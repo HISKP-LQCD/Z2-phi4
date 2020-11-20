@@ -1,4 +1,4 @@
-# $Z2-\Phi^4$ code 
+# $Z_2-\phi^4$ code 
 ## Building
 Create your build directory and compile
 ```
