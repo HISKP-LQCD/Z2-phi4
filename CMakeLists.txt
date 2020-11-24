@@ -32,7 +32,7 @@ add_subdirectory(include  include)
 macro(add_target_with_lib TARGETNAME)
   # Make the executable
   add_executable(${TARGETNAME} ${ARGN})
-  target_link_libraries(${TARGETNAME} PUBLIC metropolis)
+  target_link_libraries(${TARGETNAME} PUBLIC updates)
   target_link_libraries(${TARGETNAME} PUBLIC random)
   target_link_libraries(${TARGETNAME} PUBLIC lattice)
   target_link_libraries(${TARGETNAME} PUBLIC utils)

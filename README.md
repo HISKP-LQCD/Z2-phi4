@@ -19,10 +19,11 @@ copy the example for the infile (example.in) and create the output directory. Th
 
 ## To do
  - [x] Random number generator randlux
- - [ ] Appending
- - [ ] writing the confs
  - [ ] Cluster update
- - [ ] Measuraments
+   - add routines for $\mu=g=0$
+ - [ ] Appending
+ - [ ] Header to the confs
+ - [ ] Measurements
  - [ ] parallelization ?
    - [ ] OMP ?
    - [ ] MPI ?

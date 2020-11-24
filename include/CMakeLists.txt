@@ -1,12 +1,13 @@
 
 
 add_library(
-    metropolis STATIC
-    metropolis.hpp
+    updates STATIC
+    updates.hpp
     ../modules/metropolis.cpp
+    ../modules/cluster.cpp
 ) 
-set_target_properties(metropolis PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(metropolis PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+set_target_properties(updates PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(updates PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 
 add_library(

@@ -1,7 +1,7 @@
 #define METROPOLIS_C
 
 #include <math.h>
-#include "metropolis.hpp"
+#include "updates.hpp"
 #include "random.hpp"
 #include "IO_params.hpp"
 #include "lattice.hpp"
@@ -51,10 +51,13 @@ double metropolis_update(double ***field, cluster::IO_params params){
                      2.*deltaPhiPhi*(1. - 2.*lambda[comp]*(1. - phiSqr - deltaPhideltaPhi)) +
                      deltaPhideltaPhi*(1. - 2.*lambda[comp]*(1. )) +
                      lambda[comp]*(6.*deltaPhiPhi*deltaPhiPhi + deltaPhideltaPhi*deltaPhideltaPhi);
-                     
+           
             dS+= mu *phi_n * phi_n *( 2* deltaPhiPhi + deltaPhideltaPhi       ) ;
+           
             dS+= comp * g * phi_n * phi_n * phi_n * deltaPhi;  //component 1
             dS+= comp_n * g * deltaPhi * phi_n *( deltaPhideltaPhi + 3. * phiSqr + 3 * phi[comp][x] * deltaPhi  );   //component 0
+           
+            
             //  accept reject step -------------------------------------
             if(r[1] < exp(-dS)) {
               //phiSqr -= Phi*Phi;

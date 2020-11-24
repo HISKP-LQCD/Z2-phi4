@@ -14,7 +14,7 @@
 #include "mutils.hpp"
 #include "IO_params.hpp"
 #include "geometry.hpp"
-#include "metropolis.hpp"
+#include "updates.hpp"
 
 #include "random.hpp"
 #include "utils.hpp" 
@@ -225,6 +225,16 @@ int main(int argc, char** argv) {
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
         clock_t begin = clock(); // start time for one update step
+        
+        
+         // cluster update
+        double cluster_size = 0.0;
+        for(size_t nb = 0; nb < params.data.cluster_hits; nb++)
+            cluster_size += cluster_update(  &phi ,  params  );
+        cluster_size /= params.data.cluster_hits;
+        cluster_size /= (double) V;
+        clock_t mid = clock(); // start time for one update step
+        
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++)
@@ -232,14 +242,17 @@ int main(int argc, char** argv) {
   
         acc /= params.data.metropolis_global_hits;
 
-        clock_t mid = clock(); // start time for one update step
-        
         clock_t end = clock(); // end time for one update step
+        
+        
+        
         //Measure every 
         if(ii > params.data.start_measure && ii%params.data.measure_every_X_updates == 0){
             double *m=compute_magnetisations( phi,   params);
             double *G2=compute_G2( phi,   params);
             fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
+           // cout << "Metropolis.acc=" << acc/V  ;
+           // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
             free(m);free(G2);
         }
         // write the configuration to disk
