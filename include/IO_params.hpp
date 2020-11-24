@@ -15,7 +15,7 @@ namespace cluster {
 
 struct LatticeDataContainer { // Just the thing that holds all variables
   // lattice parameter
-  int L[D];
+  int L[dim_spacetime];
   int V;
   // action parameter
   std::string formulation;

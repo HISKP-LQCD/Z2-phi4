@@ -1,8 +1,11 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
+#include <Kokkos_Core.hpp>
+
+
 /* Dimension of the lattice */
-#define D 4
+#define dim_spacetime 4
 /* spatial extend of the lattice */
 //#define L 4
 // #define L 4LU
@@ -14,6 +17,7 @@
 #else
 #define EXTERN extern
 #endif
+
 
 using namespace std;
 
@@ -46,6 +50,9 @@ typedef struct
 {
    double kappa;
 } act_parms_t;
+
+// kokkos viever for the field 
+typedef Kokkos::View<double**>  Viewphi;
 
 /* GLOBAL_VECTORS */
 EXTERN int    **hop;

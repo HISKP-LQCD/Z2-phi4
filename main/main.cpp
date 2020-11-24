@@ -15,9 +15,12 @@
 #include "IO_params.hpp"
 #include "geometry.hpp"
 #include "updates.hpp"
+#include <random>
 
 #include "random.hpp"
 #include "utils.hpp" 
+
+#include <Kokkos_Core.hpp>
 
 static int endian;
 std::string rng_file; 
@@ -27,12 +30,12 @@ static FILE *frng=NULL ;
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double *compute_magnetisations(double **phi,  cluster::IO_params params){
+double *compute_magnetisations(Viewphi phi,  cluster::IO_params params){
 
   double *m=(double*) calloc(2,sizeof(double));
   for(int x =0; x< params.data.V; x++){
-    m[0] += sqrt(phi[0][x]*phi[0][x]);
-    m[1] += sqrt(phi[1][x]*phi[1][x]);
+    m[0] += sqrt(phi(0,x)*phi(0,x));
+    m[1] += sqrt(phi(1,x)*phi(1,x));
   }
   m[0]*=sqrt(2*params.data.kappa0)/((double)params.data.V);
   m[1]*=sqrt(2*params.data.kappa1)/((double)params.data.V);
@@ -41,7 +44,7 @@ double *compute_magnetisations(double **phi,  cluster::IO_params params){
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double  *compute_G2(double **phi, cluster::IO_params params ){
+double  *compute_G2(Viewphi phi, cluster::IO_params params ){
     double  *G2=(double*) calloc(4,sizeof(double));
     double vev;
     double kappa0=params.data.kappa0;
@@ -53,11 +56,11 @@ double  *compute_G2(double **phi, cluster::IO_params params ){
     for (int x0=0; x0< L0;x0++){
         for (int xs=0; xs< Vs; xs++){
             int x=xs+ x0*Vs;    
-            G2[0]+=phi[0][x];
-            G2[1]+=phi[0][x]*(cos(2.*3.1415926535*x0 /(double (L0)) ));
-            tmp1+=phi[0][x]*(sin(2.*3.1415926535*x0 /(double (L0)) ));
-            G2[2]+=phi[0][x]*(cos(4.*3.1415926535*x0 /(double (L0)) ));
-            tmp2=phi[0][x]*(cos(2.*3.1415926535*x0 /(double (L0)) ));
+            G2[0]+=phi(0,x);
+            G2[1]+=phi(0,x)*(cos(2.*3.1415926535*x0 /(double (L0)) ));
+            tmp1+=phi(0,x)*(sin(2.*3.1415926535*x0 /(double (L0)) ));
+            G2[2]+=phi(0,x)*(cos(4.*3.1415926535*x0 /(double (L0)) ));
+            tmp2=phi(0,x)*(cos(2.*3.1415926535*x0 /(double (L0)) ));
         }
     }
         
@@ -81,11 +84,10 @@ double  *compute_G2(double **phi, cluster::IO_params params ){
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double create_phi_update(const double delta){
+double create_phi_update(const double delta, std::mt19937 * x_rand, size_t x){
   
-  double r[1];
-  ranlxd( r,1);
-  return (r[0]*2-1)*delta;
+  double r=x_rand[x]()/((double)x_rand[x].max() );;
+  return (r*2-1)*delta;
 
 } 
 
@@ -193,20 +195,36 @@ int main(int argc, char** argv) {
     cout << "level " <<params.data.level << endl;
     cout << "output " <<params.data.outpath << endl;
     cout << "start mes " << params.data.start_measure << endl;
-    int V=params.data.V;
+    size_t V=params.data.V;
     hopping( params.data.L);
     
-    rng_file = params.data.outpath + "/rng";
-    init_rng( params);
     
-    double **phi=(double**) malloc(sizeof(double*)*2);
-    for (int i =0 ; i< 2;i++)
-        phi[i]=(double*) malloc(sizeof(double)*V);
-    
-    for (int x =0 ; x< V;x++){
-        phi[0][x]=create_phi_update(1.);
-        phi[1][x]=create_phi_update(1.); 
+    /* seed the PRNG (MT19937) for each  lattice size, with seed */
+    std::mt19937 *x_rand=(std::mt19937*) malloc(sizeof(std::mt19937)*V);
+    for (size_t x=0;x < V;x++){
+        std::mt19937 tmp_generator(x+params.data.seed);
+        x_rand[x]=tmp_generator;
     }
+    
+    
+    // init_rng( params);
+    
+    // starting kokkos
+    Kokkos::initialize( argc, argv );{
+    
+    
+    Viewphi  phi("phi",2,V);
+    
+    Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
+
+    // Initialize phi vector on host.
+    for (size_t x =0 ; x< V;x++){
+        h_phi(0,x)=create_phi_update(1.,x_rand,x);
+        h_phi(1,x)=create_phi_update(1.,x_rand,x);
+    }
+    
+    // Deep copy host views to device views.
+    Kokkos::deep_copy( phi, h_phi );
     
     std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
@@ -228,17 +246,17 @@ int main(int argc, char** argv) {
         
         
          // cluster update
-        double cluster_size = 0.0;
+  /*      double cluster_size = 0.0;
         for(size_t nb = 0; nb < params.data.cluster_hits; nb++)
             cluster_size += cluster_update(  &phi ,  params  );
         cluster_size /= params.data.cluster_hits;
         cluster_size /= (double) V;
         clock_t mid = clock(); // start time for one update step
-        
+     */   
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++)
-           acc += metropolis_update(&phi,params );
+           acc += metropolis_update(phi,params,x_rand );
   
         acc /= params.data.metropolis_global_hits;
 
@@ -274,14 +292,19 @@ int main(int argc, char** argv) {
                exit(1);
             }
             //for (int x=0; x< V; x++)
-            fwrite(phi[0], sizeof(double), V, f_conf);
-            fwrite(phi[1], sizeof(double), V, f_conf);
+            double *p=(double*) &h_phi(0,0);
+            fwrite(p, sizeof(double), V, f_conf);
+            p=(double*) &h_phi(1,0);
+            fwrite(p, sizeof(double), V, f_conf);
             fclose(f_conf);
         }    
     }
+
     
+    }
+    Kokkos::finalize();
+    /*
    // save rng 
-   
    cout << "writing the rng state to: "<< rng_file.c_str() <<endl;
    int N=rlxd_size();
    int *state = (int*) alloca(N*sizeof(int));
@@ -293,6 +316,6 @@ int main(int argc, char** argv) {
 
    write_rng_state(N,state);
    fclose(frng);
-
+*/
     return 0;
 }

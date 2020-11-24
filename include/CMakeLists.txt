@@ -1,4 +1,9 @@
+macro(target_link_libraries_kokkos TARGETNAME)
+  # Make the executable
+    target_link_libraries(${TARGETNAME} PUBLIC Kokkos::kokkos)
+    target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}") 
 
+endmacro()
 
 add_library(
     updates STATIC
@@ -7,8 +12,7 @@ add_library(
     ../modules/cluster.cpp
 ) 
 set_target_properties(updates PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(updates PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-
+target_link_libraries_kokkos(updates )
 
 add_library(
     lattice STATIC
@@ -16,8 +20,7 @@ add_library(
 ) 
 
 set_target_properties(lattice PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(lattice PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-
+target_link_libraries_kokkos(lattice)
 
 
 add_library(
@@ -26,8 +29,8 @@ add_library(
     ../modules/mutils.cpp
 ) 
 
-target_include_directories(mutils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-
+#target_include_directories(mutils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries_kokkos(mutils)
 
 add_library(
     random STATIC
@@ -35,7 +38,8 @@ add_library(
     ../modules/ranlxd.cpp
 ) 
 set_target_properties(random PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(random PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+#target_include_directories(random PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries_kokkos(random)
 
 add_library(
     utils STATIC
@@ -44,8 +48,8 @@ add_library(
     ../modules/endian.cpp
 ) 
 set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-
+#target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries_kokkos(utils)
 
 add_library(
     geometry STATIC
@@ -53,8 +57,9 @@ add_library(
     ../modules/geometry/hopping.cpp
     ../modules/geometry/lex2c.cpp
 ) 
-
-target_include_directories(geometry PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(geometry PUBLIC Kokkos::kokkos)
+#target_include_directories(geometry PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries_kokkos(geometry)
 
 
 
@@ -63,6 +68,7 @@ add_library(
     IO_params.hpp
 ) 
 set_target_properties(IO_params PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(IO_params PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+#target_include_directories(IO_params PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries_kokkos(IO_params)
 
 

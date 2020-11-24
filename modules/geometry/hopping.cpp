@@ -71,8 +71,8 @@ void hopping(const int *L)
     hop=(int**) malloc(sizeof(int*)*V);
     ipt=(int**) malloc(sizeof(int*)*V);
     for (int i =0;i<V;i++){
-        hop[i]=(int*) malloc(sizeof(int)*2*D);
-        ipt[i]=(int*) malloc(sizeof(int)*D);
+        hop[i]=(int*) malloc(sizeof(int)*2*dim_spacetime);
+        ipt[i]=(int*) malloc(sizeof(int)*dim_spacetime);
     }
 
     for(x=0;x<L1;x++)
