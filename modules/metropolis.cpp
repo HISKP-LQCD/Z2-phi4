@@ -26,7 +26,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, std::mt19937 *
   for (int parity = 0; parity <2 ;parity ++){
   //for(int x=0; x< V; x++) {  
   Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA ( size_t xx , double &update) {    
-      size_t x=xx*2+parity;
+      size_t x=even_odd[parity][xx];
       // computing phi^2 on x
       //auto phiSqr = phi[0][x]*phi[0][x] + phi[1][x]*phi[1][x];
       

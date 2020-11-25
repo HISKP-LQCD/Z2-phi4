@@ -74,25 +74,37 @@ void hopping(const int *L)
         hop[i]=(int*) malloc(sizeof(int)*2*dim_spacetime);
         ipt[i]=(int*) malloc(sizeof(int)*dim_spacetime);
     }
-
+    even_odd=(int**) malloc(sizeof(int*)*2);
+    for (int i =0;i<2;i++)
+        even_odd[i]=(int*) malloc(sizeof(int)*V/2);
+    
+    int count_e=0;
+    int count_o=0;
+    int eo=0;
     for(x=0;x<L1;x++)
         for(y=0;y<L2;y++)
             for(z=0;z<L3;z++)
                 for(t=0;t<L0;t++){
-		  i=x+y*L1+z*L1*L2+t*L3*L2*L1;
-		  hop[i][0]=x+y*L1+z*L1*L2+((t+1)%L0)*L3*L2*L1;
-		  hop[i][1]=x+y*L1+((z+1)%L3)*L1*L2+t*L3*L2*L1;
-		  hop[i][2]=x+((y+1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
-		  hop[i][3]=((x+1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
+                    i=x+y*L1+z*L1*L2+t*L3*L2*L1;
+                    hop[i][0]=x+y*L1+z*L1*L2+((t+1)%L0)*L3*L2*L1;
+                    hop[i][1]=x+y*L1+((z+1)%L3)*L1*L2+t*L3*L2*L1;
+                    hop[i][2]=x+((y+1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
+                    hop[i][3]=((x+1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
 
-		  hop[i][4]=x+y*L1+z*L1*L2+((t+L0-1)%L0)*L3*L2*L1;
-		  hop[i][5]=x+y*L1+((z+L3-1)%L3)*L1*L2+t*L3*L2*L1;
-		  hop[i][6]=x+((y+L2-1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
-		  hop[i][7]=((x+L1-1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
+                    hop[i][4]=x+y*L1+z*L1*L2+((t+L0-1)%L0)*L3*L2*L1;
+                    hop[i][5]=x+y*L1+((z+L3-1)%L3)*L1*L2+t*L3*L2*L1;
+                    hop[i][6]=x+((y+L2-1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
+                    hop[i][7]=((x+L1-1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
 
-		  //hop[i][8]=i;
-		  
-		  ipt[i][0]=t;ipt[i][1]=x;ipt[i][2]=y;ipt[i][3]=z;
+                    //hop[i][8]=i;
+                    ipt[i][0]=t;ipt[i][1]=x;ipt[i][2]=y;ipt[i][3]=z;
+                    
+                    even_odd[eo][i/2]=i;
+                    eo=(eo+1) %2;
+                    
+                    
                 }
-
+     
+                
+   
 } 

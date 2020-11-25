@@ -55,7 +55,7 @@ typedef struct
 typedef Kokkos::View<double**>  Viewphi;
 
 /* GLOBAL_VECTORS */
-EXTERN int    **hop;
+EXTERN int    **hop, **even_odd;
 EXTERN int    **ipt;
 EXTERN int      V;
 
