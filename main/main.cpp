@@ -84,7 +84,7 @@ double  *compute_G2(Viewphi phi, cluster::IO_params params ){
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double create_phi_update(const double delta, std::mt19937 * x_rand, size_t x){
+double create_phi_update(const double delta, std::mt19937_64 * x_rand, size_t x){
   
   double r=x_rand[x]()/((double)x_rand[x].max() );;
   return (r*2-1)*delta;
@@ -200,9 +200,10 @@ int main(int argc, char** argv) {
     
     
     /* seed the PRNG (MT19937) for each  lattice size, with seed */
-    std::mt19937 *x_rand=(std::mt19937*) malloc(sizeof(std::mt19937)*V);
+    std::mt19937_64 *x_rand=(std::mt19937_64*) malloc(sizeof(std::mt19937_64)*V);
+    std::mt19937_64  seed_generator(params.data.seed);
     for (size_t x=0;x < V;x++){
-        std::mt19937 tmp_generator(x+params.data.seed);
+        std::mt19937_64 tmp_generator( seed_generator() );
         x_rand[x]=tmp_generator;
     }
     
