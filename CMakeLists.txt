@@ -3,9 +3,9 @@ project(Z2-phi4 CXX)
 #add_subdirectory(../modules  ../modules)
 
 # full path of g++  otherwise it does not work
-set(CMAKE_CXX_COMPILER /usr/bin/g++)
+#set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
-set(CMAKE_CXX_FLAGS "-fopenmp   -pedantic -g   -lm -lgmp -lfftw3 ")
+#set(CMAKE_CXX_FLAGS "-fopenmp   -pedantic -g   -lm -lgmp -lfftw3 ")
 #set(CMAKE_CXX_FLAGS "-fopenmp   -pedantic  -g -O0 -pg -no-pie  -lm -lgmp -lfftw3 ")
 #-g # then compile , then open gdb, write the commands : file $namefile; run  $options ; bt
 # valgrind --leak-check=yes --track-origins=yes  ./program   #compile with -g to have line number

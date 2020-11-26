@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double metropolis_update(Viewphi &phi, cluster::IO_params params, std::mt19937_64 * x_rand){
+double metropolis_update(Viewphi &phi, cluster::IO_params params, std::mt19937_64 * x_rand  , ViewLatt &hop, ViewLatt &even_odd){
                          //const double kappa, const double lambda, 
                          //const double delta, const size_t nb_of_hits){
   double kappa[2] ={params.data.kappa0, params.data.kappa1};

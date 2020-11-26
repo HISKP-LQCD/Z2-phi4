@@ -6,7 +6,7 @@
 #endif
 
 /* HOPPING_C */
-void hopping(const int *L );
+void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt );
 
 /* LEX2C_C */
 extern int  c2lex(int *c, int d,int l);

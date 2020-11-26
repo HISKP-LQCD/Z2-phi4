@@ -10,9 +10,9 @@
 #include <vector>
 
 
-#include "lattice.hpp"
-#include "mutils.hpp"
 #include "IO_params.hpp"
+#include "mutils.hpp"
+#include "lattice.hpp"
 #include "geometry.hpp"
 #include "updates.hpp"
 #include <random>
@@ -213,9 +213,11 @@ int main(int argc, char** argv) {
     // starting kokkos
     Kokkos::initialize( argc, argv );{
     
-    
- 
-    hopping( params.data.L);    
+    ViewLatt    hop("hop",V,2*dim_spacetime);
+    ViewLatt    even_odd("even_odd",2,V/2);
+    ViewLatt    ipt("ipt",V,dim_spacetime);
+  
+    hopping( params.data.L, hop,even_odd,ipt);    
         
     Viewphi  phi("phi",2,V);
     Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
@@ -259,7 +261,7 @@ int main(int argc, char** argv) {
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++)
-           acc += metropolis_update(phi,params,x_rand );
+           acc += metropolis_update(phi,params,x_rand , hop, even_odd);
   
         acc /= params.data.metropolis_global_hits;
 

@@ -643,6 +643,7 @@ long myscanf(int n, char *format,...)
         
    }
    va_end(args);
+   tofs+=ic;
    return tofs;
 }
 

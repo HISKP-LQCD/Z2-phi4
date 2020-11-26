@@ -62,7 +62,7 @@ void hopping(int V,int L[D])
 */
 
 //void hopping(const int *L, ViewLatt &hop, ViewLatt  &ipt ,ViewLatt &even_odd )
-void hopping(const int *L )
+void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
 {
     int x, y,z,t, Lk;
     int xk, k, dxk, i ;
@@ -79,9 +79,6 @@ void hopping(const int *L )
     for (int i =0;i<2;i++)
         even_odd[i]=(int*) malloc(sizeof(int)*V/2);
     */
-    hop=ViewLatt("hop",V,2*dim_spacetime);
-    ipt=ViewLatt("ipt",V,dim_spacetime);
-    even_odd=ViewLatt("even_odd",2,V/2);
     
     int count_e=0;
     int count_o=0;
