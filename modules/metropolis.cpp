@@ -26,7 +26,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, std::mt19937_6
   for (int parity = 0; parity <2 ;parity ++){
   //for(int x=0; x< V; x++) {  
   Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA ( size_t xx , double &update) {    
-      size_t x=even_odd[parity][xx];
+      size_t x=even_odd(parity,xx);
       // computing phi^2 on x
       //auto phiSqr = phi[0][x]*phi[0][x] + phi[1][x]*phi[1][x];
       
@@ -41,7 +41,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, std::mt19937_6
         // compute the neighbour sum
         auto neighbourSum = 0.0;
         for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
-            neighbourSum += phi(comp, hop[x][dir+dim_spacetime]) + phi(comp, hop[x][dir] );
+            neighbourSum += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
         // doing the multihit
 
         for(size_t hit = 0; hit < nb_of_hits; hit++){

@@ -61,13 +61,14 @@ void hopping(int V,int L[D])
 } // hopping 
 */
 
-void hopping(const int *L)
+//void hopping(const int *L, ViewLatt &hop, ViewLatt  &ipt ,ViewLatt &even_odd )
+void hopping(const int *L )
 {
     int x, y,z,t, Lk;
     int xk, k, dxk, i ;
     int L1=L[1],L2=L[2],L3=L[3], L0=L[0];
     int V=L1*L2*L3*L0;
-    
+   /* 
     hop=(int**) malloc(sizeof(int*)*V);
     ipt=(int**) malloc(sizeof(int*)*V);
     for (int i =0;i<V;i++){
@@ -77,6 +78,10 @@ void hopping(const int *L)
     even_odd=(int**) malloc(sizeof(int*)*2);
     for (int i =0;i<2;i++)
         even_odd[i]=(int*) malloc(sizeof(int)*V/2);
+    */
+    hop=ViewLatt("hop",V,2*dim_spacetime);
+    ipt=ViewLatt("ipt",V,dim_spacetime);
+    even_odd=ViewLatt("even_odd",2,V/2);
     
     int count_e=0;
     int count_o=0;
@@ -86,20 +91,20 @@ void hopping(const int *L)
             for(z=0;z<L3;z++)
                 for(t=0;t<L0;t++){
                     i=x+y*L1+z*L1*L2+t*L3*L2*L1;
-                    hop[i][0]=x+y*L1+z*L1*L2+((t+1)%L0)*L3*L2*L1;
-                    hop[i][1]=x+y*L1+((z+1)%L3)*L1*L2+t*L3*L2*L1;
-                    hop[i][2]=x+((y+1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
-                    hop[i][3]=((x+1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
+                    hop(i,0)=x+y*L1+z*L1*L2+((t+1)%L0)*L3*L2*L1;
+                    hop(i,1)=x+y*L1+((z+1)%L3)*L1*L2+t*L3*L2*L1;
+                    hop(i,2)=x+((y+1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
+                    hop(i,3)=((x+1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
 
-                    hop[i][4]=x+y*L1+z*L1*L2+((t+L0-1)%L0)*L3*L2*L1;
-                    hop[i][5]=x+y*L1+((z+L3-1)%L3)*L1*L2+t*L3*L2*L1;
-                    hop[i][6]=x+((y+L2-1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
-                    hop[i][7]=((x+L1-1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
+                    hop(i,4)=x+y*L1+z*L1*L2+((t+L0-1)%L0)*L3*L2*L1;
+                    hop(i,5)=x+y*L1+((z+L3-1)%L3)*L1*L2+t*L3*L2*L1;
+                    hop(i,6)=x+((y+L2-1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
+                    hop(i,7)=((x+L1-1)%L1)+y*L1+z*L1*L2+t*L3*L2*L1;
 
-                    //hop[i][8]=i;
-                    ipt[i][0]=t;ipt[i][1]=x;ipt[i][2]=y;ipt[i][3]=z;
+                    //hop(i,[8]=i;
+                    ipt(i,0)=t;ipt(i,1)=x;ipt(i,2)=y;ipt(i,3)=z;
                     
-                    even_odd[eo][i/2]=i;
+                    even_odd(eo,i/2)=i;
                     eo=(eo+1) %2;
                     
                     

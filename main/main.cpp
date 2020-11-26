@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
     cout << "output " <<params.data.outpath << endl;
     cout << "start mes " << params.data.start_measure << endl;
     size_t V=params.data.V;
-    hopping( params.data.L);
+    
     
     
     /* seed the PRNG (MT19937) for each  lattice size, with seed */
@@ -214,8 +214,10 @@ int main(int argc, char** argv) {
     Kokkos::initialize( argc, argv );{
     
     
+ 
+    hopping( params.data.L);    
+        
     Viewphi  phi("phi",2,V);
-    
     Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
 
     // Initialize phi vector on host.
@@ -301,9 +303,8 @@ int main(int argc, char** argv) {
         }    
     }
 
-    
     }
-    Kokkos::finalize();
+    
     /*
    // save rng 
    cout << "writing the rng state to: "<< rng_file.c_str() <<endl;
@@ -319,4 +320,6 @@ int main(int argc, char** argv) {
    fclose(frng);
 */
     return 0;
+    //move finalize at the end otherwise runtime error when deallocate hop, ipt,even_odd
+    Kokkos::finalize();
 }

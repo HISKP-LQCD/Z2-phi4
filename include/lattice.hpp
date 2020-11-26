@@ -53,10 +53,9 @@ typedef struct
 
 // kokkos viever for the field 
 typedef Kokkos::View<double**>  Viewphi;
-
+typedef Kokkos::View<int**>  ViewLatt;
 /* GLOBAL_VECTORS */
-EXTERN int    **hop, **even_odd;
-EXTERN int    **ipt;
+EXTERN ViewLatt    hop, even_odd, ipt;
 EXTERN int      V;
 
 //EXTERN int    hop[V][2*D];

@@ -80,12 +80,12 @@ double cluster_update(double  ***field, cluster::IO_params params ){
       for(const auto& x_look : look_1){ 
         for(size_t dir = 0; dir < dim_spacetime; dir++){ 
           // negative direction
-          auto y = hop[x_look][dir];
+          auto y = hop(x_look,dir);
        //   cout << "  dir= "<< dir << "  field =" << phi[0][y] << endl;
           check_neighbour(x_look, y, kappa0,kappa1, phi,  cluster_size,
                           checked_points, look_2);
           // positive direction
-          y = hop[x_look][dir+dim_spacetime];
+          y = hop(x_look,dir+dim_spacetime);
        //   cout << "  dir= -"<< dir << "  field =" << phi[0][y] << endl;
 
           check_neighbour(x_look, y, kappa0,kappa1, phi,  cluster_size,
@@ -97,13 +97,13 @@ double cluster_update(double  ***field, cluster::IO_params params ){
       for(const auto& x_look : look_2){ 
         for(size_t dir = 0; dir < dim_spacetime; dir++){ 
           // negative direction
-          auto y = hop[x_look][dir];
+          auto y = hop(x_look,dir);
        //             cout << "  dir= "<< dir << "  field =" << phi[0][y] << endl;
 
           check_neighbour(x_look, y, kappa0,kappa1, phi, cluster_size,
                           checked_points, look_1);
           // positive direction
-          y = hop[x_look][dir+dim_spacetime];
+          y = hop(x_look,dir+dim_spacetime);
          //           cout << "  dir= -"<< dir << "  field =" << phi[0][y] << endl;
 
           check_neighbour(x_look, y, kappa0,kappa1, phi, cluster_size,
