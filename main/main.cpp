@@ -94,7 +94,7 @@ double create_phi_update(const double delta, std::mt19937_64 * x_rand, size_t x)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-static void write_rng_state(int N, int state[])
+/*static void write_rng_state(int N, int state[])
 {
    int i,iw;
    stdint_t istd[1];
@@ -154,6 +154,7 @@ static int* read_rng_state(void)
 
    return state;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static void init_rng( cluster::IO_params params)
@@ -178,7 +179,7 @@ static void init_rng( cluster::IO_params params)
    else
       rlxd_init(level,seed);   
 }
-
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -199,19 +200,29 @@ int main(int argc, char** argv) {
     
     
     
-    /* seed the PRNG (MT19937) for each  lattice size, with seed */
-    std::mt19937_64 *x_rand=(std::mt19937_64*) malloc(sizeof(std::mt19937_64)*V);
-    std::mt19937_64  seed_generator(params.data.seed);
-    for (size_t x=0;x < V;x++){
-        std::mt19937_64 tmp_generator( seed_generator() );
-        x_rand[x]=tmp_generator;
-    }
     
     
     // init_rng( params);
     
     // starting kokkos
     Kokkos::initialize( argc, argv );{
+    
+    /* seed the PRNG (MT19937) for each  lattice size, with seed*/
+    std::mt19937_64 *x_rand=(std::mt19937_64*) malloc(sizeof(std::mt19937_64)*V);
+    std::mt19937_64  seed_generator(params.data.seed);
+    for (size_t x=0;x < V;x++){
+        std::mt19937_64 tmp_generator( seed_generator() );
+        x_rand[x]=tmp_generator;
+    }
+/*
+    typedef Kokkos::View<std::mt19937_64 *>  Viewrand;
+    Vievrand  x_rand("mt19937",V );
+    for (size_t x=0;x < V;x++){
+        std::mt19937_64 tmp_generator( seed_generator() );
+        x_rand(x)=tmp_generator;
+    }
+*/
+
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -247,6 +258,7 @@ int main(int argc, char** argv) {
     
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
+        cout << "Starting step   "<< ii <<endl; 
         clock_t begin = clock(); // start time for one update step
         
          // cluster update
@@ -263,6 +275,7 @@ int main(int argc, char** argv) {
            acc += metropolis_update(phi,params,x_rand , hop, even_odd);
         }
         acc /= params.data.metropolis_global_hits;
+        cout << "Metropolis.acc=" << acc/V  ;
 
         clock_t end = clock(); // end time for one update step
         
@@ -273,7 +286,6 @@ int main(int argc, char** argv) {
             double *m=compute_magnetisations( phi,   params);
             double *G2=compute_G2( phi,   params);
             fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
-           // cout << "Metropolis.acc=" << acc/V  ;
            // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
             free(m);free(G2);
         }

@@ -46,9 +46,11 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, std::mt19937_6
 
         for(size_t hit = 0; hit < nb_of_hits; hit++){
             double r[2];
+ printf( "here \n");
             //THIS DOES NOT WORK IN THE GPU
             r[0]=x_rand[x]()/((double)x_rand[x].max() );
             r[1]=x_rand[x]()/((double)x_rand[x].max() );
+ printf( "IT IS NOT ARRIVING HERE \n");
             auto deltaPhi = (r[0]*2. - 1.)*delta;
             auto deltaPhiPhi = deltaPhi * phi(comp,x);
             auto deltaPhideltaPhi = deltaPhi * deltaPhi;

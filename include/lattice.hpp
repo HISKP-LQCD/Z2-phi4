@@ -25,7 +25,7 @@ typedef Kokkos::View<double**>  Viewphi;
 typedef Kokkos::View<int**>  ViewLatt;
 /* GLOBAL_VECTORS */
 EXTERN int      V;
-
+EXTERN double  rand_max;
 //EXTERN int    hop[V][2*D];
 //EXTERN int    ipt[V][D];
 
