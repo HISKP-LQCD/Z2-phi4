@@ -20,37 +20,6 @@
 
 
 using namespace std;
-
-typedef enum
-{
-   CG,FFT,SOLVERS
-} solver_t;
-
-/* data structure to store all the parameters of the algorithm */
-typedef struct 
-{
-   solver_t solver;   
-   int nmx;
-   double res;
-} ispt_parms_t;
-
-typedef struct
-{
-   int nstep;
-   double tau;
-}  hmd_parms_t;
-
-typedef struct
-{
-   double gamma;
-}  smd_parms_t;
-
-/* data structure to store all the parameters of the action */
-typedef struct 
-{
-   double kappa;
-} act_parms_t;
-
 // kokkos viever for the field 
 typedef Kokkos::View<double**>  Viewphi;
 typedef Kokkos::View<int**>  ViewLatt;

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(Z2-phi4 CXX)
-#add_subdirectory(../modules  ../modules)
+
 
 # full path of g++  otherwise it does not work
 #set(CMAKE_CXX_COMPILER /usr/bin/g++)
@@ -29,23 +29,25 @@ project(Z2-phi4 CXX)
 
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/kokkos" "external/kokkos")
+#include_directories(include)
 add_subdirectory(include  include)
+#include_directories(${CMAKE_SOURCE_DIR}/include)
 
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # this has been taken straight from the build system of Balint's Dslash (github.com/bjoo/KokkosDslash)
 macro(add_target_with_lib TARGETNAME)
   # Make the executable
   add_executable(${TARGETNAME} ${ARGN})
-  target_link_libraries(${TARGETNAME} PUBLIC updates)
-  target_link_libraries(${TARGETNAME} PUBLIC random)
-  target_link_libraries(${TARGETNAME} PUBLIC lattice)
-  target_link_libraries(${TARGETNAME} PUBLIC utils)
-  target_link_libraries(${TARGETNAME} PUBLIC mutils)
-  target_link_libraries(${TARGETNAME} PUBLIC geometry)
-  target_link_libraries(${TARGETNAME} PUBLIC IO_params)
+#  target_link_libraries(${TARGETNAME} PUBLIC lattice)
   target_link_libraries(${TARGETNAME} PUBLIC Kokkos::kokkos)
+  target_link_libraries(${TARGETNAME} PUBLIC utils)
+  target_link_libraries(${TARGETNAME} PUBLIC updates)
+  target_link_libraries(${TARGETNAME} PUBLIC geometry)
+  target_link_libraries(${TARGETNAME} PUBLIC random)
+  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_BINARY_DIR}/include")
 endmacro()
-
 
 add_subdirectory(main)
 

@@ -216,7 +216,7 @@ int main(int argc, char** argv) {
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
     ViewLatt    ipt("ipt",V,dim_spacetime);
-  
+    
     hopping( params.data.L, hop,even_odd,ipt);    
         
     Viewphi  phi("phi",2,V);
@@ -249,7 +249,6 @@ int main(int argc, char** argv) {
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
         clock_t begin = clock(); // start time for one update step
         
-        
          // cluster update
   /*      double cluster_size = 0.0;
         for(size_t nb = 0; nb < params.data.cluster_hits; nb++)
@@ -260,9 +259,9 @@ int main(int argc, char** argv) {
      */   
         // metropolis update
         double acc = 0.0;
-        for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++)
+        for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++){
            acc += metropolis_update(phi,params,x_rand , hop, even_odd);
-  
+        }
         acc /= params.data.metropolis_global_hits;
 
         clock_t end = clock(); // end time for one update step
