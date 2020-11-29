@@ -65,10 +65,9 @@ void hopping(int V,int L[D])
 //void hopping(const int *L, ViewLatt &hop, ViewLatt  &ipt ,ViewLatt &even_odd )
 void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
 {
-    int x, y,z,t, Lk;
-    int xk, k, dxk, i ;
+    int x, y,z,t;
     int L1=L[1],L2=L[2],L3=L[3], L0=L[0];
-    int V=L1*L2*L3*L0;
+    size_t V=L1*L2*L3*L0;
    /* 
     hop=(int**) malloc(sizeof(int*)*V);
     ipt=(int**) malloc(sizeof(int*)*V);
@@ -84,12 +83,13 @@ void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
     ViewLatt::HostMirror h_ipt =  Kokkos::create_mirror_view( ipt );   
     ViewLatt::HostMirror h_even_odd =  Kokkos::create_mirror_view( even_odd );   
  
-    int eo=0;
+    size_t eo=0;
     for(x=0;x<L1;x++)
         for(y=0;y<L2;y++)
             for(z=0;z<L3;z++)
                 for(t=0;t<L0;t++){
-                    i=x+y*L1+z*L1*L2+t*L3*L2*L1;
+                    size_t i=x+y*L1+z*L1*L2+t*L3*L2*L1;
+//printf("  %d = %d  %d  %d  %d   -> %d\n",i,x,y,z,t,eo);
                     h_hop(i,0)=x+y*L1+z*L1*L2+((t+1)%L0)*L3*L2*L1;
                     h_hop(i,1)=x+y*L1+((z+1)%L3)*L1*L2+t*L3*L2*L1;
                     h_hop(i,2)=x+((y+1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
@@ -110,5 +110,9 @@ void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
                 }
      
                 
+            // Deep copy host views to device views.
+    Kokkos::deep_copy( hop, h_hop );
+    Kokkos::deep_copy( ipt, h_ipt );
+    Kokkos::deep_copy( even_odd, h_even_odd );
    
 } 

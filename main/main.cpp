@@ -216,17 +216,20 @@ int main(int argc, char** argv) {
         x_rand[x]=tmp_generator;
     }
 */
+    cout << "Kokkos started"<< endl; 
     // Create a random number generator pool (64-bit states or 1024-bit state)
     // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
     // which is used to fill the generators of the pool.
     RandPoolType rand_pool(params.data.seed);
     //Kokkos::Random_XorShift1024_Pool<> rand_pool1024(5374857); 
+    cout << "random pool initialised"<< endl; 
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
     ViewLatt    ipt("ipt",V,dim_spacetime);
     
     hopping( params.data.L, hop,even_odd,ipt);    
+    cout << "hopping initialised"<< endl; 
         
     Viewphi  phi("phi",2,V);
     Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
@@ -245,9 +248,9 @@ int main(int argc, char** argv) {
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     });   
-    // Deep copy divice views to host views.
+    // Deep copy device views to host views.
     Kokkos::deep_copy( h_phi, phi );
-    
+   
     std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
                               ".X" + std::to_string(params.data.L[1]) +
@@ -264,7 +267,7 @@ int main(int argc, char** argv) {
     
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
-        cout << "Starting step   "<< ii <<endl; 
+//        cout << "Starting step   "<< ii <<endl; 
         clock_t begin = clock(); // start time for one update step
         
          // cluster update
@@ -281,7 +284,7 @@ int main(int argc, char** argv) {
            acc += metropolis_update(phi,params, rand_pool, hop, even_odd);
         }
         acc /= params.data.metropolis_global_hits;
-        cout << "Metropolis.acc=" << acc/V << endl ;
+  //      cout << "Metropolis.acc=" << acc/V << endl ;
 
         clock_t end = clock(); // end time for one update step
         
@@ -289,7 +292,9 @@ int main(int argc, char** argv) {
         
         //Measure every 
         if(ii > params.data.start_measure && ii%params.data.measure_every_X_updates == 0){
-            cout << "measuring  " <<endl;
+            // Deep copy device views to host views.
+            Kokkos::deep_copy( h_phi, phi );
+    //        cout << "measuring  " <<endl;
             double *m=compute_magnetisations( h_phi,   params);
             double *G2=compute_G2( h_phi,   params);
             fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
@@ -298,7 +303,9 @@ int main(int argc, char** argv) {
         }
         // write the configuration to disk
         if(params.data.save_config == "yes" && ii > params.data.start_measure && ii%params.data.save_config_every_X_updates == 0){
-            cout << "saving conf  " <<endl;
+            // Deep copy device views to host views.
+            Kokkos::deep_copy( h_phi, phi );
+      //      cout << "saving conf  " <<endl;
             std::string conf_file = params.data.outpath + 
                               "/T" + std::to_string(params.data.L[0]) +
                               ".X" + std::to_string(params.data.L[1]) +

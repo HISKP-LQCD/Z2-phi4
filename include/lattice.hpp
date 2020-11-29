@@ -24,7 +24,7 @@
 using namespace std;
 // kokkos viever for the field 
 typedef Kokkos::View<double**>  Viewphi;
-typedef Kokkos::View<int**>  ViewLatt;
+typedef Kokkos::View<size_t**>  ViewLatt;
 
 typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
 typedef typename RandPoolType::generator_type gen_type;
