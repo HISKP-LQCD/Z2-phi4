@@ -30,7 +30,7 @@ static FILE *frng=NULL ;
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double *compute_magnetisations(Viewphi phi,  cluster::IO_params params){
+double *compute_magnetisations( Viewphi::HostMirror phi,  cluster::IO_params params){
 
   double *m=(double*) calloc(2,sizeof(double));
   for(int x =0; x< params.data.V; x++){
@@ -44,7 +44,7 @@ double *compute_magnetisations(Viewphi phi,  cluster::IO_params params){
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double  *compute_G2(Viewphi phi, cluster::IO_params params ){
+double  *compute_G2( Viewphi::HostMirror phi, cluster::IO_params params ){
     double  *G2=(double*) calloc(4,sizeof(double));
     double vev;
     double kappa0=params.data.kappa0;
@@ -84,13 +84,14 @@ double  *compute_G2(Viewphi phi, cluster::IO_params params ){
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double create_phi_update(const double delta, std::mt19937_64 * x_rand, size_t x){
+/*
+ double create_phi_update(const double delta, std::mt19937_64 * x_rand, size_t x){
   
   double r=x_rand[x]()/((double)x_rand[x].max() );;
   return (r*2-1)*delta;
 
 } 
-
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -207,22 +208,19 @@ int main(int argc, char** argv) {
     // starting kokkos
     Kokkos::initialize( argc, argv );{
     
-    /* seed the PRNG (MT19937) for each  lattice size, with seed*/
-    std::mt19937_64 *x_rand=(std::mt19937_64*) malloc(sizeof(std::mt19937_64)*V);
+    // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
+/*    std::mt19937_64 *x_rand=(std::mt19937_64*) malloc(sizeof(std::mt19937_64)*V);
     std::mt19937_64  seed_generator(params.data.seed);
     for (size_t x=0;x < V;x++){
         std::mt19937_64 tmp_generator( seed_generator() );
         x_rand[x]=tmp_generator;
     }
-/*
-    typedef Kokkos::View<std::mt19937_64 *>  Viewrand;
-    Vievrand  x_rand("mt19937",V );
-    for (size_t x=0;x < V;x++){
-        std::mt19937_64 tmp_generator( seed_generator() );
-        x_rand(x)=tmp_generator;
-    }
 */
-
+    // Create a random number generator pool (64-bit states or 1024-bit state)
+    // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
+    // which is used to fill the generators of the pool.
+    RandPoolType rand_pool(params.data.seed);
+    //Kokkos::Random_XorShift1024_Pool<> rand_pool1024(5374857); 
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -234,13 +232,21 @@ int main(int argc, char** argv) {
     Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
 
     // Initialize phi vector on host.
-    for (size_t x =0 ; x< V;x++){
+/*    for (size_t x =0 ; x< V;x++){
         h_phi(0,x)=create_phi_update(1.,x_rand,x);
         h_phi(1,x)=create_phi_update(1.,x_rand,x);
-    }
-    
-    // Deep copy host views to device views.
-    Kokkos::deep_copy( phi, h_phi );
+    }*/
+    // Initialize phi on the device
+    Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+        // get a random generatro from the pool
+        gen_type rgen = rand_pool.get_state();
+        phi(0,x)=(rgen.drand()*2.-1.);
+        phi(1,x)=(rgen.drand()*2.-1.);
+        // Give the state back, which will allow another thread to aquire it
+        rand_pool.free_state(rgen);
+    });   
+    // Deep copy divice views to host views.
+    Kokkos::deep_copy( h_phi, phi );
     
     std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
@@ -272,10 +278,10 @@ int main(int argc, char** argv) {
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++){
-           acc += metropolis_update(phi,params,x_rand , hop, even_odd);
+           acc += metropolis_update(phi,params, rand_pool, hop, even_odd);
         }
         acc /= params.data.metropolis_global_hits;
-        cout << "Metropolis.acc=" << acc/V  ;
+        cout << "Metropolis.acc=" << acc/V << endl ;
 
         clock_t end = clock(); // end time for one update step
         
@@ -283,14 +289,16 @@ int main(int argc, char** argv) {
         
         //Measure every 
         if(ii > params.data.start_measure && ii%params.data.measure_every_X_updates == 0){
-            double *m=compute_magnetisations( phi,   params);
-            double *G2=compute_G2( phi,   params);
+            cout << "measuring  " <<endl;
+            double *m=compute_magnetisations( h_phi,   params);
+            double *G2=compute_G2( h_phi,   params);
             fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
            // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
             free(m);free(G2);
         }
         // write the configuration to disk
         if(params.data.save_config == "yes" && ii > params.data.start_measure && ii%params.data.save_config_every_X_updates == 0){
+            cout << "saving conf  " <<endl;
             std::string conf_file = params.data.outpath + 
                               "/T" + std::to_string(params.data.L[0]) +
                               ".X" + std::to_string(params.data.L[1]) +
@@ -332,7 +340,6 @@ int main(int argc, char** argv) {
    write_rng_state(N,state);
    fclose(frng);
 */
-    return 0;
-    //move finalize at the end otherwise runtime error when deallocate hop, ipt,even_odd
     Kokkos::finalize();
+    return 0;
 }

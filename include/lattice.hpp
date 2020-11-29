@@ -2,6 +2,8 @@
 #define LATTICE_H
 
 #include <Kokkos_Core.hpp>
+#include <Kokkos_Random.hpp>
+#include <random>
 
 
 /* Dimension of the lattice */
@@ -23,6 +25,9 @@ using namespace std;
 // kokkos viever for the field 
 typedef Kokkos::View<double**>  Viewphi;
 typedef Kokkos::View<int**>  ViewLatt;
+
+typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
+typedef typename RandPoolType::generator_type gen_type;
 /* GLOBAL_VECTORS */
 EXTERN int      V;
 EXTERN double  rand_max;
@@ -35,4 +40,6 @@ hmd_parms_t hmd_parms;
 smd_parms_t smd_parms;
 act_parms_t act_parms;
 */
+
+
 #endif
