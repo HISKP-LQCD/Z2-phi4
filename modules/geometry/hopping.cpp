@@ -67,7 +67,7 @@ void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
 {
     int x, y,z,t;
     int L1=L[1],L2=L[2],L3=L[3], L0=L[0];
-    size_t V=L1*L2*L3*L0;
+    //size_t V=L1*L2*L3*L0;
    /* 
     hop=(int**) malloc(sizeof(int*)*V);
     ipt=(int**) malloc(sizeof(int*)*V);
@@ -84,12 +84,12 @@ void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
     ViewLatt::HostMirror h_even_odd =  Kokkos::create_mirror_view( even_odd );   
  
     size_t eo=0;
-    for(x=0;x<L1;x++)
-        for(y=0;y<L2;y++)
-            for(z=0;z<L3;z++)
-                for(t=0;t<L0;t++){
+    //they have to run si such a way that i+=1;
+    for(t=0;t<L0;t++){
+        for(z=0;z<L3;z++){
+            for(y=0;y<L2;y++){
+                for(x=0;x<L1;x++){
                     size_t i=x+y*L1+z*L1*L2+t*L3*L2*L1;
-//printf("  %d = %d  %d  %d  %d   -> %d\n",i,x,y,z,t,eo);
                     h_hop(i,0)=x+y*L1+z*L1*L2+((t+1)%L0)*L3*L2*L1;
                     h_hop(i,1)=x+y*L1+((z+1)%L3)*L1*L2+t*L3*L2*L1;
                     h_hop(i,2)=x+((y+1)%L2)*L1+z*L1*L2+t*L3*L2*L1;
@@ -102,15 +102,23 @@ void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
 
                     //hop(i,[8]=i;
                     h_ipt(i,0)=t; h_ipt(i,1)=x; h_ipt(i,2)=y; h_ipt(i,3)=z;
-                    
+//                    eo=(x+y+z+t)%2;        
                     h_even_odd(eo,i/2)=i;
+//printf("  %ld = %ld  %ld  %ld  %ld   -> %ld\n",i,x,y,z,t,eo);
+//printf("even_odd(%ld, %ld)=%ld = %ld \n", eo,i/2, i, h_even_odd(eo,i/2) );
                     eo=(eo+1) %2;
                     
                     
                 }
-     
+                    eo=(eo+1) %2;
+            }
+                    eo=(eo+1) %2;
+        }
+                    eo=(eo+1) %2;
+    }
+
                 
-            // Deep copy host views to device views.
+    // Deep copy host views to device views.
     Kokkos::deep_copy( hop, h_hop );
     Kokkos::deep_copy( ipt, h_ipt );
     Kokkos::deep_copy( even_odd, h_even_odd );

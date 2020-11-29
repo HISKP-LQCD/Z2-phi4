@@ -17,7 +17,7 @@ module load boost/1.72.0--spectrum_mpi--10.3.1--binary
 
 
 src_dir=${HOME}/Z2-phi4
-CXXFLAGS="-Xcompiler -O3 -Xcompiler -mtune=power9 -Xcompiler -mcpu=power9 -Xcompiler -g -Xcompiler -mno-float128 -Xcompiler -G" \
+CXXFLAGS="-Xcompiler -O3 -Xcompiler -mtune=power9 -Xcompiler -mcpu=power9 -Xcompiler -g -Xcompiler -mno-float128 " \
   cmake \
   -DCMAKE_CXX_COMPILER=${src_dir}/external/kokkos/bin/nvcc_wrapper \
   -DKokkos_ARCH_POWER9=ON \

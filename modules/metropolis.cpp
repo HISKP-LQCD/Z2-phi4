@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType rand_pool  , ViewLatt &hop, ViewLatt &even_odd){
+double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType rand_pool  , ViewLatt hop, ViewLatt even_odd){
                          //const double kappa, const double lambda, 
                          //const double delta, const size_t nb_of_hits){
   double kappa[2] ={params.data.kappa0, params.data.kappa1};
@@ -27,7 +27,8 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
   //for(int x=0; x< V; x++) {  
   Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx , double &update) {    
       size_t x=even_odd(parity,xx);
-      
+//if (parity ==1)
+ //     printf("xx=%ld   x=%ld  parity=%ld   ----  hop0123=%ld   %ld   %ld  %ld\n",xx,x,parity,hop(x,0), hop(x,1) ,hop(x,2), hop(x,3)); 
       //getting a generator from the pool 
       gen_type rgen = rand_pool.get_state();
       // computing phi^2 on x
