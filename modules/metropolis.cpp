@@ -41,7 +41,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
         auto phiSqr = phi(comp,x)*phi(comp,x);
         // The other component 
         int comp_n=(comp+1)%2;
-        auto phi_n = phi(comp,x);
+        auto phi_n = phi(comp_n,x);
         // compute the neighbour sum
         auto neighbourSum = 0.0;
         for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
