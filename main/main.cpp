@@ -258,7 +258,9 @@ int main(int argc, char** argv) {
         x_rand[x]=tmp_generator;
     }
 */
-    cout << "Kokkos started"<< endl; 
+    cout << "Kokkos started:"<< endl; 
+    cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
+    cout << "   host  execution    space:"<<  Kokkos::HostSpace::name << endl; 
     // Create a random number generator pool (64-bit states or 1024-bit state)
     // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
     // which is used to fill the generators of the pool.
@@ -315,12 +317,13 @@ int main(int argc, char** argv) {
                exit(1);
     }    
            
-    
+    double time_update=0,time_mes=0,time_writing=0;
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
-//        cout << "Starting step   "<< ii <<endl; 
-        clock_t begin = clock(); // start time for one update step
-        
+         //  cout << "Starting step   "<< ii <<endl; 
+         // Timer 
+         Kokkos::Timer timer1;
+           
          // cluster update
   /*      double cluster_size = 0.0;
         for(size_t nb = 0; nb < params.data.cluster_hits; nb++)
@@ -338,11 +341,14 @@ int main(int argc, char** argv) {
   //      cout << "Metropolis.acc=" << acc/V << endl ;
 
         clock_t end = clock(); // end time for one update step
-        
-        
-        
+        // Calculate time of Metropolis update
+        double time = timer1.seconds();
+        //printf("time metropolis (%g  s)\n",time);
+        time_update+=time;
+
         //Measure every 
-        if(ii > params.data.start_measure && ii%params.data.measure_every_X_updates == 0){
+        if(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0){
+            Kokkos::Timer timer_2;
             // Deep copy device views to host views.
             Kokkos::deep_copy( h_phi, phi );
     //        cout << "measuring  " <<endl;
@@ -352,9 +358,14 @@ int main(int argc, char** argv) {
             fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
            // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
             free(m);free(G2);
+           
+            time = timer_2.seconds();
+          //  printf("time measurament (%g  s)\n",time);
+            time_mes+=time;
         }
         // write the configuration to disk
-        if(params.data.save_config == "yes" && ii > params.data.start_measure && ii%params.data.save_config_every_X_updates == 0){
+        if(params.data.save_config == "yes" && ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.save_config_every_X_updates == 0){
+            Kokkos::Timer timer3;
             // Deep copy device views to host views.
             Kokkos::deep_copy( h_phi, phi );
       //      cout << "saving conf  " <<endl;
@@ -380,6 +391,9 @@ int main(int argc, char** argv) {
             p=(double*) &h_phi(1,0);
             fwrite(p, sizeof(double), V, f_conf);
             fclose(f_conf);
+            time = timer3.seconds();
+            //printf("time writing (%g  s)\n",time);
+            time_writing+=time;
         }    
     }
 
@@ -399,6 +413,12 @@ int main(int argc, char** argv) {
    write_rng_state(N,state);
    fclose(frng);
 */
+    printf("  time updating = %f s (%f per single operation)\n", time_update, time_update/(params.data.start_measure+params.data.total_measure) );
+    printf("  time mesuring = %f s (%f per single operation)\n", time_mes   , time_mes/(params.data.total_measure/ params.data.measure_every_X_updates ));
+    printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_mes/(params.data.total_measure/ params.data.save_config_every_X_updates) );
+    printf("total time = %f s\n",time_writing+ time_mes+ time_update );
+
+
     fclose(f_G2t);
     fclose(f_mes);
     }
