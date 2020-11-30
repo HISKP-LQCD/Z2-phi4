@@ -78,7 +78,49 @@ double  *compute_G2( Viewphi::HostMirror phi, cluster::IO_params params ){
     
     return G2;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+double  **compute_G2t(Viewphi::HostMirror phi, cluster::IO_params params , FILE *f_G2t ){
+    int L[dim_spacetime];
+    double V=1;
+    size_t Vs=1;
+    for (int i=0; i<dim_spacetime;i++ ){
+        L[i]=params.data.L[i];
+        V*=L[i];
+        Vs*=L[i];
+    }
+    Vs/=params.data.L[0];
+    double  **G2t=(double**) malloc(sizeof(double*)*2);
+    G2t[0]=(double*) calloc(L[0],sizeof(double));
+    G2t[1]=(double*) calloc(L[0],sizeof(double));     
  
+
+    for(int t=0; t<L[0]; t++) {
+        double G2t0=0;
+        double G2t1=0;
+        for(int t1=0; t1<L[0]; t1++) {
+            double phip[2][2]={{0,0},{0,0}};
+            int tpt1=(t+t1)%L[0];
+            for(int x=0; x<Vs; x++){
+                size_t i0= x+t1*Vs;
+                phip[0][0]+=phi(0,i0);
+                phip[1][0]+=phi(1,i0);	
+                i0= x+tpt1*Vs;
+                phip[0][1]+=phi(0,i0);	
+                phip[1][1]+=phi(1,i0);	
+            }
+            G2t0+=phip[0][0]*phip[0][1];
+            G2t1+=phip[1][0]*phip[1][1];
+            
+        }
+	    G2t0*=2.*params.data.kappa0/(V*V*L[0]);
+        G2t1*=2.*params.data.kappa1/(V*V*L[0]);
+    fprintf(f_G2t,"%d \t %.12g \t %.12g \n",t,G2t0,G2t1);
+    }
+    return G2t;
+}
  
  
  
@@ -257,10 +299,19 @@ int main(int argc, char** argv) {
                               ".Y" + std::to_string(params.data.L[2]) +
                               ".Z" + std::to_string(params.data.L[3]) +
                               ".msq" + std::to_string(params.data.msq0);
+    std::string G2t_file = params.data.outpath + 
+                              "/G2t_T" + std::to_string(params.data.L[0]) +
+                              "_L" + std::to_string(params.data.L[1]) +
+                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   ;
+                              
     cout << "Writing magnetization to: " << mes_file << endl;
-    FILE *f_mes = fopen(mes_file.c_str(), "wb"); 
-    if (f_mes == NULL) {
-               printf("Error opening file %s!\n", mes_file.c_str());
+    cout << "Writing G2t       to: " << G2t_file << endl;
+    FILE *f_mes = fopen(mes_file.c_str(), "w+"); 
+    FILE *f_G2t = fopen(G2t_file.c_str(), "w+"); 
+    if (f_mes == NULL  || f_G2t == NULL  ) {
+               printf("Error opening file %s or %s \n", mes_file.c_str(), G2t_file.c_str());
                exit(1);
     }    
            
@@ -297,6 +348,7 @@ int main(int argc, char** argv) {
     //        cout << "measuring  " <<endl;
             double *m=compute_magnetisations( h_phi,   params);
             double *G2=compute_G2( h_phi,   params);
+            compute_G2t( h_phi,   params,f_G2t);
             fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
            // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
             free(m);free(G2);
@@ -331,7 +383,7 @@ int main(int argc, char** argv) {
         }    
     }
 
-    }
+    
     
     /*
    // save rng 
@@ -347,6 +399,10 @@ int main(int argc, char** argv) {
    write_rng_state(N,state);
    fclose(frng);
 */
+    fclose(f_G2t);
+    fclose(f_mes);
+    }
     Kokkos::finalize();
+    
     return 0;
 }
