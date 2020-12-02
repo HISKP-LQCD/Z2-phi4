@@ -30,7 +30,7 @@ static FILE *frng=NULL ;
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double *compute_magnetisations( Viewphi::HostMirror phi,  cluster::IO_params params){
+double *compute_magnetisations_serial( Viewphi::HostMirror phi,  cluster::IO_params params){
 
   double *m=(double*) calloc(2,sizeof(double));
   for(int x =0; x< params.data.V; x++){
@@ -40,6 +40,41 @@ double *compute_magnetisations( Viewphi::HostMirror phi,  cluster::IO_params par
   m[0]*=sqrt(2*params.data.kappa0)/((double)params.data.V);
   m[1]*=sqrt(2*params.data.kappa1)/((double)params.data.V);
   return m;
+}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+double *compute_magnetisations( Viewphi phi,  cluster::IO_params params){
+
+  size_t V=params.data.V; //you can not use params.data.X  on the device
+  double *mr=(double*) calloc(2,sizeof(double));
+ //as slow as the seiral
+ /* Kokkos::View<double *> m("m",2);
+  Kokkos::View<double *>::HostMirror h_m = Kokkos::create_mirror_view( m );
+  typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+  typedef Kokkos::TeamPolicy<>::member_type  member_type;
+  
+  Kokkos::parallel_for("magnetization", team_policy( 2 , Kokkos::AUTO ), KOKKOS_LAMBDA ( const member_type &teamMember ) {
+       const int comp = teamMember.league_rank();
+       m(comp) = 0;
+       Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, V ), [&] ( const size_t x, double &inner ) {
+           inner+=sqrt(phi(comp,x)*phi(comp,x));
+       }, m(comp) );
+       
+  });
+  // Deep copy device views to host views.
+   Kokkos::deep_copy( h_m, m ); 
+  mr[0]=h_m(2)*sqrt(2*params.data.kappa0)/((double)params.data.V);
+  mr[1]=h_m(1)*sqrt(2*params.data.kappa1)/((double)params.data.V);
+*/
+  for (int comp=0; comp<2;comp++){
+      Kokkos::parallel_reduce( "magnetization", V, KOKKOS_LAMBDA ( const size_t x, double &inner ) {
+           inner+=sqrt(phi(comp,x)*phi(comp,x));
+       }, mr[comp] );
+  }
+
+  mr[0]*=sqrt(2*params.data.kappa0)/((double)params.data.V);
+  mr[1]*=sqrt(2*params.data.kappa1)/((double)params.data.V);
+  return mr;
 }
  
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,13 +89,18 @@ double  *compute_G2( Viewphi::HostMirror phi, cluster::IO_params params ){
     double tmp1=0, tmp2=0;
     
     for (int x0=0; x0< L0;x0++){
+        double w1=(cos(2.*3.1415926535*x0 /(double (L0)) ));
+        double w2=(cos(4.*3.1415926535*x0 /(double (L0)) ));
+        double ws1=(sin(2.*3.1415926535*x0 /(double (L0)) ));
+        double ws2=(sin(4.*3.1415926535*x0 /(double (L0)) ));
+
         for (int xs=0; xs< Vs; xs++){
             int x=xs+ x0*Vs;    
             G2[0]+=phi(0,x);
-            G2[1]+=phi(0,x)*(cos(2.*3.1415926535*x0 /(double (L0)) ));
-            tmp1+=phi(0,x)*(sin(2.*3.1415926535*x0 /(double (L0)) ));
-            G2[2]+=phi(0,x)*(cos(4.*3.1415926535*x0 /(double (L0)) ));
-            tmp2=phi(0,x)*(cos(2.*3.1415926535*x0 /(double (L0)) ));
+            G2[1]+=phi(0,x)*w1;
+            tmp1+=phi(0,x)*ws1;
+            G2[2]+=phi(0,x)*w2;
+            tmp2+=phi(0,x)*ws2;
         }
     }
         
@@ -128,16 +168,15 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
-    int L[dim_spacetime];
-    double V=1;
-    size_t Vs=1;
-    for (int i=0; i<dim_spacetime;i++ ){
+    int L[dim_spacetime]={params.data.L[0]};
+    size_t Vs=params.data.V/params.data.L[0];
+/*    for (int i=0; i<dim_spacetime;i++ ){
         L[i]=params.data.L[i];
         V*=L[i];
         Vs*=L[i];
     }
     Vs/=params.data.L[0];
-    
+*/
     Viewphi phip("G2t",2,L[0]);
     Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
     typedef Kokkos::TeamPolicy<>               team_policy;
@@ -154,9 +193,20 @@ void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
        phip(comp,t)=phip(comp,t)/((double) Vs);
     });
     }
-
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip, phip ); 
+/*
+    for (int comp=0; comp<2;comp++){
+       for(int t=0; t<L[0]; t++) {
+       h_phip(comp,t) = 0;
+       Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, double &inner ) {
+           size_t i0= x+t*Vs;
+	   inner+=phi(comp,i0);
+       }, h_phip(comp,t)  );
+       h_phip(comp,t)=h_phip(comp,t)/((double) Vs);
+       }
+    }
+*/
     // now we continue on the host 
     for(int t=0; t<L[0]; t++) {
         double G2t0=0;
@@ -399,19 +449,28 @@ int main(int argc, char** argv) {
         if(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0){
             Kokkos::Timer timer_2;
             // Deep copy device views to host views.
-            Kokkos::deep_copy( h_phi, phi );
+            //Kokkos::deep_copy( h_phi, phi );
+//printf("time_deep copy %g \n",timer_2.seconds());
     //        cout << "measuring  " <<endl;
-            double *m=compute_magnetisations( h_phi,   params);
-            double *G2=compute_G2( h_phi,   params);
+    //        double *ms=compute_magnetisations_serial( h_phi,   params);
+//printf("time magnetization serial %g \n",timer_2.seconds());
+            double *m=compute_magnetisations( phi,   params);
+//printf("time magnetization device %g \n",timer_2.seconds());
+
+//            double *G2=compute_G2( h_phi,   params);
+//printf("time G2p %g \n",timer_2.seconds());
             compute_G2t( phi,   params,f_G2t);
+//printf("time G2t %g \n",timer_2.seconds());
 //            compute_G2t_serial_host( h_phi, params,  f_G2t);
-            fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
+            //fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
+            fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
            // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
-            free(m);free(G2);
+            free(m);//free(G2);
            
             time = timer_2.seconds();
-            printf("time measurament (%g  s)\n",time);
+//            printf("time measurament (%g  s)\n",time);
             time_mes+=time;
+//printf("time write free etc %g \n",timer_2.seconds());
 
         }
         // write the configuration to disk

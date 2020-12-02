@@ -105,8 +105,8 @@ private:
     data.V = data.L[0]*data.L[1]*data.L[2]*data.L[3];
 
     // kappa and lambda
-    //reader += fscanf(infile, "formulation = %255s\n", readin);
-    //data.formulation.assign(readin);
+    reader += fscanf(infile, "formulation = %255s\n", readin);
+    data.formulation.assign(readin);
     reader += fscanf(infile, "msq0 = %lf\n", &data.msq0);
     reader += fscanf(infile, "msq1 = %lf\n", &data.msq1);
     reader += fscanf(infile, "lambdaC0 = %lf\n", &data.lambdaC0);
@@ -114,18 +114,23 @@ private:
     reader += fscanf(infile, "muC = %lf\n", &data.muC);
     reader += fscanf(infile, "gC = %lf\n", &data.gC);
 
+    if(data.formulation == "O2"){
+      cout << "using O2 version of the two scalars lambdaC0=lambdaC1=muC/2: \n" << endl;
+      if ( data.lambdaC1 !=0 || data.muC !=0 ){
+          cout    << "if formulation = O2  you need to set lambdaC1= muC2=0 "<< endl; 
+          exit(0);
+      }
+      data.lambdaC1= data.lambdaC0;
+      data.muC= 2.*data.lambdaC0;
+
+    }
     data.kappa0=comp_kappa(data.msq0, data.lambdaC0);
     data.kappa1=comp_kappa(data.msq1, data.lambdaC1);
     data.lambda0=data.lambdaC0 * 4. * data.kappa0 *data.kappa0;
     data.lambda1=data.lambdaC1 * 4. * data.kappa1 *data.kappa1;
     data.mu=data.muC/(4. *data.kappa0*data.kappa1 );
     data.g=data.gC/(4. * sqrt(data.kappa0 *data.kappa1 * data.kappa1 * data.kappa1) );
-/*    if(data.formulation == "continuum"){
-      data.lambda = 4.*data.kappa*data.kappa*data.lambda;
-      mdp << "Parameters lambda and kappa are changed to lattice versions: \n"
-          << "\tlambda = " << data.lambda << " kappa = " << data.kappa << endl; 
-    }
-*/
+
     // metropolis 
     reader += fscanf(infile, "metropolis_local_hits = %d\n", 
                              &data.metropolis_local_hits);
