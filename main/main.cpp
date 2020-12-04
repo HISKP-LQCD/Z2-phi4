@@ -170,15 +170,11 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
 void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
     int L[dim_spacetime]={params.data.L[0]};
     size_t Vs=params.data.V/params.data.L[0];
-/*    for (int i=0; i<dim_spacetime;i++ ){
-        L[i]=params.data.L[i];
-        V*=L[i];
-        Vs*=L[i];
-    }
-    Vs/=params.data.L[0];
-*/
+
     Viewphi phip("G2t",2,L[0]);
     Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
+
+/*
     typedef Kokkos::TeamPolicy<>               team_policy;
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
 
@@ -195,7 +191,8 @@ void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
     }
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip, phip ); 
-/*
+*/
+
     for (int comp=0; comp<2;comp++){
        for(int t=0; t<L[0]; t++) {
        h_phip(comp,t) = 0;
@@ -206,7 +203,7 @@ void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
        h_phip(comp,t)=h_phip(comp,t)/((double) Vs);
        }
     }
-*/
+
     // now we continue on the host 
     for(int t=0; t<L[0]; t++) {
         double G2t0=0;
@@ -218,6 +215,7 @@ void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
         } 
         G2t0*=2.*params.data.kappa0/((double) L[0]);
         G2t1*=2.*params.data.kappa1/((double) L[0]);
+
         fprintf(f_G2t,"%d \t %.12g \t %.12g \n",t,G2t0,G2t1);
     }
 
