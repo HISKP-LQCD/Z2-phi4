@@ -20,7 +20,10 @@
 #include "random.hpp"
 #include "utils.hpp" 
 
+//#include <highfive/H5File.hpp>
+
 #include <Kokkos_Core.hpp>
+
 
 static int endian;
 std::string rng_file; 
@@ -493,12 +496,14 @@ int main(int argc, char** argv) {
                printf("Error opening file %s!\n", conf_file.c_str());
                exit(1);
             }
-            //for (int x=0; x< V; x++)
-            double *p=(double*) &h_phi(0,0);
-            fwrite(p, sizeof(double), V, f_conf);
-            p=(double*) &h_phi(1,0);
-            fwrite(p, sizeof(double), V, f_conf);
-            fclose(f_conf);
+   
+            for (int comp=0; comp<2;comp++ ){
+	/*	for (size_t  x=0; x< V; x++){
+		    fwrite(&h_phi(comp,x), sizeof(double), 1, f_conf);
+		}*/
+                    double *p=&h_phi(comp,0);
+		    fwrite(p, sizeof(double), V, f_conf);
+            }
             time = timer3.seconds();
             //printf("time writing (%g  s)\n",time);
             time_writing+=time;

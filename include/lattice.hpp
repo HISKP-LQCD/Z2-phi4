@@ -23,7 +23,7 @@
 
 using namespace std;
 // kokkos viever for the field 
-typedef Kokkos::View<double**>  Viewphi;
+typedef Kokkos::View<double**, Kokkos::LayoutRight >  Viewphi;
 typedef Kokkos::View<size_t**>  ViewLatt;
 
 typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
