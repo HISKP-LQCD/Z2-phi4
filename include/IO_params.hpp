@@ -128,9 +128,17 @@ private:
     data.kappa1=comp_kappa(data.msq1, data.lambdaC1);
     data.lambda0=data.lambdaC0 * 4. * data.kappa0 *data.kappa0;
     data.lambda1=data.lambdaC1 * 4. * data.kappa1 *data.kappa1;
-    data.mu=data.muC/(4. *data.kappa0*data.kappa1 );
-    data.g=data.gC/(4. * sqrt(data.kappa0 *data.kappa1 * data.kappa1 * data.kappa1) );
+    data.mu=data.muC*(4. *data.kappa0*data.kappa1 );
+    data.g=data.gC*(4. * sqrt(data.kappa0 *data.kappa1 * data.kappa1 * data.kappa1) );
+    printf("parameters:\n");
+    printf( "msq0 = %.6f     -> kappa0   = %.6f\n", data.msq0, data.kappa0);
+    printf( "msq1 = %.6f     -> kappa1   = %.6f\n", data.msq1, data.kappa1);
+    printf( "lambdaC0 = %.6f -> lambda0  = %.6f\n", data.lambdaC0, data.lambda0);
+    printf( "lambdaC1 = %.6f -> lambda1  = %.6f\n", data.lambdaC1, data.lambda1);
+    printf( "muC = %.6f      -> mu       = %.6f\n", data.muC, data.mu);
+    printf( "gC = %.6f       -> g        = %.6f\n",  data.gC, data.g);
 
+    
     // metropolis 
     reader += fscanf(infile, "metropolis_local_hits = %d\n", 
                              &data.metropolis_local_hits);
