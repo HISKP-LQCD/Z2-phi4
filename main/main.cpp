@@ -361,6 +361,51 @@ int main(int argc, char** argv) {
     cout << "Kokkos started:"<< endl; 
     cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
     cout << "   host  execution    space:"<<  Kokkos::HostSpace::name << endl; 
+    //check the layout of phi    
+    Viewphi v_tmp("test_l",2,4);
+    Viewphi::HostMirror h_tmp = Kokkos::create_mirror_view( v_tmp );
+    for (int c =0 ; c< 2;c++)
+        for (int x =0 ; x< 4;x++)
+            h_tmp(c,x)=c+x*2;
+        
+
+    double *p_tmp=&h_tmp(0,0);
+    int count_l=0,count_r=0;
+    for (int c =0 ; c< 2;c++){   
+        for (int x =0 ; x< 4;x++){
+            if ( x==0 && c==0 || x==3 && c==1) {p_tmp++ ;continue;}// the first and the last are always in the same position, so we remove from the test
+
+            if ( *p_tmp == h_tmp(c,x)  ){
+//                printf("Layout of the field phi(c=%ld,x=%ld) : c+x*2 : LayoutLeft \n",c,x);
+                count_l++;
+            }
+            else if ( *p_tmp == x+c*4  ){
+//                printf("Layout of the field phi(c=%ld,x=%ld) : x+c*V : LayoutRight \n",c,x);
+                count_r++;
+            }
+            else{
+                printf("\n\n urecogised Layout\n\n");
+                exit(1);
+            }
+                
+            p_tmp++;
+        }
+    }
+    
+    Viewphi w_phi("w_phi",2,V);
+    int swap_layout=0;
+    if (count_l==6 && count_r==0) {
+        printf("Layout of the field phi(c,x) : c+x*2 : LayoutRight \n it need a reordering before writing\n");
+        swap_layout=1;
+    } 
+    else if (count_l==0 && count_r==6) {
+        printf("Layout of the field phi(c,x) : x+c*V : LayoutLeft \n nothing to be done to write\n");
+    }
+    else{
+        printf("\n\n urecogised Layout\n\n");
+        exit(1);
+    }
+
     // Create a random number generator pool (64-bit states or 1024-bit state)
     // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
     // which is used to fill the generators of the pool.
@@ -395,12 +440,18 @@ int main(int argc, char** argv) {
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phi, phi );
    
-    std::string mes_file = params.data.outpath + 
+/*    std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
                               ".X" + std::to_string(params.data.L[1]) +
                               ".Y" + std::to_string(params.data.L[2]) +
                               ".Z" + std::to_string(params.data.L[3]) +
-                              ".msq" + std::to_string(params.data.msq0);
+                              ".msq" + std::to_string(params.data.msq0);*/
+    std::string mes_file = params.data.outpath + 
+                              "/mes_T" + std::to_string(params.data.L[0]) +
+                              "_L" + std::to_string(params.data.L[1]) +
+                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   ;
     std::string G2t_file = params.data.outpath + 
                               "/G2t_T" + std::to_string(params.data.L[0]) +
                               "_L" + std::to_string(params.data.L[1]) +
@@ -478,7 +529,6 @@ int main(int argc, char** argv) {
         if(params.data.save_config == "yes" && ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.save_config_every_X_updates == 0){
             Kokkos::Timer timer3;
             // Deep copy device views to host views.
-            Kokkos::deep_copy( h_phi, phi );
       //      cout << "saving conf  " <<endl;
             std::string conf_file = params.data.outpath + 
                               "/T" + std::to_string(params.data.L[0]) +
@@ -496,14 +546,26 @@ int main(int argc, char** argv) {
                printf("Error opening file %s!\n", conf_file.c_str());
                exit(1);
             }
-   
-            for (int comp=0; comp<2;comp++ ){
-	/*	for (size_t  x=0; x< V; x++){
-		    fwrite(&h_phi(comp,x), sizeof(double), 1, f_conf);
-		}*/
-                    double *p=&h_phi(comp,0);
-		    fwrite(p, sizeof(double), V, f_conf);
+            if (swap_layout==0){
+                Kokkos::deep_copy( h_phi, phi );
             }
+            else if (swap_layout==1){
+                
+                 Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
+                     //phi (c,x ) is stored in position i=c+x*2
+                     // I want to save this value in i'=x+c*V
+                     // the cooordinate of i'=c'+x'*2
+                     for(size_t c=0; c<2;c++){
+			 size_t i1=x+c*V;
+			 size_t c1=i1%2;
+			 size_t x1=i1/2;
+			 w_phi(c1,x1)=phi(c,x);
+                     }
+                });
+                Kokkos::deep_copy( h_phi, w_phi );
+            }
+            fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
+             
             time = timer3.seconds();
             //printf("time writing (%g  s)\n",time);
             time_writing+=time;
@@ -528,7 +590,7 @@ int main(int argc, char** argv) {
 */
     printf("  time updating = %f s (%f per single operation)\n", time_update, time_update/(params.data.start_measure+params.data.total_measure) );
     printf("  time mesuring = %f s (%f per single operation)\n", time_mes   , time_mes/(params.data.total_measure/ params.data.measure_every_X_updates ));
-    printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_mes/(params.data.total_measure/ params.data.save_config_every_X_updates) );
+    printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.save_config_every_X_updates) );
     printf("total time = %f s\n",time_writing+ time_mes+ time_update );
 
 

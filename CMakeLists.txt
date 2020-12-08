@@ -29,9 +29,15 @@ project(Z2-phi4 CXX)
 
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/kokkos" "external/kokkos")
+
+#add_subdirectory(${PROJECT_SOURCE_DIR}/external/HighFive)
+
+
 #include_directories(include)
 add_subdirectory(include  include)
 #include_directories(${CMAKE_SOURCE_DIR}/include)
+
+
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -45,6 +51,7 @@ macro(add_target_with_lib TARGETNAME)
   target_link_libraries(${TARGETNAME} PUBLIC updates)
   target_link_libraries(${TARGETNAME} PUBLIC geometry)
   target_link_libraries(${TARGETNAME} PUBLIC random)
+#  target_link_libraries(${TARGETNAME} PUBLIC HighFive)
   target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
   target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_BINARY_DIR}/include")
 endmacro()
