@@ -19,7 +19,7 @@
 
 #include "random.hpp"
 #include "utils.hpp" 
-
+#include "write_viewer.hpp"
 //#include <highfive/H5File.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -361,51 +361,8 @@ int main(int argc, char** argv) {
     cout << "Kokkos started:"<< endl; 
     cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
     cout << "   host  execution    space:"<<  Kokkos::HostSpace::name << endl; 
-    //check the layout of phi    
-    Viewphi v_tmp("test_l",2,4);
-    Viewphi::HostMirror h_tmp = Kokkos::create_mirror_view( v_tmp );
-    for (int c =0 ; c< 2;c++)
-        for (int x =0 ; x< 4;x++)
-            h_tmp(c,x)=c+x*2;
-        
-
-    double *p_tmp=&h_tmp(0,0);
-    int count_l=0,count_r=0;
-    for (int c =0 ; c< 2;c++){   
-        for (int x =0 ; x< 4;x++){
-            if ( x==0 && c==0 || x==3 && c==1) {p_tmp++ ;continue;}// the first and the last are always in the same position, so we remove from the test
-
-            if ( *p_tmp == h_tmp(c,x)  ){
-//                printf("Layout of the field phi(c=%ld,x=%ld) : c+x*2 : LayoutLeft \n",c,x);
-                count_l++;
-            }
-            else if ( *p_tmp == x+c*4  ){
-//                printf("Layout of the field phi(c=%ld,x=%ld) : x+c*V : LayoutRight \n",c,x);
-                count_r++;
-            }
-            else{
-                printf("\n\n urecogised Layout\n\n");
-                exit(1);
-            }
-                
-            p_tmp++;
-        }
-    }
     
-    Viewphi w_phi("w_phi",2,V);
-    int swap_layout=0;
-    if (count_l==6 && count_r==0) {
-        printf("Layout of the field phi(c,x) : c+x*2 : LayoutRight \n it need a reordering before writing\n");
-        swap_layout=1;
-    } 
-    else if (count_l==0 && count_r==6) {
-        printf("Layout of the field phi(c,x) : x+c*V : LayoutLeft \n nothing to be done to write\n");
-    }
-    else{
-        printf("\n\n urecogised Layout\n\n");
-        exit(1);
-    }
-
+    int layout_value=check_layout();
     // Create a random number generator pool (64-bit states or 1024-bit state)
     // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
     // which is used to fill the generators of the pool.
@@ -421,7 +378,6 @@ int main(int argc, char** argv) {
     cout << "hopping initialised"<< endl; 
         
     Viewphi  phi("phi",2,V);
-    Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
 
     // Initialize phi vector on host.
 /*    for (size_t x =0 ; x< V;x++){
@@ -438,7 +394,7 @@ int main(int argc, char** argv) {
         rand_pool.free_state(rgen);
     });   
     // Deep copy device views to host views.
-    Kokkos::deep_copy( h_phi, phi );
+    //  Kokkos::deep_copy( h_phi, phi );
    
 /*    std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
@@ -532,40 +488,19 @@ int main(int argc, char** argv) {
       //      cout << "saving conf  " <<endl;
             std::string conf_file = params.data.outpath + 
                               "/T" + std::to_string(params.data.L[0]) +
-                              ".X" + std::to_string(params.data.L[1]) +
-                              ".Y" + std::to_string(params.data.L[2]) +
-                              ".Z" + std::to_string(params.data.L[3]) +
-                              ".kap" + std::to_string(params.data.kappa0) + 
-                              ".lam" + std::to_string(params.data.lambda0)+
-                              ".rep_" + std::to_string(params.data.replica) + 
-                              ".rot_" + params.data.save_config_rotated + 
-                              ".conf" + std::to_string(ii);
+                              "_L" + std::to_string(params.data.L[1]) +
+                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
+                              "_rep" + std::to_string(params.data.replica) + 
+                              "_conf" + std::to_string(ii);
             cout << "Writing configuration to: " << conf_file << endl;
             FILE *f_conf = fopen(conf_file.c_str(), "wb"); 
             if (f_conf == NULL) {
                printf("Error opening file %s!\n", conf_file.c_str());
                exit(1);
             }
-            if (swap_layout==0){
-                Kokkos::deep_copy( h_phi, phi );
-            }
-            else if (swap_layout==1){
-                
-                 Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
-                     //phi (c,x ) is stored in position i=c+x*2
-                     // I want to save this value in i'=x+c*V
-                     // the cooordinate of i'=c'+x'*2
-                     for(size_t c=0; c<2;c++){
-			 size_t i1=x+c*V;
-			 size_t c1=i1%2;
-			 size_t x1=i1/2;
-			 w_phi(c1,x1)=phi(c,x);
-                     }
-                });
-                Kokkos::deep_copy( h_phi, w_phi );
-            }
-            fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
-             
+            write_viewer(f_conf, layout_value, V, phi ); 
             time = timer3.seconds();
             //printf("time writing (%g  s)\n",time);
             time_writing+=time;

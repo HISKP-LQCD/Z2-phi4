@@ -12,6 +12,13 @@ add_library(
 set_target_properties(updates PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries_kokkos(updates )
 
+add_library(
+    write_viewer STATIC
+    write_viewer.hpp
+    ../modules/write_viewer.cpp
+) 
+target_link_libraries_kokkos(write_viewer )
+
 #add_library(
 #    lattice STATIC
 #    lattice.hpp
