@@ -61,9 +61,13 @@ private:
     
   double comp_kappa(double msq, double lambdaC){
       double k;
-      
-      k=-8.-msq+sqrt( (8+msq)*(8+msq)+32*lambdaC );
-      k/=(16.*lambdaC);
+
+      if (lambdaC<1e-12)
+	 k=1./(8.+msq);
+      else{
+         k=-8.-msq+sqrt( (8+msq)*(8+msq)+32*lambdaC );
+         k/=(16.*lambdaC);
+      }
       return k;
       
   }  
