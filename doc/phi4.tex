@@ -1,0 +1,37 @@
+\documentclass[10pt,a4paper]{article}
+ \usepackage[utf8]{inputenc}
+ \usepackage[english]{babel}
+ \usepackage{amsmath}
+ \usepackage{amsfonts}
+ \usepackage{amssymb}
+ \usepackage{graphicx}
+ \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+ \begin{document}
+ Lagrangian
+ \begin{align}
+ & {\cal L}= {\cal L}_0+ {\cal L}_1+  {\cal L}_{IZ_2} \\
+ &{\cal L}_0= \frac{1}{2} \partial_\mu \varphi_0\partial_\mu \varphi_0 +\frac{1}{2}m_0 \varphi_0^2 +\lambda_0 \varphi_0^4 \\
+ &{\cal L}_1=\frac{1}{2} \partial_\mu \varphi_1\partial_\mu \varphi_1 +\frac{1}{2}m_1 \varphi_1^2+\lambda_1 \varphi_1^4 \\
+ &{\cal L}_{IZ_2}= \mu \varphi_0^2 \varphi_1^2 \\
+  &{\cal L}_{I}= g \varphi_1 \varphi_0^3
+ \end{align}
+On the lattice we can discretise the derivative $\partial_\mu \varphi(x)=\frac{1}{a}(\varphi(x+\mu)-\varphi(x)) $.
+On the lattice the above lagrangian can be written in a more convenient way for simulations
+\begin{align}
+ &{\cal L}_0= \sum_{x}\left[ -2\kappa_0\sum_\mu \phi_0(x) \phi_0({x+\mu}) +\lambda_L^0 \left( \phi_0(x)^2-1\right)^2+ \phi_0(x)^2  \right]\,,\\
+ &{\cal L}_1= \sum_{x}\left[ -2\kappa_1\sum_\mu \phi_1(x) \phi_1({x+\mu}) +\lambda_L^1 \left( \phi_1(x)^2-1\right)^2+ \phi_1(x)^2  \right]\,,\\
+ &{\cal L}_{IZ_2}= \mu_L  \sum_{x} \phi_0(x)^2 \phi_1(x)^2 \,,\\
+  &{\cal L}_{I}= g_L \sum_{x} \phi_1(x) \phi_0(x)^3 \,.
+ \end{align}
+With
+\begin{align}
+& m_0^2=\frac{1-2\lambda_L^0}{\kappa_0}-8\,,\quad \lambda_0=\frac{\lambda_L^0}{4\kappa_0^2}\,,\quad \varphi_0=\sqrt{2\kappa_0}\phi_0\\
+& m_1^2=\frac{1-2\lambda_L^1}{\kappa_1}-8\,,\quad \lambda_1=\frac{\lambda_L^1}{4\kappa_1^2}
+\,,\quad \varphi_1=\sqrt{2\kappa_1}\phi_1 \,,
+ \end{align}
+ and
+ \begin{align}
+\mu=\frac{\mu_L}{4\kappa_0\kappa_1} \,,\quad g=\frac{g_L}{4\sqrt{\kappa_0}\kappa_1^{3/2}}
+ \end{align}
+ 
+ \end{document} 
