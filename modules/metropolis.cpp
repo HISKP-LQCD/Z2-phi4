@@ -27,8 +27,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
   //for(int x=0; x< V; x++) {  
   Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx , double &update) {    
       size_t x=even_odd(parity,xx);
-//if (parity ==1)
- //     printf("xx=%ld   x=%ld  parity=%ld   ----  hop0123=%ld   %ld   %ld  %ld\n",xx,x,parity,hop(x,0), hop(x,1) ,hop(x,2), hop(x,3)); 
+      
       //getting a generator from the pool 
       gen_type rgen = rand_pool.get_state();
       // computing phi^2 on x
@@ -47,7 +46,6 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
         for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
             neighbourSum += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
         // doing the multihit
-
         for(size_t hit = 0; hit < nb_of_hits; hit++){
             double r[2];
             //  getting two random double  in 0,1
@@ -76,8 +74,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
               update++; 
             }
         } // multi hit ends here
-    } // loop over sites ends here
-    //phi.update(parity); // communicate boundaries
+      } // loop components sites ends here
 
     // Give the state back, which will allow another thread to aquire it
     rand_pool.free_state(rgen);

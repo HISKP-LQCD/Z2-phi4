@@ -407,13 +407,15 @@ int main(int argc, char** argv) {
                               "_L" + std::to_string(params.data.L[1]) +
                               "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
                               "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   ;
+                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   +
+                              "_rep" + std::to_string(params.data.replica) ;
     std::string G2t_file = params.data.outpath + 
                               "/G2t_T" + std::to_string(params.data.L[0]) +
                               "_L" + std::to_string(params.data.L[1]) +
                               "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
                               "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   ;
+                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   +
+                              "_rep" + std::to_string(params.data.replica) ; 
                               
     cout << "Writing magnetization to: " << mes_file << endl;
     cout << "Writing G2t       to: " << G2t_file << endl;
