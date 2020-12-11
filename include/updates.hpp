@@ -5,6 +5,6 @@
 #include <random>
 
 double metropolis_update(Viewphi &field, cluster::IO_params params,  RandPoolType rand_pool,  ViewLatt hop, ViewLatt even_odd );
-double cluster_update(double  ***field, cluster::IO_params params ,  ViewLatt &hop);
+double cluster_update(Viewphi &field, cluster::IO_params params , RandPoolType rand_pool, ViewLatt &hop);
 
 #endif

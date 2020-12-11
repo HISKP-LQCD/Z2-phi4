@@ -379,11 +379,7 @@ int main(int argc, char** argv) {
         
     Viewphi  phi("phi",2,V);
 
-    // Initialize phi vector on host.
-/*    for (size_t x =0 ; x< V;x++){
-        h_phi(0,x)=create_phi_update(1.,x_rand,x);
-        h_phi(1,x)=create_phi_update(1.,x_rand,x);
-    }*/
+   
     // Initialize phi on the device
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
         // get a random generatro from the pool
@@ -393,8 +389,7 @@ int main(int argc, char** argv) {
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     });   
-    // Deep copy device views to host views.
-    //  Kokkos::deep_copy( h_phi, phi );
+    
    
 /*    std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
@@ -431,16 +426,18 @@ int main(int argc, char** argv) {
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
          //  cout << "Starting step   "<< ii <<endl; 
          // Timer 
-         Kokkos::Timer timer1;
-           
+        Kokkos::Timer timer1;
+        double time;  
          // cluster update
-  /*      double cluster_size = 0.0;
+        double cluster_size = 0.0;
         for(size_t nb = 0; nb < params.data.cluster_hits; nb++)
-            cluster_size += cluster_update(  &phi ,  params  );
+            cluster_size += cluster_update(  phi ,  params, rand_pool,hop  );
         cluster_size /= params.data.cluster_hits;
         cluster_size /= (double) V;
-        clock_t mid = clock(); // start time for one update step
-     */   
+        
+        time = timer1.seconds();
+        //printf("time cluster (%g  s)   size=%g\n",time,cluster_size);
+      
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++){
@@ -449,10 +446,9 @@ int main(int argc, char** argv) {
         acc /= params.data.metropolis_global_hits;
   //      cout << "Metropolis.acc=" << acc/V << endl ;
 
-        clock_t end = clock(); // end time for one update step
         // Calculate time of Metropolis update
-        double time = timer1.seconds();
-        //printf("time metropolis (%g  s)\n",time);
+        time = timer1.seconds();
+       // printf("time metropolis (%g  s)\n",time);
         time_update+=time;
 
         //Measure every 
