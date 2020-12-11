@@ -368,7 +368,12 @@ int main(int argc, char** argv) {
     // which is used to fill the generators of the pool.
     RandPoolType rand_pool(params.data.seed);
     //Kokkos::Random_XorShift1024_Pool<> rand_pool1024(5374857); 
-    cout << "random pool initialised"<< endl; 
+    cout << "random pool initialised"<< endl;
+    // we need a random generator on the host for the cluster
+    // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
+    std::mt19937_64 host_rand( params.data.seed );
+    
+  
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -429,12 +434,12 @@ int main(int argc, char** argv) {
         Kokkos::Timer timer1;
         double time;  
          // cluster update
-        double cluster_size = 0.0;
+/*        double cluster_size = 0.0;
         for(size_t nb = 0; nb < params.data.cluster_hits; nb++)
-            cluster_size += cluster_update(  phi ,  params, rand_pool,hop  );
+            cluster_size += cluster_update(  phi ,  params, rand_pool, host_rand ,hop  );
         cluster_size /= params.data.cluster_hits;
         cluster_size /= (double) V;
-        
+  */      
         time = timer1.seconds();
         //printf("time cluster (%g  s)   size=%g\n",time,cluster_size);
       

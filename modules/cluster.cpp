@@ -150,7 +150,7 @@ inline void check_neighbour(const size_t x_look, const size_t y,
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType rand_pool ,ViewLatt &hop ){ 
+double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType rand_pool, std::mt19937_64 host_rand  ,ViewLatt &hop ){ 
                       //std::vector<size_t>& look_1, std::vector<size_t>& look_2){
  
   Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
@@ -167,23 +167,26 @@ double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType ra
   // lookuptable to check which lattice points will be flipped
   std::vector<cluster_state_t>   checked_points(V, CLUSTER_UNCHECKED);
    
+  std::uniform_real_distribution<double> dist(0.0, 1.0);
   // while-loop: until at least some percentage of the lattice is updated ------
   size_t cluster_size = 0; int count=0;
   while(double(cluster_size)/V <= min_size){
- //printf("iteration %d \n",count++);
-    gen_type rgen = rand_pool.get_state();
+  //printf("iteration %d \n",count++);
+ 
+    //gen_type rgen = rand_pool.get_state();
+    
     // Choose a random START POINT for the cluster: 0 <= xx < volume and check 
     // if the point is already part of another cluster - if so another start 
     // point is choosen
-    double r=rgen.drand();
+    double r=dist(host_rand);
+    //double r=rgen.drand();
     size_t xx = size_t(r* V);
     while(checked_points.at(xx) == CLUSTER_FLIP){
-      xx = size_t(rgen.drand()* V);
+      xx = size_t(dist(host_rand)* V);
     }
     checked_points.at(xx) = CLUSTER_FLIP;
     look_1.emplace_back(xx);
     cluster_size++; 
-
     // run over both lookuptables until there are no more points to update -----
     while(look_1.size()){ 
       // run over first lookuptable and building up second lookuptable
@@ -194,12 +197,12 @@ double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType ra
           auto y = h_hop(x_look,dir);
           
           check_neighbour(x_look, y, kappa0,kappa1, h_phi,  cluster_size,
-                          checked_points, look_2, rgen.drand() );
+                          checked_points, look_2, dist(host_rand) );
           // positive direction
           y = h_hop(x_look,dir+dim_spacetime);
 
           check_neighbour(x_look, y, kappa0,kappa1, h_phi,  cluster_size,
-                          checked_points, look_2, rgen.drand() );
+                          checked_points, look_2, dist(host_rand) );
         }
       }
       // run over second lookuptable and building up first lookuptable
@@ -210,16 +213,18 @@ double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType ra
           auto y = h_hop(x_look,dir);
 
           check_neighbour(x_look, y, kappa0,kappa1, h_phi, cluster_size,
-                          checked_points, look_1, rgen.drand());
+                          checked_points, look_1, dist(host_rand)  );
           // positive direction
           y = h_hop(x_look,dir+dim_spacetime);
 
           check_neighbour(x_look, y, kappa0,kappa1, h_phi, cluster_size,
-                          checked_points, look_1, rgen.drand());
+                          checked_points, look_1, dist(host_rand) );
         }
       }
     } // while loop to build the cluster ends here
-    rand_pool.free_state(rgen);
+
+    //rand_pool.free_state(rgen);
+
   } // while loop to ensure minimal total cluster size ends here
 
   // perform the phi flip ------------------------------------------------------
