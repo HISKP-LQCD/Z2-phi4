@@ -171,12 +171,11 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
-    int L[dim_spacetime]={params.data.L[0]};
-    size_t Vs=params.data.V/params.data.L[0];
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
 
-    Viewphi phip("G2t",2,L[0]);
+    Viewphi phip("G2t",2,T);
     Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
-
 /*
     typedef Kokkos::TeamPolicy<>               team_policy;
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
@@ -197,27 +196,27 @@ void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
 */
 
     for (int comp=0; comp<2;comp++){
-       for(int t=0; t<L[0]; t++) {
+       for(int t=0; t<T; t++) {
        h_phip(comp,t) = 0;
        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, double &inner ) {
            size_t i0= x+t*Vs;
-	   inner+=phi(comp,i0);
+	       inner+=phi(comp,i0);
        }, h_phip(comp,t)  );
        h_phip(comp,t)=h_phip(comp,t)/((double) Vs);
        }
     }
 
     // now we continue on the host 
-    for(int t=0; t<L[0]; t++) {
+    for(int t=0; t<T; t++) {
         double G2t0=0;
         double G2t1=0;
-        for(int t1=0; t1<L[0]; t1++) {
-            int tpt1=(t+t1)%L[0];
+        for(int t1=0; t1<T; t1++) {
+            int tpt1=(t+t1)%T;
             G2t0+=h_phip(0,t1) *h_phip(0 , tpt1);
             G2t1+=h_phip(1,t1) *h_phip(1 , tpt1); 
         } 
-        G2t0*=2.*params.data.kappa0/((double) L[0]);
-        G2t1*=2.*params.data.kappa1/((double) L[0]);
+        G2t0*=2.*params.data.kappa0/((double) T);
+        G2t1*=2.*params.data.kappa1/((double) T);
 
         fprintf(f_G2t,"%d \t %.12g \t %.12g \n",t,G2t0,G2t1);
     }

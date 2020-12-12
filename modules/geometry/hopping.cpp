@@ -84,7 +84,7 @@ void hopping(const int *L , ViewLatt &hop, ViewLatt &even_odd,  ViewLatt &ipt )
     ViewLatt::HostMirror h_even_odd =  Kokkos::create_mirror_view( even_odd );   
  
     size_t eo=0;
-    //they have to run si such a way that i+=1;
+    // run in such a way that i+=1;
     for(t=0;t<L0;t++){
         for(z=0;z<L3;z++){
             for(y=0;y<L2;y++){

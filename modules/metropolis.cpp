@@ -19,7 +19,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
   double delta =params.data.metropolis_delta;
   double nb_of_hits=params.data.metropolis_local_hits;
   
-  int V=params.data.V;
+  size_t V=params.data.V;
   double acc = .0;
   //auto &phi=*field; 
   
