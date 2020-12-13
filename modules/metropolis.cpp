@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType rand_pool  , ViewLatt hop, ViewLatt even_odd){
+double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool  , ViewLatt hop, ViewLatt even_odd){
                          //const double kappa, const double lambda, 
                          //const double delta, const size_t nb_of_hits){
   double kappa[2] ={params.data.kappa0, params.data.kappa1};
@@ -22,6 +22,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
   size_t V=params.data.V;
   double acc = .0;
   //auto &phi=*field; 
+  
   
   for (int parity = 0; parity <2 ;parity ++){
   //for(int x=0; x< V; x++) {  
@@ -37,12 +38,12 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
       // component is updated individually with multiple hits
       for(size_t comp = 0; comp < 2; comp++){
         //auto& Phi = phi[comp][x]; // this reference gives a speedup???
-        auto phiSqr = phi(comp,x)*phi(comp,x);
+        double phiSqr = phi(comp,x)*phi(comp,x);
         // The other component 
         int comp_n=(comp+1)%2;
-        auto phi_n = phi(comp_n,x);
+        double phi_n = phi(comp_n,x);
         // compute the neighbour sum
-        auto neighbourSum = 0.0;
+        double neighbourSum = 0.0;
         for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
             neighbourSum += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
         // doing the multihit
@@ -51,20 +52,20 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
             //  getting two random double  in 0,1
             r[0]=rgen.drand();
             r[1]=rgen.drand();
-            auto deltaPhi = (r[0]*2. - 1.)*delta;
-            auto deltaPhiPhi = deltaPhi * phi(comp,x);
-            auto deltaPhideltaPhi = deltaPhi * deltaPhi;
+            double deltaPhi = (r[0]*2. - 1.)*delta;
+            double deltaPhiPhi = deltaPhi * phi(comp,x);
+            double deltaPhideltaPhi = deltaPhi * deltaPhi;
             // change of action
-            auto dS = -2.*kappa[comp]*deltaPhi*neighbourSum + 
+            double dS = -2.*kappa[comp]*deltaPhi*neighbourSum + 
                      2.*deltaPhiPhi*(1. - 2.*lambda[comp]*(1. - phiSqr - deltaPhideltaPhi)) +
                      deltaPhideltaPhi*(1. - 2.*lambda[comp]*(1. )) +
                      lambda[comp]*(6.*deltaPhiPhi*deltaPhiPhi + deltaPhideltaPhi*deltaPhideltaPhi);
            
-            dS+= mu *phi_n * phi_n *( 2* deltaPhiPhi + deltaPhideltaPhi       ) ;
-           
+            dS+= mu *phi_n * phi_n *( 2.* deltaPhiPhi + deltaPhideltaPhi       ) ;
+            
             dS+= comp * g * phi_n * phi_n * phi_n * deltaPhi;  //component 1
             dS+= comp_n * g * deltaPhi * phi_n *( deltaPhideltaPhi + 3. * phiSqr + 3 * phi(comp,x) * deltaPhi  );   //component 0
-           
+
             
             //  accept reject step -------------------------------------
             if(r[1] < exp(-dS)) {
@@ -74,13 +75,13 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType r
               update++; 
             }
         } // multi hit ends here
-      } // loop components sites ends here
+      } // loop components  ends here
 
     // Give the state back, which will allow another thread to aquire it
     rand_pool.free_state(rgen);
   },acc);  // end lattice_even loop in parallel
   }//end loop parity
-
+  
   return acc/(2*nb_of_hits); // the 2 accounts for updating the component indiv.
 
 } 

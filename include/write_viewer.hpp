@@ -4,7 +4,7 @@
 
 
 int check_layout();
-void write_viewer(FILE *f_conf,int layout_value, size_t V, Viewphi phi  );
+void write_viewer(FILE *f_conf,int layout_value, size_t V, const Viewphi &phi  );
 
 
 

@@ -150,7 +150,7 @@ inline void check_neighbour(const size_t x_look, const size_t y,
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType rand_pool, std::mt19937_64 host_rand  ,ViewLatt &hop ){ 
+double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType &rand_pool, std::mt19937_64 host_rand  ,ViewLatt &hop ){ 
                       //std::vector<size_t>& look_1, std::vector<size_t>& look_2){
  
   Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );

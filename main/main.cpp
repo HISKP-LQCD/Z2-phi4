@@ -170,7 +170,7 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  compute_G2t(Viewphi phi, cluster::IO_params params , FILE *f_G2t ){
+void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t ){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
 
@@ -338,6 +338,10 @@ int main(int argc, char** argv) {
     cout << "level " <<params.data.level << endl;
     cout << "output " <<params.data.outpath << endl;
     cout << "start mes " << params.data.start_measure << endl;
+    
+    cout << "metropolis_local_hits " << params.data.metropolis_local_hits << endl;
+    cout << "metropolis_global_hits " << params.data.metropolis_global_hits << endl;
+    cout << "metropolis_delta  " << params.data.metropolis_delta << endl;
     size_t V=params.data.V;
     
     
@@ -426,6 +430,7 @@ int main(int argc, char** argv) {
     }    
            
     double time_update=0,time_mes=0,time_writing=0;
+    double ave_acc=0;
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
          //  cout << "Starting step   "<< ii <<endl; 
@@ -447,8 +452,9 @@ int main(int argc, char** argv) {
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++){
            acc += metropolis_update(phi,params, rand_pool, hop, even_odd);
         }
-        acc /= params.data.metropolis_global_hits;
-  //      cout << "Metropolis.acc=" << acc/V << endl ;
+        acc/= (params.data.metropolis_global_hits);
+        ave_acc += acc/((double) V);
+       // cout << "Metropolis.acc=" << acc/V << endl ;
 
         // Calculate time of Metropolis update
         time = timer1.seconds();
@@ -465,6 +471,7 @@ int main(int argc, char** argv) {
     //        double *ms=compute_magnetisations_serial( h_phi,   params);
 //printf("time magnetization serial %g \n",timer_2.seconds());
             double *m=compute_magnetisations( phi,   params);
+ 
 //printf("time magnetization device %g \n",timer_2.seconds());
 
 //            double *G2=compute_G2( h_phi,   params);
@@ -525,6 +532,8 @@ int main(int argc, char** argv) {
    write_rng_state(N,state);
    fclose(frng);
 */
+    printf("average acceptance rate= %g\n", ave_acc/(params.data.start_measure+params.data.total_measure));
+    
     printf("  time updating = %f s (%f per single operation)\n", time_update, time_update/(params.data.start_measure+params.data.total_measure) );
     printf("  time mesuring = %f s (%f per single operation)\n", time_mes   , time_mes/(params.data.total_measure/ params.data.measure_every_X_updates ));
     printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.save_config_every_X_updates) );

@@ -52,7 +52,7 @@ int check_layout(){
     return swap_layout;
 }
 
-void write_viewer(FILE *f_conf,int layout_value, size_t V, Viewphi phi  ){
+void write_viewer(FILE *f_conf,int layout_value, size_t V, const Viewphi &phi  ){
 //     Kokkos::Timer timer; 
      Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
  

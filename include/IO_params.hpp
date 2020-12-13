@@ -63,7 +63,7 @@ private:
       double k;
 
       if (lambdaC<1e-12)
-	 k=1./(8.+msq);
+	     k=1./(8.+msq);
       else{
          k=-8.-msq+sqrt( (8+msq)*(8+msq)+32*lambdaC );
          k/=(16.*lambdaC);
