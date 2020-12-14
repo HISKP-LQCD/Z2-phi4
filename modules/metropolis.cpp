@@ -37,8 +37,8 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
       // running over the four components, comp, of the phi field - Each 
       // component is updated individually with multiple hits
       for(size_t comp = 0; comp < 2; comp++){
-        //auto& Phi = phi[comp][x]; // this reference gives a speedup???
         double phiSqr = phi(comp,x)*phi(comp,x);
+
         // The other component 
         int comp_n=(comp+1)%2;
         double phi_n = phi(comp_n,x);
@@ -69,9 +69,8 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
             
             //  accept reject step -------------------------------------
             if(r[1] < exp(-dS)) {
-              //phiSqr -= Phi*Phi;
               phi(comp,x) += deltaPhi;
-              //phiSqr += Phi*Phi;
+              phiSqr = phi(comp,x)*phi(comp,x);
               update++; 
             }
         } // multi hit ends here

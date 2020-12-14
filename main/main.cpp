@@ -77,6 +77,7 @@ double *compute_magnetisations( Viewphi phi,  cluster::IO_params params){
 
   mr[0]*=sqrt(2*params.data.kappa0)/((double)params.data.V);
   mr[1]*=sqrt(2*params.data.kappa1)/((double)params.data.V);
+  
   return mr;
 }
  
@@ -363,7 +364,7 @@ int main(int argc, char** argv) {
 */
     cout << "Kokkos started:"<< endl; 
     cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
-    cout << "   host  execution    space:"<<  Kokkos::HostSpace::name << endl; 
+    cout << "   host  execution    space:"<<  &Kokkos::HostSpace::name << endl; 
     
     int layout_value=check_layout();
     // Create a random number generator pool (64-bit states or 1024-bit state)
