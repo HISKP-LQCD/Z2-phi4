@@ -17,7 +17,7 @@ int check_layout(){
     int count_l=0,count_r=0;
     for (int c =0 ; c< 2;c++){   
         for (int x =0 ; x< 4;x++){
-            if ( x==0 && c==0 || x==3 && c==1) {p_tmp++ ;continue;}// the first and the last are always in the same position, so we remove from the test
+            if ( (x==0 && c==0) || (x==3 && c==1)) {p_tmp++ ;continue;}// the first and the last are always in the same position, so we remove from the test
 
             if ( *p_tmp == h_tmp(c,x)  ){
 //                printf("Layout of the field phi(c=%ld,x=%ld) : c+x*2 : LayoutLeft \n",c,x);
