@@ -217,8 +217,8 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t ){
             int tpt1=(t+t1)%T;
             G2t0+=h_phip(0,t1) *h_phip(0 , tpt1);
             G2t1+=h_phip(1,t1) *h_phip(1 , tpt1); 
-            C2t0+=G2t0*G2t0;
-            C2t1+=G2t1*G2t1; 
+            C2t0+=h_phip(0,t1) *h_phip(0 , tpt1)* h_phip(0,t1) *h_phip(0 , tpt1)   ;
+            C2t1+=h_phip(1,t1) *h_phip(1 , tpt1)* h_phip(1,t1) *h_phip(1 , tpt1) ; 
         } 
         G2t0*=2.*params.data.kappa0/((double) T);
         G2t1*=2.*params.data.kappa1/((double) T);
