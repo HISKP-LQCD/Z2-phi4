@@ -41,7 +41,7 @@ add_subdirectory(include  include)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# this has been taken straight from the build system of Balint's Dslash (github.com/bjoo/KokkosDslash)
+#
 macro(add_target_with_lib TARGETNAME)
   # Make the executable
   add_executable(${TARGETNAME} ${ARGN})
