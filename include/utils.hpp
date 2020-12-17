@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <float.h>
-#include <gmp.h>
+//#include <gmp.h>
 
 //#define NAME_SIZE 128
 
@@ -47,14 +47,14 @@ typedef unsigned long int stduint_t;
 
 #undef IMAX
 #define IMAX(n,m) ((n)+((m)-(n))*((m)>(n)))
-
+/*
 typedef struct
 {
    int mx,n;
    mpq_t *c;
 } cnum_t;
 
-/* CNUM_C */
+// CNUM_C 
 extern cnum_t *alloc_cnum(int nc,int mx);
 extern void free_cnum(int nc,cnum_t *cn);
 extern void set_cnum(int n,long (*r)[2],cnum_t *cn);
@@ -65,7 +65,7 @@ extern void mul_cnum(cnum_t *cn1,cnum_t *cn2);
 extern int is_zero_cnum(cnum_t *cn);
 extern double eval_cnum(double x,cnum_t *cn);
 extern int print_cnum(FILE *out,char *x,cnum_t *cn);
-
+*/
 /* ENDIAN_C */
 extern int endianness(void);
 extern void bswap_int(int n,void *a);
