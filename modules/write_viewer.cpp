@@ -57,7 +57,7 @@ void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
 
      fwrite(&params.data.L, sizeof(int), 4, f_conf); 
 
-     fwrite(&params.data.formulation, sizeof(char)*100, 1, f_conf); 
+     fwrite(params.data.formulation.c_str(), sizeof(char)*100, 1, f_conf); 
 
      fwrite(&params.data.msq0, sizeof(double), 1, f_conf); 
      fwrite(&params.data.msq1, sizeof(double), 1, f_conf); 
@@ -69,16 +69,16 @@ void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
 
      fwrite(&params.data.metropolis_local_hits, sizeof(int), 1, f_conf); 
      fwrite(&params.data.metropolis_global_hits, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.metropolis_delta, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.metropolis_delta, sizeof(double), 1, f_conf); 
      
      fwrite(&params.data.cluster_hits, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.cluster_min_size, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.cluster_min_size, sizeof(double), 1, f_conf); 
 
      fwrite(&params.data.seed, sizeof(int), 1, f_conf); 
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.start_measure, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.total_measure, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.measure_every_X_updates, sizeof(int), 1, f_conf); 
+     //fwrite(&params.data.start_measure, sizeof(int), 1, f_conf); 
+     //fwrite(&params.data.total_measure, sizeof(int), 1, f_conf); 
+     //fwrite(&params.data.measure_every_X_updates, sizeof(int), 1, f_conf); 
      
      fwrite(&iconf, sizeof(int), 1, f_conf); 
 
@@ -102,9 +102,9 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
          Viewphi w_phi("w_phi",2,V);
          Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
             //Kokkos::resize(w_phi, 2,V);  
-            //phi (c,x ) is stored in position i=c+x*2
-            // I want to save this value in i'=x+c*V
-            // the cooordinate of i'=c'+x'*2
+            //phi (c,x ) is stored in the divice with the order i=c+x*2
+            // I want to save it on the disk with order i1=x+c*V
+            // so we need the coordinate c1 and x1 of  i1=c1+x1*2
              for(size_t c=0; c<2;c++){
 			 size_t i1=x+c*V;
 			 size_t c1=i1%2;
@@ -124,6 +124,11 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
      //printf(" fwrite %f\n", time);
 
 }
+
+////////////////////////////////////////////////////
+// same routine as before but for reading
+////////////////////////////////////////////////////
+
 template <typename T>
 void error_header(FILE *f_conf, T expected, const char *message){
      T read;
@@ -168,7 +173,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ,int iconf){
      error_header(f_conf,iconf,"iconf" ); 
 }
 
-void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params &params, int iconf  ,  Viewphi &phi  ){
+void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  ,  Viewphi &phi  ){
 //     Kokkos::Timer timer;
      check_header(f_conf, params, iconf);
      size_t V=params.data.V; 
@@ -185,15 +190,15 @@ void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params &params, int 
          Viewphi r_phi("r_phi",2,V);
          // Deep copy host views to device views.
          Kokkos::deep_copy( r_phi, h_phi );
-         Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
-            //Kokkos::resize(w_phi, 2,V);  
-            //phi (c,x ) is stored in position i=c+x*2
-            // I want to save this value in i'=x+c*V
-            // the cooordinate of i'=c'+x'*2
+         Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {  
+             
+             //we have the field phi (c,x) on the disk as i=x+c*V
+             // we want to load it in to the device as i1=c+x*2
+             // we need the coordinate i1=x1+c1*V 
              for(size_t c=0; c<2;c++){
-			 size_t i1=x+c*V;
-			 size_t c1=i1%2;
-			 size_t x1=i1/2;
+			 size_t i1=c+x*2;
+			 size_t c1=i1/V;
+			 size_t x1=i1%V;
 			 phi(c1,x1)=r_phi(c,x);
              }
          });
