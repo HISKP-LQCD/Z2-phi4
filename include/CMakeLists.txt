@@ -19,6 +19,13 @@ add_library(
 ) 
 target_link_libraries_kokkos(write_viewer )
 
+
+add_library(
+    measurements STATIC
+    measurements.hpp
+    ../modules/measurements.cpp
+) 
+target_link_libraries_kokkos(measurements )
 #add_library(
 #    lattice STATIC
 #    lattice.hpp
