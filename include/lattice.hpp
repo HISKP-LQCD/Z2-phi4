@@ -34,6 +34,7 @@ typedef typename RandPoolType::generator_type gen_type;
 /* GLOBAL_VECTORS */
 EXTERN int      V;
 EXTERN double  rand_max;
+EXTERN int endian;
 //EXTERN int    hop[V][2*D];
 //EXTERN int    ipt[V][D];
 

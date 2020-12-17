@@ -4,6 +4,7 @@
 #include "lattice.hpp"
 #include "IO_params.hpp"
 #include "write_viewer.hpp"
+#include "utils.hpp"
 
 int check_layout(){
     //check the layout of phi    
@@ -86,25 +87,24 @@ void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
 
 
 void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , const Viewphi &phi  ){
-//     Kokkos::Timer timer;
+ 
      write_header(f_conf, params, iconf);
      size_t V=params.data.V; 
      Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
- 
+     
+     
      if (layout_value==0){
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, phi );
-         //double time =timer.seconds();
-         //printf(" deep_copy %f\n", time);
+         
      }
      else if (layout_value==1){
                 
          Viewphi w_phi("w_phi",2,V);
          Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
-            //Kokkos::resize(w_phi, 2,V);  
-            //phi (c,x ) is stored in the divice with the order i=c+x*2
-            // I want to save it on the disk with order i1=x+c*V
-            // so we need the coordinate c1 and x1 of  i1=c1+x1*2
+             //phi (c,x ) is stored in the divice with the order i=c+x*2
+             // I want to save it on the disk with order i1=x+c*V
+             // so we need the coordinate c1 and x1 of  i1=c1+x1*2
              for(size_t c=0; c<2;c++){
 			 size_t i1=x+c*V;
 			 size_t c1=i1%2;
@@ -112,16 +112,18 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
 			 w_phi(c1,x1)=phi(c,x);
              }
          });
-         //double time =timer.seconds();
-         //printf(" swap %f\n", time);
+         
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, w_phi );
-         //time =timer.seconds();
-         //printf(" deep_copy %f\n", time);
+         
+     }
+     if(endian==BIG_ENDIAN){
+         for(size_t x=0; x<V;x++) 
+             for(size_t c=0; c<2;c++)
+                 bswap_double(1,&h_phi(c,x));
      }
      fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
-     //double time =timer.seconds();
-     //printf(" fwrite %f\n", time);
+     
 
 }
 

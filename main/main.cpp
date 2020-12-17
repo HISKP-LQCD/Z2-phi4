@@ -26,110 +26,7 @@
 #include <Kokkos_Core.hpp>
 
 
-static int endian;
-std::string rng_file; 
-static FILE *frng=NULL ;
 
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-/*
- double create_phi_update(const double delta, std::mt19937_64 * x_rand, size_t x){
-  
-  double r=x_rand[x]()/((double)x_rand[x].max() );;
-  return (r*2-1)*delta;
-
-} 
-*/
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-/*static void write_rng_state(int N, int state[])
-{
-   int i,iw;
-   stdint_t istd[1];
-
-   istd[0]=(stdint_t)(N);
-
-   if (endian==BIG_ENDIAN)
-      bswap_int(1,istd);
-
-   iw=fwrite(istd,sizeof(stdint_t),1,frng);
-
-   for(i=0;i<N;i++)
-   {
-      istd[0]=(stdint_t)(state[i]);
-
-      if (endian==BIG_ENDIAN)
-         bswap_int(1,istd);
-
-      iw+=fwrite(istd,sizeof(stdint_t),1,frng);
-   }
-
-   error(iw!=(N+1),1,"write_rng_state ",
-              "Incorrect write count");
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-static int* read_rng_state(void)
-{
-   int i,ir,N;
-   int *state;
-   stdint_t istd[1];
-
-   ir=fread(istd,sizeof(stdint_t),1,frng);
-
-   if (ir!=1)
-      return 0;
-
-   if (endian==BIG_ENDIAN)
-      bswap_int(1,istd);
-
-   N=(int)(istd[0]);
-   state=(int*) malloc(N*sizeof(int));
-
-   for(i=0;i<N;i++)
-   {
-      ir+=fread(istd,sizeof(stdint_t),1,frng);
-
-      if (endian==BIG_ENDIAN)
-         bswap_int(1,istd);
-
-      state[i]=(int)(istd[0]);
-   }
-
-   error(ir!=(N+1),1,"read_rng_state ",
-              "Incorrect read count");
-
-   return state;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-static void init_rng( cluster::IO_params params)
-{
-   int *state;
-   int append=params.data.append;
-   int seed=params.data.seed;
-   int level=params.data.level;
-
-   if (append)
-   {
-      frng=fopen(rng_file.c_str(),"rb");
-      error(frng==NULL,1,"init_rng [smd2.c]",
-           "Unable to open ranlux state file");
-
-      state=read_rng_state();
-      rlxd_reset(state);
-      free(state);
-
-      fclose(frng);
-   }
-   else
-      rlxd_init(level,seed);   
-}
-*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,8 +34,10 @@ static void init_rng( cluster::IO_params params)
 int main(int argc, char** argv) {
     
     endian=endianness();
-    //int hop[V][2*D];
-    //int ipt[V][D];
+   
+    printf("endianness=%d  (0 unknown , 1 little , 2 big)\n",endian);
+    if (endian==UNKNOWN_ENDIAN) {printf("UNKNOWN_ENDIAN abort\n"); exit(0);}
+
     cluster::IO_params params(argc, argv);
     cout << "time " << params.data.L[0] << endl;
     cout << "volume " <<params.data.V << endl;
@@ -160,15 +59,7 @@ int main(int argc, char** argv) {
     
     // starting kokkos
     Kokkos::initialize( argc, argv );{
-    
-    // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
-/*    std::mt19937_64 *x_rand=(std::mt19937_64*) malloc(sizeof(std::mt19937_64)*V);
-    std::mt19937_64  seed_generator(params.data.seed);
-    for (size_t x=0;x < V;x++){
-        std::mt19937_64 tmp_generator( seed_generator() );
-        x_rand[x]=tmp_generator;
-    }
-*/
+   
     cout << "Kokkos started:"<< endl; 
     cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
     cout << "   host  execution    space:"<<  &Kokkos::HostSpace::name << endl; 
@@ -206,14 +97,7 @@ int main(int argc, char** argv) {
         rand_pool.free_state(rgen);
     });   
     
-   
-/*    std::string mes_file = params.data.outpath + 
-                              "/mes_T" + std::to_string(params.data.L[0]) +
-                              ".X" + std::to_string(params.data.L[1]) +
-                              ".Y" + std::to_string(params.data.L[2]) +
-                              ".Z" + std::to_string(params.data.L[3]) +
-                              ".msq" + std::to_string(params.data.msq0);*/
-    std::string mes_file = params.data.outpath + 
+     std::string mes_file = params.data.outpath + 
                               "/mes_T" + std::to_string(params.data.L[0]) +
                               "_L" + std::to_string(params.data.L[1]) +
                               "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
@@ -241,7 +125,6 @@ int main(int argc, char** argv) {
     double ave_acc=0;
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
-         //  cout << "Starting step   "<< ii <<endl; 
          // Timer 
         Kokkos::Timer timer1;
         double time;  
@@ -272,37 +155,22 @@ int main(int argc, char** argv) {
         //Measure every 
         if(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0){
             Kokkos::Timer timer_2;
-            // Deep copy device views to host views.
-            //Kokkos::deep_copy( h_phi, phi );
-//printf("time_deep copy %g \n",timer_2.seconds());
-    //        cout << "measuring  " <<endl;
-    //        double *ms=compute_magnetisations_serial( h_phi,   params);
-//printf("time magnetization serial %g \n",timer_2.seconds());
+
             double *m=compute_magnetisations( phi,   params);
  
-//printf("time magnetization device %g \n",timer_2.seconds());
 
-//            double *G2=compute_G2( h_phi,   params);
-//printf("time G2p %g \n",timer_2.seconds());
             compute_G2t( phi,   params,f_G2t);
-//printf("time G2t %g \n",timer_2.seconds());
-//            compute_G2t_serial_host( h_phi, params,  f_G2t);
-            //fprintf(f_mes,"%.15g   %.15g   %.15g   %.15g   %.15g  %.15g\n",m[0], m[1], G2[0], G2[1], G2[2], G2[3]);
+
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
-           // cout << "    phi0 norm=" << m[0]  << "    phi1 norm=" << m[1]  << endl;
-            free(m);//free(G2);
+            free(m);
            
             time = timer_2.seconds();
-//            printf("time measurament (%g  s)\n",time);
             time_mes+=time;
-//printf("time write free etc %g \n",timer_2.seconds());
 
         }
         // write the configuration to disk
         if(params.data.save_config == "yes" && ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.save_config_every_X_updates == 0){
             Kokkos::Timer timer3;
-            // Deep copy device views to host views.
-      //      cout << "saving conf  " <<endl;
             std::string conf_file = params.data.outpath + 
                               "/T" + std::to_string(params.data.L[0]) +
                               "_L" + std::to_string(params.data.L[1]) +
@@ -319,27 +187,12 @@ int main(int argc, char** argv) {
             }
             write_viewer(f_conf, layout_value, params , ii , phi ); 
             time = timer3.seconds();
-            //printf("time writing (%g  s)\n",time);
             time_writing+=time;
         }    
     }
 
     
-    
-    /*
-   // save rng 
-   cout << "writing the rng state to: "<< rng_file.c_str() <<endl;
-   int N=rlxd_size();
-   int *state = (int*) alloca(N*sizeof(int));
-   rlxd_get(state);
-
-   frng=fopen(rng_file.c_str(),"wb");
-   error(frng==NULL,1,"main",
-         "Unable to open ranlux state file");
-
-   write_rng_state(N,state);
-   fclose(frng);
-*/
+  
     printf("average acceptance rate= %g\n", ave_acc/(params.data.start_measure+params.data.total_measure));
     
     printf("  time updating = %f s (%f per single operation)\n", time_update, time_update/(params.data.start_measure+params.data.total_measure) );
