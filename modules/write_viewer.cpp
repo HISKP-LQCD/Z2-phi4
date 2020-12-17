@@ -150,7 +150,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ,int iconf){
      char string[100];
      fread(&string, sizeof(char)*100, 1, f_conf); 
      if (strcmp(params.data.formulation.c_str() ,string ) ){
-         printf("error: formulation read=%s   expected %s \n",string,params.data.formulation);
+         printf("error: formulation read=%s   expected %s \n",string,params.data.formulation.c_str());
          exit(2);
      }
      
