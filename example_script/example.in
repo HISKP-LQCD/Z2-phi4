@@ -1,0 +1,29 @@
+L = 8 8 8 8 
+
+msq0 = 0.1305
+msq1 = 0.13135
+lambdaC0 = 0.001
+lambdaC1 = 0.15
+muC = 0
+gC = 0
+
+metropolis_local_hits = 10
+metropolis_global_hits = 1
+metropolis_delta = 4.7
+
+cluster_hits = 32
+cluster_min_size = 0.1 
+
+seed = 907345
+level = 1
+
+append = 0
+replica = 0
+start_measure = 100
+total_measure = 1000
+measure_every_X_updates = 1
+save_config = yes
+save_config_rotated = n0
+save_config_every_X_updates = 1000
+
+outpath = ./data
