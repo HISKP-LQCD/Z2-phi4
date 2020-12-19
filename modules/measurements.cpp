@@ -172,12 +172,12 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t ){
 
     for (int comp=0; comp<2;comp++){
        for(int t=0; t<T; t++) {
-       h_phip(comp,t) = 0;
-       Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, double &inner ) {
-           size_t i0= x+t*Vs;
-	       inner+=phi(comp,i0);
-       }, h_phip(comp,t)  );
-       h_phip(comp,t)=h_phip(comp,t)/((double) Vs);
+           h_phip(comp,t) = 0;
+           Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, double &inner ) {
+               size_t i0= x+t*Vs;
+               inner+=phi(comp,i0);
+           }, h_phip(comp,t)  );
+           h_phip(comp,t)=h_phip(comp,t)/((double) Vs);
        }
     }
 
