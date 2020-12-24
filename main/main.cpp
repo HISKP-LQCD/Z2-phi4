@@ -120,7 +120,9 @@ int main(int argc, char** argv) {
                printf("Error opening file %s or %s \n", mes_file.c_str(), G2t_file.c_str());
                exit(1);
     }    
-           
+    write_header_measuraments(f_G2t, params ); 
+     
+     
     double time_update=0,time_mes=0,time_writing=0;
     double ave_acc=0;
     // The update ----------------------------------------------------------------
@@ -159,7 +161,7 @@ int main(int argc, char** argv) {
             double *m=compute_magnetisations( phi,   params);
  
 
-            compute_G2t( phi,   params,f_G2t);
+            compute_G2t( phi,   params,f_G2t, ii);
 
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);

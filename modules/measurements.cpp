@@ -142,11 +142,108 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
     free(G2t[1]);
     free(G2t);
 }
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
+
+     fwrite(&params.data.L, sizeof(int), 4, f_conf); 
+
+     fwrite(params.data.formulation.c_str(), sizeof(char)*100, 1, f_conf); 
+
+     fwrite(&params.data.msq0, sizeof(double), 1, f_conf); 
+     fwrite(&params.data.msq1, sizeof(double), 1, f_conf); 
+     fwrite(&params.data.lambdaC0, sizeof(double), 1, f_conf); 
+     fwrite(&params.data.lambdaC1, sizeof(double), 1, f_conf); 
+     fwrite(&params.data.muC, sizeof(double), 1, f_conf); 
+     fwrite(&params.data.gC, sizeof(double), 1, f_conf); 
+
+     fwrite(&params.data.metropolis_local_hits, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.metropolis_global_hits, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.metropolis_delta, sizeof(double), 1, f_conf); 
+     
+     fwrite(&params.data.cluster_hits, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.cluster_min_size, sizeof(double), 1, f_conf); 
+
+     fwrite(&params.data.seed, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
+     
+     
+     int ncorr=4;
+     fwrite(&ncorr, sizeof(int), 1, f_conf); 
+     
+     size_t size= params.data.L[0]*ncorr;
+     fwrite(&size, sizeof(size_t), 1, f_conf); 
+
+}
+ 
  
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t ){
+void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , int iconf){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    fwrite(&iconf,sizeof(int),1,f_G2t);        
+
+    Viewphi phip("G2t",2,T);
+    Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
+
+
+    for (int comp=0; comp<2;comp++){
+       for(int t=0; t<T; t++) {
+           h_phip(comp,t) = 0;
+           Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, double &inner ) {
+               size_t i0= x+t*Vs;
+               inner+=phi(comp,i0);
+           }, h_phip(comp,t)  );
+           h_phip(comp,t)=h_phip(comp,t)/((double) Vs);
+       }
+    }
+
+    // now we continue on the host 
+    for(int t=0; t<T; t++) {
+        double G2t0=0;
+        double G2t1=0;
+        double C2t=0;
+        double C3t=0;
+        for(int t1=0; t1<T; t1++) {
+            int tpt1=(t+t1)%T;
+            double pp0=h_phip(0,t1) *h_phip(0 , tpt1);
+            double pp1=h_phip(1,t1) *h_phip(1 , tpt1);
+            std::complex<double> p0 = h_phip(0,t1) + 1i* h_phip(1,t1);
+            std::complex<double> cpt = h_phip(0,tpt1) - 1i* h_phip(1,tpt1);
+            
+            G2t0+=pp0;
+            G2t1+=pp1; 
+            C2t+= pp0*pp0 + pp1*pp1 + 4*pp0*pp1
+                - h_phip(0,t1) *h_phip(0 , t1)* h_phip(1,tpt1) *h_phip(1 , tpt1)
+                - h_phip(1,t1) *h_phip(1 , t1)* h_phip(0,tpt1) *h_phip(0 , tpt1);
+            C3t+=  real(p0*cpt* p0*cpt *p0*cpt);
+            
+        } 
+        double norm=2.*params.data.kappa0;
+        G2t0*=norm/((double) T);
+        G2t1*=2.*params.data.kappa1/((double) T);
+        C2t*=norm*norm/((double) T);
+        C3t*=norm*norm*norm/((double) T);
+
+        fwrite(&G2t0,sizeof(double),1,f_G2t);
+        fwrite(&G2t1,sizeof(double),1,f_G2t);
+        fwrite(&C2t,sizeof(double),1,f_G2t);
+        fwrite(&C3t,sizeof(double),1,f_G2t);
+    }
+
+    
+}
+
+ 
+ 
+ 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+void  compute_G2t_ASCI(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t ){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
 
