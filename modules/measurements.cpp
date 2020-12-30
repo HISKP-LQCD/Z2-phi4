@@ -170,10 +170,10 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=5;
+     int ncorr=5;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
-     size_t size= params.data.L[0]*ncorr;
+     size_t size= params.data.L[0]*ncorr;  // number of double of each block
      fwrite(&size, sizeof(size_t), 1, f_conf); 
 
 }
