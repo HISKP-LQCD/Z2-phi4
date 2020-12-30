@@ -170,7 +170,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=4;
+     int ncorr=5;
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;
@@ -202,12 +202,15 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
        }
     }
 
+    double norm=2.*params.data.kappa0;
+    double norm1=2.*params.data.kappa1;
     // now we continue on the host 
     for(int t=0; t<T; t++) {
         double G2t0=0;
         double G2t1=0;
         double C2t=0;
         double C3t=0;
+        double C4=0;
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
             double pp0=h_phip(0,t1) *h_phip(0 , tpt1);
@@ -222,17 +225,21 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
                 - h_phip(1,t1) *h_phip(1 , t1)* h_phip(0,tpt1) *h_phip(0 , tpt1);
             C3t+=  real(p0*cpt* p0*cpt *p0*cpt);
             
+            C4+=h_phip(1,t1)*h_phip(1,(T/8+t1)%T )* h_phip(1,tpt1)*h_phip(1,(T/2+t1)%T );
+            
         } 
-        double norm=2.*params.data.kappa0;
+       
         G2t0*=norm/((double) T);
-        G2t1*=2.*params.data.kappa1/((double) T);
+        G2t1*=norm1/((double) T);
         C2t*=norm*norm/((double) T);
         C3t*=norm*norm*norm/((double) T);
+        C4*=norm1*norm1*norm1*norm1/((double) T);
 
         fwrite(&G2t0,sizeof(double),1,f_G2t);
         fwrite(&G2t1,sizeof(double),1,f_G2t);
         fwrite(&C2t,sizeof(double),1,f_G2t);
         fwrite(&C3t,sizeof(double),1,f_G2t);
+        fwrite(&C4,sizeof(double),1,f_G2t);
     }
 
     
