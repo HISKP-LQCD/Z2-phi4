@@ -170,7 +170,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=7;//number of correlators
+     int ncorr=11;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
@@ -207,7 +207,11 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
     for(int t=0; t<T; t++) {
         double G2t0=0;
         double G2t1=0;
+        double C2t0=0;
+        double C2t1=0;
         double C2t=0;
+        double C3t0=0;
+        double C3t1=0;
         double C3t=0;
         double C40=0;
         double C41=0;
@@ -221,9 +225,14 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
             
             G2t0+=pp0;
             G2t1+=pp1; 
+            C2t0+=pp0*pp0;
+            C2t1+=pp1*pp1;
             C2t+= pp0*pp0 + pp1*pp1 + 4*pp0*pp1
                 - h_phip(0,t1) *h_phip(0 , t1)* h_phip(1,tpt1) *h_phip(1 , tpt1)
                 - h_phip(1,t1) *h_phip(1 , t1)* h_phip(0,tpt1) *h_phip(0 , tpt1);
+                
+            C3t0+=pp0*pp0*pp0;
+            C3t1+=pp1*pp1*pp1;
             C3t+=  real(p0*cpt* p0*cpt *p0*cpt);
             
             C40+=h_phip(0,t1)*h_phip(0,(T/8+t1)%T )* h_phip(0,tpt1)*h_phip(0,(T/2+t1)%T );
@@ -234,7 +243,11 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
        
         G2t0/=((double) T);
         G2t1/=((double) T);
+        C2t0/=((double) T);
+        C2t1/=((double) T);
         C2t/=((double) T);
+        C3t0/=((double) T);
+        C3t1/=((double) T);
         C3t/=((double) T);
         C40/=((double) T);
         C40/=((double) T);
@@ -242,10 +255,14 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         
         fwrite(&G2t0,sizeof(double),1,f_G2t);
         fwrite(&G2t1,sizeof(double),1,f_G2t);
-        fwrite(&C2t,sizeof(double),1,f_G2t);
+        fwrite(&C2t0,sizeof(double),1,f_G2t);
+        fwrite(&C2t1,sizeof(double),1,f_G2t);
+        fwrite(&C2t,sizeof(double),1,f_G2t); // 5 corr
+        fwrite(&C3t0,sizeof(double),1,f_G2t);
+        fwrite(&C3t1,sizeof(double),1,f_G2t);
         fwrite(&C3t,sizeof(double),1,f_G2t);
         fwrite(&C40,sizeof(double),1,f_G2t);
-        fwrite(&C41,sizeof(double),1,f_G2t);
+        fwrite(&C41,sizeof(double),1,f_G2t); // 10 corr
         fwrite(&C401,sizeof(double),1,f_G2t);
     }
 
