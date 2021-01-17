@@ -189,6 +189,7 @@ int main(int argc, char** argv) {
             }
             write_viewer(f_conf, layout_value, params , ii , phi ); 
             time = timer3.seconds();
+	    fclose(f_conf);
             time_writing+=time;
         }    
     }
