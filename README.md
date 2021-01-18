@@ -10,26 +10,27 @@ $ git submodule update --init --recursive
 ``` 
 ## Building
 
-To build the program you may create a build directory and copy inside one of the the build script  of the folder example_script. The script available are
-```
-  do_cmake_host.sh
-```
-for a host CPU openMP building and
+To build the program you may create a build directory and copy inside one of the the build script  of the folder example_script. One example 
 ```
   do_cmake_m100.sh
 ```
-to build the this code on marconi100 (Nvidia volta 100).
-To build on the host you have to 
+to build  on marconi100 (Nvidia volta 100).
 
 ```
    mkdir build
    cd build
-   cp ../example_script/do_cmake_host.sh .
-   bash do_cmake_host.sh
+   cp ../example_script/do_cmake_m100.sh .
+   bash do_cmake_m100.sh
    make
 ```
-if you want to build the program somewere else you need to change the path inside the script do_cmake.sh (src_dir=where_I_create_the_build_directory).
-If the compilation goes well a folder main will be created with the executable
+if you want to build the program somewhere else you need to change the path inside the script do_cmake.sh (src_dir=where_I_create_the_build_directory).
+If the compilation goes well a folder main will be created with the executable.
+you can add option
+
+```
+-DCMAKE_CXX_FLAGS=-DTIMER
+```
+in the building scritp to have more extra info on the timer
 
 ## Running 
 
