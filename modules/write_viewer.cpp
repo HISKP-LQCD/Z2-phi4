@@ -176,12 +176,22 @@ void check_header(FILE *f_conf, cluster::IO_params &params ,int iconf){
 }
 
 void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  ,  Viewphi &phi  ){
-//     Kokkos::Timer timer;
+     #ifdef NDEBUG
+         Kokkos::Timer timer;
+     #endif
      check_header(f_conf, params, iconf);
+     #ifdef NDEBUG
+         double time=timer.seconds();
+         printf("time to check header %f\n",time);
+     #endif
      size_t V=params.data.V; 
      Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
  
      fread(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
+     #ifdef NDEBUG
+         double time1=timer.seconds()-time;
+         printf("time to read on Host %f\n",time1);
+     #endif
      if (layout_value==0){
          // Deep copy host views to device views.
          Kokkos::deep_copy( phi, h_phi );
@@ -205,5 +215,10 @@ void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int i
              }
          });
      }
+     
+     #ifdef NDEBUG
+         double time2=timer.seconds()-time-time1;
+         printf("time to copy on device %f\n",time2);
+     #endif
 
 }
