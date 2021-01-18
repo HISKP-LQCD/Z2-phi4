@@ -5,10 +5,10 @@ output:
   pdf_document: 
     latex_engine: xelatex
   toc: true
+  rmarkdown::html_vignette: default
   html_document:
     toc: true
     df_print: paged
-  rmarkdown::html_vignette: default
 vignette: |
   %\VignetteIndexEntry{plots} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
 ---
@@ -60,240 +60,14 @@ The plots for each ensemble are
     $$
  - BH four point function $\langle \phi_0(\frac{T}{2})\phi_0(t)\phi_0(\frac{T}{8}) \phi_0(0)\rangle$
  - BH four point function $\langle \phi_1(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_1(0)\rangle$
- - BH four point function $\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle$
+ - BH four point function $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
  
 
-```{r echo=FALSE, warning=FALSE, results="asis"}
-set_xmargin<- function(fit_range, T){
-  xmin <-fit_range[1]-7
-  xmax <-fit_range[2]+7
-  if (xmin<0 ){ xmin<-0}
-  if (xmax>T ){ xmax<-T}
-  c(xmin,xmax)
-}
-#####################################################################
-#####################################################################
 
-myggplot<-function(d,fit, fit_range,n,T){
-
-gg <- ggplot(d, aes(x=x, y=y)) + geom_point() 
-gg  <- gg + xlim(set_xmargin(fit_range,T) ) + ylim(fit[1,1]-15*fit[1,2], fit[1,1]+15*fit[1,2]) 
-gg <- gg +geom_errorbar(aes(ymin=y-err, ymax=y+err),  width = 1)  
-gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$m_{eff}$'))
-# plot orizontal line with fit 
-gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1], xend = fit_range[2], yend = fit[1,1]) , linetype="dashed", color = "red")
-gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1]-fit[1,2], xend = fit_range[2], yend = fit[1,1]-fit[1,2]) , linetype="solid", color = "red")
-gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1]+fit[1,2], xend = fit_range[2], yend = fit[1,1]+fit[1,2]) , linetype="solid", color = "red")
-gg <- gg+theme_bw()
-s<- sprintf("%.6f",fit[1,1])
-err<- sprintf("%.6f",fit[1,2])
-
-
-pander(paste0("  fit: $m_{eff}=",s,"\\pm",err,"$")) 
-plot(gg)
-}
-#####################################################################
-#####################################################################
-
-my_fit_ggplot<-function(d,fit_par, fit_range,n,T){
-gg <- ggplot(d, aes(x=x, y=y)) + geom_point() 
-#gg <- gg+ scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-#              labels = trans_format("log10", math_format(10^.x)))
-gg <- gg +geom_errorbar(aes(ymin=y-err, ymax=y+err),  width = 0.3)  
-
-gg <- gg +geom_ribbon( aes(x=x, ymin=fit-errfit,ymax=fit+errfit ), color="red",alpha=0.3) 
-gg <- gg+ geom_line( aes(x=fit_range[1]), color="gray", linetype="dashed") 
-gg <- gg+ geom_line( aes(x=fit_range[2]), color="gray", linetype="dashed") 
-
-#gg <- gg +geom_line( aes(x=x, ymin=fit), color="red") 
-
-gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
-
-
-gg <- gg+theme_bw()
-s<- sprintf("%.6f",fit_par[1,1])
-err<- sprintf("%.6f",fit_par[1,2])
-
-
-pander(paste0("  fit: $m_{eff}=",s,"\\pm",err,"$")) 
-plot(gg)
-}
-#####################################################################
-#####################################################################
-plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
-  
-block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
-                    col.names = c(1:50))
-block_full <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1, comment.char = "",   col.names = c(1:50))
-l<-grep("fit",block_full[,2])
-
-meff <- data.frame('ave'=c(0), 'err'=c(0))
-len<- length(block[,1])
-count<-1
-mylist<- list(  L,T)
-
-cat('\n\n#### Mass  \n\n')
-for (n in c(2,3)){
-  if (len >= (n*(T/2)-1)){
-      cat('index n=',n%%2,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
-
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:3])
-      #plot data
-      d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
-      myggplot(d,fit,fit_range,n,T/2) 
-      #meff[count,]<- list(fit[1,1],fit[1,2])
-      mylist  <- append(mylist, list(fit[1,1],fit[1,2]) )
-      count <- count+1
-  }
-  else mylist <-append(mylist, list("NaN","NaN") )
-    
-}
-mylist  <-append(mylist, list(msq0, msq1, l0,l1,mu,g,rep ))
-
-
-cat('\n\n#### Two particle energy  \n\n')
-for (n in c(5,6,7)){
-  if (len >= (n*(T/2)-1)){
-      cat('index n=',n-5,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
-
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:3])
-      #plot data
-      d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
-      myggplot(d,fit,fit_range,n,T/2) 
-
-      mylist  <- append(mylist, list(fit[1,1],fit[1,2]) )
-      count <- count+1
-  }
-  else mylist  <-append(mylist, list("NaN","NaN")) 
-}
-
-cat('\n\n#### Three particle energy  \n\n')
-for (n in c(8,9,10)){
-  if (len >= (n*(T/2)-1)){
-      cat('index n=',n-8,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
-
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:5])
-    
-    d <- data.frame("x"=data[[1]],"y"=abs(data[[2]]),"err"=abs(data[[3]]),
-                      "fit"=abs(data[[4]]),"errfit"=abs(data[[5]]))
-  
-    my_fit_ggplot(d,fit,fit_range,n,T/2)
-
-    mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
-  }
-  else mylist  <-append(mylist, list("NaN","NaN") )
-  count<-count+1
-}
-
-
-cat('\n\n#### C4_BH  \n\n')
-for (n in c(11,12,13)){
-  if (len >= (n*(T/2)-1)){
-      cat('index n=',n-11,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
-
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:5])
-    
-      d <- data.frame("x"=data[[1]],"y"=abs(data[[2]]),"err"=abs(data[[3]]),
-                      "fit"=abs(data[[4]]),"errfit"=abs(data[[5]]))
-      my_fit_ggplot(d,fit,fit_range,n,T/2)
-
-    mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
-  }
-  else mylist  <-append(mylist, list("NaN","NaN") )
-  count<-count+1
-}
-
-
-#append to df
-count=length(df[,1])             
-df[ count+1,]<- mylist
-return(df)
-
-}
-#####################################################################
-# main
-#####################################################################
-
-
-
-df<- data.frame(  "L"=c(0),"T"=c(0),
-                "meff0"=c(0), "Emeff0"=c(0), "meff1"=c(0) , "Emeff1"=c(0) ,
-                 "msq0"=c(0), "msq1"=c(0),
-                "lambda0"=c(0) , "lambda1"=c(0),
-                "mu"=c(0), "g"=c(0), "rep"=c(0),
-                "E2_0"=c(0),"E2_0err"=c(0),
-                "E2_1"=c(0),"E2_1err"=c(0),
-                "E2"=c(0),"E2err"=c(0),
-                "E3_0"=c(0),"E3_0err"=c(0),
-                "E3_1"=c(0),"E3_1err"=c(0),
-                "E3"=c(0),"E3err"=c(0),
-                "a_0"=c(0),"a_0err"=c(0),
-                "a_1"=c(0),"a_1err"=c(0),
-                "a_01"=c(0),"a_01err"=c(0)
-                )
-df<-df[-1,]
-count=1
-
-for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
-for (msq0 in c(-4.9,-4.95,-4.98,-4.99,-5.0)){
-#for (msq0 in c(-4.9)){  
-for (msq1 in c(-4.9)){
-for (l0 in c(2.5)){  
-for (l1 in c(2.5)){    
-for (mu in c(5.0)){    
-for (g in c(0)){
-for (T in c(24)){
-for (L in c(10)){
-for (rep in c(0,1)){
-file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
-                   dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
- if (file.exists(file)){
-#print(file)
-#cat(" m0^2=", msq0,'\t m1^2=', msq1, '\n lam0=', l0, '\t lam1=',l1,'\n mu=',mu,'\t g=',g )
-pander(paste('\n\n## T', T, 'L',L, ' '))   
-   cat("\n\n")
-pander(paste("$m_0^2 = ", msq0,"\\quad$"))
-pander(paste0("$m_1^2 = ", msq1,"\\quad$"))
-pander(paste0("$\\lambda_0^2 = ", l0,"\\quad$"))
-pander(paste0("$\\lambda_1^2 = ", l1,"\\quad$"))
-pander(paste0("$\\mu^2 = ", mu,"\\quad$"))
-pander(paste0("$g^2 = ", g,"\\quad$"))
-pander(paste0("replica = ", rep,' '))
-cat("\n\n")
-df<-plot_two_comp(file,df, T, L ,msq0,msq1,l0,l1,mu,g,rep )
-
-
-
- }#if file exist
- }}}}}}}}}}
-
-
-kable(df[,c(1,2,7,8,26,27,28,29,30,31)])
+```{r  echo=FALSE, results="asis",code=readLines("ggplot.R")}
 ```
+
 
 # Masses
 
@@ -383,11 +157,40 @@ plot(gg)
 
 ```
 
+# Ampitude BH
+
+```{r echo=FALSE}
+
+kable(df[,c(1,2,7,8,26,27,28,29,30,31)])
+
+colors <- c("a_0" = "blue", "a_1" = "red", "a_01"="black")
+
+#gg <- ggplot(df, aes(x=msq0, y=a_0,color ="a_0")) + geom_point() 
+#gg <- gg +geom_errorbar(aes(ymin=a_0-a_0err, ymax=a_0+a_0err,  color="a_0"), width=0.005)  
+#gg <- gg+ geom_point( aes(x=msq0, y=a_1, color="a_1")) 
+#gg <- gg +geom_errorbar(aes(ymin=a_1-a_1err, ymax=a_1+a_1err , color="a_1"),  width = 0.005)  
+
+gg <- ggplot(df, aes(x=msq0, y=a_01,color ="a_01"))
+gg <- gg+ geom_point( aes(x=msq0, y=a_01, color="a_01")) 
+gg <- gg +geom_errorbar(aes(ymin=a_01-a_01err, ymax=a_01+a_01err , color="a_01"),  width = 0.005) 
+gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+
+
+gg <- gg+ labs(x = TeX('a m_0^2'), y= TeX('$a$') )
+
+
+gg <- gg+theme_bw()
+
+plot(gg)
+```
+
+
+
+
 # to be compared with the result of the paper  https://arxiv.org/abs/1806.02367
 
 ```{r echo=FALSE}
 paper_table <- read.table("paper_data.txt",fill = TRUE , blank.lines.skip=TRUE,skip=0)
 kable(paper_table)
 ```
-
 
