@@ -170,7 +170,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=11;//number of correlators
+     int ncorr=12;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
@@ -216,6 +216,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         double C40=0;
         double C41=0;
         double C401=0;
+        double C201=0;
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
             double pp0=h_phip(0,t1) *h_phip(0 , tpt1);
@@ -239,6 +240,8 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
             C41+=h_phip(1,t1)*h_phip(1,(T/8+t1)%T )* h_phip(1,tpt1)*h_phip(1,(T/2+t1)%T );
             C401+=h_phip(0,t1)*h_phip(1,(T/8+t1)%T )* h_phip(1,tpt1)*h_phip(0,(T/2+t1)%T );
             
+            C201+=h_phip(0,t1)*h_phip(1,t1)  *  h_phip(0,tpt1)*h_phip(1,tpt1); 
+            
         } 
        
         G2t0/=((double) T);
@@ -252,6 +255,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         C40/=((double) T);
         C40/=((double) T);
         C401/=((double) T);
+        C201/=((double) T);
         
         fwrite(&G2t0,sizeof(double),1,f_G2t);
         fwrite(&G2t1,sizeof(double),1,f_G2t);
@@ -264,6 +268,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         fwrite(&C40,sizeof(double),1,f_G2t);
         fwrite(&C41,sizeof(double),1,f_G2t); // 10 corr
         fwrite(&C401,sizeof(double),1,f_G2t);
+        fwrite(&C201,sizeof(double),1,f_G2t);
     }
 
     

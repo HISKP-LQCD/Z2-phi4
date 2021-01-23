@@ -18,7 +18,14 @@ require(scales) # to access break formatting functions
 library(latex2exp)
 library(pander)
 panderOptions('knitr.auto.asis', FALSE)
+
+library(reticulate)
+use_python("/home/marco/Programs/Anaconda3/bin/python")
+
+library(knitrengines) # github.com/hrbrmstr/knitrengines
+
 ```
+
 
 ```{r echo=FALSE}
 
@@ -206,12 +213,27 @@ file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_
 ## C4_BH
 
 $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
-{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
+{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
 
 
 Fit function:
-$$C_4^{BH}= 8\pi(m_0^2+m_1^2) a_N \tilde{t} + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 \tilde{t} }$$
+$$C_4^{BH}= 8\pi(m_0+m_1) a_N \tilde{t} + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 \tilde{t} }$$
 $\tilde{t}=(t-T/8)$ and $P[0]=a_N$
+
+here is the fit  function plotted for various values of $a_N$
+
+```{r "plot me" , engine="gnuplot"}
+set term pngcairo
+set output "goodreads.png"
+m0=0.076221
+m1=0.251042
+f(x,a)=8*3.14*(m0**2+m1**2)*a*x +16*(a**2) *sqrt(2*3.14*(m0+m1)*m0*m1*x)
+
+plot [0:20] f(x,0.2), f(x,0.4),f(x,0.6), f(x,0.8),f(x,1)
+
+```
+![test of the fit function for the values of the parameter](goodreads.png)
+
  
 ```{r echo=FALSE,  results="asis"}
   cat('\n\n#### C4_BH  \n\n')

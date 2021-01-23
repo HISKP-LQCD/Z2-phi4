@@ -1,16 +1,14 @@
 ---
-title: "Effective mass"
+title: "gplots"
 author: "MG"
 output:
-  pdf_document: 
+  pdf_document:
+    toc: yes
     latex_engine: xelatex
-  toc: true
-  rmarkdown::html_vignette: default
   html_document:
-    toc: true
-    df_print: paged
-vignette: |
-  %\VignetteIndexEntry{plots} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
+    toc: yes
+vignette: "%\\VignetteIndexEntry{gplots} %\\VignetteEngine{knitr::rmarkdown} \\usepackage[utf8]{inputenc}
+  \ \n"
 ---
 ```{r setup, include=FALSE}
 library(knitr)
@@ -61,7 +59,7 @@ The plots for each ensemble are
  - BH four point function $\langle \phi_0(\frac{T}{2})\phi_0(t)\phi_0(\frac{T}{8}) \phi_0(0)\rangle$
  - BH four point function $\langle \phi_1(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_1(0)\rangle$
  - BH four point function $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
-{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
+{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
  
 
 
