@@ -88,11 +88,17 @@ void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
 
 void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , const Viewphi &phi  ){
  
+     #ifdef TIMER
+         Kokkos::Timer timer;
+     #endif
      write_header(f_conf, params, iconf);
+     #ifdef TIMER
+         double time=timer.seconds();
+         printf("time to write the header %f\n",time);
+     #endif
      size_t V=params.data.V; 
      Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
-     
-     
+          
      if (layout_value==0){
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, phi );
@@ -122,7 +128,15 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
              for(size_t c=0; c<2;c++)
                  bswap_double(1,&h_phi(c,x));
      }
+     #ifdef TIMER
+         double time1=timer.seconds()-time;
+         printf("time to copy data on the host %f\n",time1);
+     #endif
      fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
+     #ifdef TIMER
+         double time2=timer.seconds()-time-time1;
+         printf("time of fwrite %f\n",time2);
+     #endif
      
 
 }
