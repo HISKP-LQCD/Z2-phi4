@@ -157,7 +157,7 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
   }
   
   cat('\n\n#### Three particle energy  \n\n')
-  for (n in c(8,9,10)){
+  for (n in c(8,9,10) ){    #
     if (len >= (n*(T/2)-1)){
       cat('index n=',n-8,'\n\n')
       a1<-gsub("\\[","c\\(", block_full[l,4][n])
@@ -173,7 +173,7 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
                       "fit"=abs(data[[4]]),"errfit"=abs(data[[5]]), 
                       "xp"=abs(data[[6]]), "fitp"=abs(data[[7]]), "errfitp"= abs(data[[8]]) )
       
-      my_fit_ggplot(d,fit,fit_range,n,T/2)
+      #my_fit_ggplot(d,fit,fit_range,n,T/2)
       
       mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
     }
@@ -183,7 +183,7 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
   
   
   cat('\n\n#### C4_BH  \n\n')
-  for (n in c(11,12,13,14,15,16,17,18)){
+  for (n in c(11,12,13) ){   # c(11,12,13,14,15,16,17,18)
     if (len >= (n*(T/2)-1)){
       cat('index n=',n-11,block_full[l,1][n] ,'\n\n')
       
@@ -198,6 +198,7 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
       
       d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
                       "fit"=(data[[4]]),"errfit"=(data[[5]]))
+      if(n==13)
       my_fit_ggplot(d,fit,fit_range,n,T/2)
       
       mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
@@ -238,16 +239,15 @@ df<-df[-1,]
 count=1
 
 for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
-  for (msq0 in c(-4.9,-4.95,-4.98,-4.99,-5.0)){
-    #for (msq0 in c(-4.9)){  
-    for (msq1 in c(-4.9)){
+  for (msq1 in c(-4.9,-4.89,-4.85)){
+    for (msq0 in c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0)){
       for (l0 in c(2.5)){  
         for (l1 in c(2.5)){    
           for (mu in c(5.0)){    
             for (g in c(0)){
-              for (T in c(24,48)){
-                for (L in c(10)){
-                  for (rep in c(0,1)){
+              for (L in c(10,20)){
+                for (T in c(24,48)){
+                  for (rep in c(0)){
                     file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
                                  dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
                     if (file.exists(file)){

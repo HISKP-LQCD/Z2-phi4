@@ -2,11 +2,11 @@
 title: "gplots"
 author: "MG"
 output:
+  html_document:
+    toc: yes
   pdf_document:
     toc: yes
     latex_engine: xelatex
-  html_document:
-    toc: yes
 vignette: "%\\VignetteIndexEntry{gplots} %\\VignetteEngine{knitr::rmarkdown} \\usepackage[utf8]{inputenc}
   \ \n"
 ---
@@ -80,10 +80,10 @@ library(tidyr)
 colors <- c("meff0" = "blue", "meff1" = "red")
 
 
-gg <- ggplot(df, aes(x=msq0, y=meff0,color ="meff0")) + geom_point( ) 
-gg <- gg +geom_errorbar(aes(ymin=meff0-Emeff0, ymax=meff0+Emeff0,  color="meff0"), width=0.005)  
-gg <- gg+ geom_point( aes(x=msq0, y=meff1, color="meff1")) 
-gg <- gg +geom_errorbar(aes(ymin=meff1-Emeff1, ymax=meff1+Emeff1 , color="meff1"),  width = 0.005)  
+gg <- ggplot(df, aes(x=msq0, y=meff0,color ="meff0", shape=as.factor(L ) )) + geom_point(size=3) 
+gg <- gg +geom_errorbar(aes(ymin=meff0-Emeff0, ymax=meff0+Emeff0,  color="meff0"), width=0.003)  
+gg <- gg+ geom_point( aes(x=msq0, y=meff1, color="meff1", shape=as.factor(L)  ),size=3 ) 
+gg <- gg +geom_errorbar(aes(ymin=meff1-Emeff1, ymax=meff1+Emeff1 , color="meff1"),  width = 0.003)  
 gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
 
 
@@ -94,6 +94,33 @@ gg <- gg+theme_bw()
 
 plot(gg)
 
+```
+
+
+```{r}
+
+colors <- c("meff0" = "blue", "meff1" = "red")
+
+gg <- ggplot(df, aes(x=msq0, y=meff0,color =as.factor(L), shape=as.factor(msq1) )) + geom_point(size=3) 
+#gg <- gg +geom_errorbar(aes(x=msq0, ymin=meff0-Emeff0, ymax=meff0+Emeff0), width=0.002)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('a m_0^2'), y= TeX('$m_{eff}$') )
+gg <- gg+theme_bw()
+
+plot(gg)
+```
+
+```{r}
+
+colors <- c("meff0" = "blue", "meff1" = "red")
+
+gg <- ggplot(df, aes(x=msq0, y=meff1,color =as.factor(L), shape=as.factor(msq1) )) + geom_point(size=3) 
+#gg <- gg +geom_errorbar(aes(x=msq0, ymin=meff0-Emeff0, ymax=meff0+Emeff0), width=0.002)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('a m_0^2'), y= TeX('$m_{eff}$') )
+gg <- gg+theme_bw()
+
+plot(gg)
 ```
 
 # Two particle energy
@@ -159,24 +186,13 @@ plot(gg)
 
 ```{r echo=FALSE}
 
-kable(df[,c(1,2,7,8,26,27,28,29,30,31)])
-
-colors <- c("a_0" = "blue", "a_1" = "red", "a_01"="black")
-
-#gg <- ggplot(df, aes(x=msq0, y=a_0,color ="a_0")) + geom_point() 
-#gg <- gg +geom_errorbar(aes(ymin=a_0-a_0err, ymax=a_0+a_0err,  color="a_0"), width=0.005)  
-#gg <- gg+ geom_point( aes(x=msq0, y=a_1, color="a_1")) 
-#gg <- gg +geom_errorbar(aes(ymin=a_1-a_1err, ymax=a_1+a_1err , color="a_1"),  width = 0.005)  
-
-gg <- ggplot(df, aes(x=msq0, y=a_01,color ="a_01"))
-gg <- gg+ geom_point( aes(x=msq0, y=a_01, color="a_01")) 
-gg <- gg +geom_errorbar(aes(ymin=a_01-a_01err, ymax=a_01+a_01err , color="a_01"),  width = 0.005) 
-gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+kable(df[,c(1,2,7,8,30,31)])
 
 
-gg <- gg+ labs(x = TeX('a m_0^2'), y= TeX('$a$') )
-
-
+gg <- ggplot(df, aes(x=msq0, y=a_01,color =as.factor(L), shape=as.factor(msq1) )) + geom_point(size=3) 
+gg <- gg +geom_errorbar(aes(x=msq0, ymin=a_01-a_01err, ymax=a_01+a_01err), width=0.002)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('a m_0^2'), y= TeX('$a_{N\\pi}$') )
 gg <- gg+theme_bw()
 
 plot(gg)

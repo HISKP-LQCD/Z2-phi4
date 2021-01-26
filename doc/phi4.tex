@@ -5,9 +5,11 @@
  \usepackage{amsfonts}
  \usepackage{amssymb}
  \usepackage{graphicx}
+ \usepackage{tcolorbox}
  \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
  \begin{document}
- Lagrangian
+ 
+ \section{Lagrangian}
  \begin{align}
  & {\cal L}= {\cal L}_0+ {\cal L}_1+  {\cal L}_{IZ_2} \\
  &{\cal L}_0= \frac{1}{2} \partial_\mu \varphi_0\partial_\mu \varphi_0 +\frac{1}{2}m_0 \varphi_0^2 +\lambda_0 \varphi_0^4 \\
@@ -33,5 +35,103 @@ With
  \begin{align}
 \mu=\frac{\mu_L}{4\kappa_0\kappa_1} \,,\quad g=\frac{g_L}{4\sqrt{\kappa_0}\kappa_1^{3/2}}
  \end{align}
+ 
+\section{BH four point function}
+ 
+
+
+$$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1
+$$
+
+\subsection{Spectral Decomposition for $t_1<t_2<t_3<t_4$}
+
+\begin{itemize}
+
+\item Numerator
+\begin{gather}
+\langle \phi_0(t_1)\phi_1(t_2)\phi_1(t_3) \phi_0(t_4)\rangle=\\
+ \sum_{i,j,k}\frac{1}{ 2 m_j 2 m_k}e^{-(T-t_1)E_i} e^{-t_1E_j}\langle i| \phi_0 | j\rangle\langle j|  \phi_1(t_2)\phi_1(t_3) 
+ | k\rangle\langle k|  \phi_0 |i\rangle e^{-(E_i-E_k)t_4}\\
+\end{gather}
+in the limit $T-t_1\to \infty$ and setting $t_4=0$
+\begin{gather}
+ \sum_{j,k}\frac{1}{ 2 m_j 2 m_k}\langle 0| \phi_0 | j\rangle  e^{-t_1E_j} \langle j|   \phi_1(t_2)\phi_1(t_3) 
+ | k\rangle  \langle k| \phi_0 | 0\rangle  \\
+ = \sum_{j,k}\frac{1}{ 2 m_j 2 m_k}\langle 0| \phi_0 | j\rangle  e^{-(t_1-t_2)E_j} \langle j|   \phi_1 e^{-(t_2-t_3)H}\phi_1 
+ | k\rangle  e^{- t_3 E_k} \langle k| \phi_0 | 0\rangle
+\end{gather}
+Assuming $t_1-t_2>>0$ and $t_3>>0$ the states $|j\rangle =| \pi\rangle$ and 
+$|k\rangle =| \pi\rangle$ so we get
+\begin{gather}
+=\frac{1}{ 2 m_\pi 2 m_\pi}|\langle 0| \phi_0 | \pi\rangle|^2  e^{-(t_1-t_2)E_{\pi}}e^{- t_3 E_\pi}  \langle \pi|   \phi_1 e^{-(t_2-t_3)H}\phi_1 
+ | \pi\rangle  
+\end{gather}
+Setting  $t_1=T/2$, $t_2=t$ and $t_3=T/8$
+\begin{gather}
+\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle=
+\frac{1}{ 2 m_\pi 2 m_\pi}|\langle 0| \phi_0 | \pi\rangle|^2  e^{-\frac{T}{2}E_{\pi}}e^{- (\frac{T}{8}-t) E_\pi}  \langle \pi|   \phi_1 e^{-(t-\frac{T}{8})H}\phi_1 
+ | \pi\rangle  
+\end{gather}
+
+ \item Denominator 0
+$$
+\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle = \frac{1}{m_\pi}|\langle 0| \phi_0 | \pi\rangle|^2  e^{-\frac{T}{2}E_\pi}
+$$
+Where we have summed both the forward and backward signal
+
+ \item Denominator 1
+$$
+\langle \phi_1(t) \phi_1(\frac{T}{8})\rangle = \frac{1}{2m_N}|\langle 0| N | \pi\rangle|^2  \left(e^{- (t-\frac{T}{8})E_N}+  e^{(T-t+\frac{T}{8})E_N}  \right)
+=\frac{1}{2m_N}|\langle 0| N | \pi\rangle|^2  e^{- (t-\frac{T}{8})E_N}
+$$
+We can ignore the second term since $T/8<t<T/2$
+
+\end{itemize}
+
+Putting the various pieces toghether we get
+\begin{gather}
+C_4^{BH}=\frac{m_N}{ 2 m_\pi }\frac{
+  e^{ (t-\frac{T}{8})(E_N-E\pi)} \langle \pi|   \phi_1 e^{-(t-\frac{T}{8})H}\phi_1 
+ | \pi\rangle  
+}{
+ |\langle 0| N | \pi\rangle|^2  
+}-1
+\end{gather}
+\begin{tcolorbox}
+{To be compared with the expression on the  paper BH:
+ \begin{multline}
+\label{eq:cThetaNpiDef}
+c^{\Theta, N \pi}_{\vec q_1' \vec q_2' \vec q_1 \vec q_2}(t', t \vert \, M_0) \equiv \frac{ 2 \omega_{\vec q_2'} e^{\omega_{\vec q_2'} t' } 2 \omega_{\vec q_2 } e^{- \omega_{\vec q_2 } t } }{Z_N} C_{a'b'} C_{ab} \, \\
+\times \langle \pi^{a'} , \vec q_1' \vert \widetilde N^{b'}_{ \vec q_2'}(0) \, \Theta(\hat M - M_0, \Delta) \, e^{- \hat H(t' - t)} e^{ \omega_{\vec q_1'} t'} e^{ - \omega_{\vec q_1} t} \, \widetilde N^{\dagger b}_{-\vec q_2}(0) \vert \pi^{a}, \vec q_1 \rangle \,.
+\nonumber
+\end{multline}
+}
+\end{tcolorbox}
+
+\begin{tcolorbox}
+where $\omega_{\vec q} = \sqrt{\vec q^2 + m_\pi^2}$ and $Z_\pi = \langle \pi, \vec p \vert \pi(0) \vert 0 \rangle^2$. Here the single particle state has the usual relativistic normalization, $\langle \pi, \vec q \vert \pi, \vec q' \rangle = 2 \omega_{\vec q} (2 \pi)^3 \delta^3(\vec q - \vec q')$.
+\end{tcolorbox}
+Comparing the two equation above we get 
+\begin{equation}
+8m_\pi m_N C_4^{BH}=  c^{\Theta, N \pi}_{\vec q_1' \vec q_2' \vec q_1 \vec q_2}(t', t \vert \, M_0)
+\end{equation}
+ 
+ \begin{tcolorbox}
+ To be compared with the expression on the  paper BH:
+ \begin{multline}
+c^{\Theta, N \pi}_{\vec 0}(t', t \vert \, M_0) _{\sf c} = 8 \pi (m_N + m_\pi) \, a_{N\pi} \, (t' - t ) \\
+- 16 \, a_{N \pi}^2 \sqrt{2 \pi (m_N + m_\pi) m_N m_\pi (t'-t)} + \mathcal O \big ((t'-t)^0\big) \,.\nonumber
+\end{multline}
+ \end{tcolorbox}
+Finally our formula become 
+
+\begin{multline}
+ C_4^{BH}=  \frac{1}{8m_\pi m_N}\left[ 8 \pi (m_N + m_\pi) \, a_{N\pi} \, (t' - t ) 
+- 16 \, a_{N \pi}^2 \sqrt{2 \pi (m_N + m_\pi) m_N m_\pi (t'-t)} + \mathcal O \big ((t'-t)^0\big) \right]\,.\nonumber
+\end{multline} 
+ 
+ 
+ 
  
  \end{document} 
