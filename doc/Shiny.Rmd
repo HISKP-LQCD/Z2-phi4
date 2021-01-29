@@ -1,0 +1,315 @@
+---
+title: "Untitled"
+author: "Marco Garofalo"
+date: "1/26/2021"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+library(htmlwidgets)
+library(pander)
+library(latex2exp)
+library(knitr)
+panderOptions('knitr.auto.asis', FALSE)
+```
+
+```{r , echo=FALSE}
+set_xmargin<- function(fit_range, T){
+  xmin <-fit_range[1]-7
+  xmax <-fit_range[2]+7
+  if (xmin<0 ){ xmin<-0}
+  if (xmax>T ){ xmax<-T}
+  c(xmin,xmax)
+}
+
+#####################################################################
+#####################################################################
+
+myggplot<-function(d,fit, fit_range,T){
+  
+  gg <- ggplot(d, aes(x=d[,1], y=d[,2])) + geom_point() 
+  #gg  <- gg + xlim(set_xmargin(fit_range,T) ) + ylim(fit[1,1]-15*fit[1,2], fit[1,1]+15*fit[1,2]) 
+  gg <- gg +geom_errorbar(aes(ymin=d[,2]-d[,3], ymax=d[,2]+d[,3]),  width = 1)  
+  gg <- gg+ labs(x = 't', y= 'y')
+  # plot orizontal line with fit 
+  gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1], xend = fit_range[2], yend = fit[1,1]) , linetype="dashed", color = "red")
+  gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1]-fit[1,2], xend = fit_range[2], yend = fit[1,1]-fit[1,2]) , linetype="solid", color = "red")
+  gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1]+fit[1,2], xend = fit_range[2], yend = fit[1,1]+fit[1,2]) , linetype="solid", color = "red")
+  gg <- gg+theme_bw()
+  s<- sprintf("%.6f",fit[1,1])
+  err<- sprintf("%.6f",fit[1,2])
+  
+  
+  pander(paste0("  fit: $m_{eff}=",s,"\\pm",err,"$")) 
+  #plot(gg)
+  return(gg)
+}
+#####################################################################
+#####################################################################
+
+my_fit_ggplot<-function(d,fit_par, fit_range,T){
+  
+   l<- length(d[1,])
+   fit_precision<- (l -2)/3  # the number of x of the fits
+   mydf <-data.frame('x'=c(0), 'y'=c(0), 'err'=c(0)
+                     ,'xfit'=c(0), 'fit'=c(0), 'errfit'=c(0) )
+   mydf<- mydf[-1,]
+  # 
+   colx <- c(1,c(1:fit_precision*3))[-2] # 1, 6, 9, 12,..#columns of the x
+   colf <- c(4,c(1:fit_precision*3+1))[-2]# 4, 7, 10, 13,..#columns of the fit
+   colferr <- c(5,c(1:fit_precision*3+2))[-2]# 5, 8, 11, 14,..#columns of the fit
+   count<-1
+   for(i in c(1:fit_precision)) {
+     for (t in c(1: length(d[,1])) ){
+       mylist  <-  list(d[t,1],d[t,2], d[t,3]  ) 
+       mylist  <- append(mylist, list( d[t,colx[i]],d[t,colf[i]], d[t,colferr[i]]  ) )
+       mydf[count,]<- mylist
+       count<-count+1
+     }
+   }
+   gg <- ggplot(mydf, aes(x=x, y=y)) + geom_point() 
+   gg <- gg +geom_errorbar(aes(ymin=y-err, ymax=y+err),  width = 0.3)  
+  # 
+   gg <- gg +geom_ribbon( aes(x=xfit, ymin=fit-errfit,ymax=fit+errfit ), color="red",alpha=0.3) 
+   gg <- gg+ geom_line( aes(x=fit_range[1]), color="gray", linetype="dashed") 
+   gg <- gg+ geom_line( aes(x=fit_range[2]), color="gray", linetype="dashed") 
+  # 
+  #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
+  # 
+  # 
+  gg <- gg+theme_bw()
+  len<-length(fit_par[1,])  /2-1
+  for(i in c(1:len )  ){
+    if(! is.na(fit_par[1,i*2])) {
+       s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
+       err<- sprintf("%.6f",fit_par[1,i*2])
+       pander(paste0("$",s,"\\pm ",err,"$ ")) 
+     }
+   }
+   
+   
+  return(gg)
+} 
+
+```
+
+
+```{r , echo=FALSE, results="asis"}
+inputPanel(
+  selectInput("L", label = "L",
+              choices =as.integer( c(10, 20,40)), selected = 20),
+  selectInput("T", label = "T",
+              choices =as.integer( c(24, 48,96)), selected = 48),
+  selectInput("msq0", label = "msq0",
+              choices = c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0), selected = -4.925),
+  selectInput("msq1", label = "msq1",
+              choices =c(-4.9,-4.89,-4.85), selected = -4.85),
+  selectInput("l0", label = "$\\lambda_0$",
+              choices =c(2.5), selected = 2.5),
+  selectInput("l1", label = "lambda_1",
+              choices =c(2.5), selected = 2.5),
+  selectInput("mu", label = "mu",
+              choices =c(5), selected = 5),
+  selectInput("g", label = "g",
+              choices =c(0.0), selected = 0),
+   selectInput("rep", label = "rep",
+              choices =c(0,1), selected = 0),
+   selectInput("Obs", label = "Obs",
+              choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3","C4_BH","E2_01"), selected = "C4_BH")
+  
+)
+```
+
+```{r, echo=FALSE}
+file<-reactive({
+  T<-as.integer(input$T)
+  L<-as.integer(input$L)
+  msq0<-as.double(input$msq0)
+  msq1<-as.double(input$msq1)
+  l0<-as.double(input$l0)
+  l1<-as.double(input$l1)
+  mu<-as.double(input$mu)
+  g <- as.double(input$g)
+  rep<-as.integer(input$rep)
+  dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+  
+  file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",                         dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
+  return(file)
+})
+index<-reactive({
+  if (input$Obs=="meff0")   { n<- 2         }
+  if (input$Obs=="meff1")    n<- 3
+  if (input$Obs=="E2_0")    n<- 4
+  if (input$Obs=="E2_1")    n<- 5
+  if (input$Obs=="E2")      n<- 6
+  if (input$Obs=="E3_0")    n<- 7
+  if (input$Obs=="E3_1")    n<- 8
+  if (input$Obs=="E3")    n<- 9
+  if (input$Obs=="C4_BH")    {n<- 13  }
+  if (input$Obs=="E2_01")    {n<- 20  }
+
+  return (n)
+})
+plot_routine<-reactive({
+  if (input$Obs=="meff0")   { fun<-  myggplot         }
+  if (input$Obs=="meff1")    fun<-  myggplot 
+  if (input$Obs=="E2_0")    fun<-  myggplot 
+  if (input$Obs=="E2_1")    fun<-  myggplot 
+  if (input$Obs=="E2")      fun<-  myggplot 
+  if (input$Obs=="E3_0")    fun<-  my_fit_ggplot 
+  if (input$Obs=="E3_1")    fun<-  my_fit_ggplot 
+  if (input$Obs=="E3")      fun<-  my_fit_ggplot 
+  if (input$Obs=="C4_BH")   fun<-  my_fit_ggplot 
+  if (input$Obs=="E2_01")   { fun<-  my_fit_ggplot  }
+  return (fun)
+})
+
+```
+
+```{r, echo=FALSE}
+gg<-reactive({  
+  file<-file()
+  n<-index()
+  T<-as.integer(input$T)
+  columns_file<-c(1:20)  
+  block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
+                     col.names =columns_file)
+  block_full <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
+                            comment.char = "",   col.names = columns_file)
+  l<-grep("fit",block_full[,2])
+   
+  meff <- data.frame('ave'=c(0), 'err'=c(0))
+  len<- length(block[,1])
+  a1<-gsub("\\[","c\\(", block_full[l,4][n])
+  a2<-gsub("\\]","\\)", a1)
+  fit_range <- eval(parse(text=a2))
+  
+  # store in fit the fit value
+  fit <- block[(n*( T/2)),]
+  data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:8])
+  #plot data
+  d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
+  tmp<-plot_routine()
+  gg<-tmp(data,fit,fit_range,T/2)
+  
+  
+  #plot(gg)
+  return(gg)
+})
+
+
+mass_tables<-reactive({  
+
+    df<- data.frame(  "meff0"=c(0), "Emeff0"=c(0), "meff1"=c(0) , "Emeff1"=c(0) , "E_01"=c(0),
+                      "errorE_01"=c(0))
+   
+    file<-file()
+    T<-as.integer(input$T)
+    columns_file<-c(1:20)  
+    block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
+                      col.names =columns_file)
+    fit <- block[(2*(T/2)),]
+    fit1<- block[(3*(T/2)),]
+    fit01<- block[(20*(T/2)),]
+    df[ 1,]<- list( fit[1,1], fit[1,2],fit1[1,1], fit1[1,2],fit01[1,1], fit01[1,2] )
+    return(df)
+})
+```
+
+```{r, echo=FALSE}
+#renderDataTable( mass_tables() )
+renderTable( mass_tables(),digit=-4 )
+```
+
+
+```{r , echo=FALSE, results="asis"}
+ggly<-reactive({
+  ggly<-ggplotly(gg())
+  return(ggly)
+})
+
+  
+  
+  renderPrint({file()})
+  #renderPlot(gg())
+  renderPlotly(ggly())
+  
+  
+  mypl<-renderText({"$m_0^2=$"})
+  mypl()
+
+```
+
+
+
+# Full Table
+
+```{r echo=FALSE, warning=FALSE}
+
+df_tot<- data.frame(  "L"=c(0),"T"=c(0),
+                  "meff0"=c(0), "Emeff0"=c(0), "meff1"=c(0) , "Emeff1"=c(0) ,
+                  "msq0"=c(0), "msq1"=c(0),
+                  "lambda0"=c(0) , "lambda1"=c(0),
+                  "mu"=c(0), "g"=c(0), "rep"=c(0),
+                  "E2_0"=c(0),"E2_0err"=c(0),
+                  "E2_1"=c(0),"E2_1err"=c(0),
+                  "E2"=c(0),"E2err"=c(0),
+                  "E3_0"=c(0),"E3_0err"=c(0),
+                  "E3_1"=c(0),"E3_1err"=c(0),
+                  "E3"=c(0),"E3err"=c(0),
+                  "a_0"=c(0),"a_0err"=c(0),
+                  "a_1"=c(0),"a_1err"=c(0),
+                  "a_01"=c(0),"a_01err"=c(0))
+count<-1
+for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
+  for (msq1 in c(-4.9,-4.89,-4.85)){
+    for (msq0 in c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0)){
+      for (l0 in c(2.5)){  
+        for (l1 in c(2.5)){    
+          for (mu in c(5.0)){    
+            for (g in c(0)){
+              for (L in c(10,20,40)){
+                for (T in c(24,48)){
+                  for (rep in c(0)){
+                    file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
+                                 dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
+                    if (file.exists(file1)){
+                      
+   
+    
+    columns_file<-c(1:20)  
+    mylist<- list(  L,T)
+    block <- read.table(file1,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
+                      col.names =columns_file)
+    fit <- block[(2*(T/2)),]
+    fit1<- block[(3*(T/2)),]
+    mylist  <- append(mylist, list(fit[1,1], fit[1,2],fit1[1,1], fit1[1,2]) )
+    mylist  <-append(mylist, list(msq0, msq1, l0,l1,mu,g,rep ))
+    fit <- block[(5*(T/2)),]
+    fit1<- block[(6*(T/2)),]
+    mylist  <- append(mylist, list(fit[1,1], fit[1,2],fit1[1,1], fit1[1,2]) )
+    fit <- block[(6*(T/2)),]
+    fit1<- block[(7*(T/2)),]
+    mylist  <- append(mylist, list(fit[1,1], fit[1,2],fit1[1,1], fit1[1,2]) )
+    fit <- block[(8*(T/2)),]
+    fit1<- block[(9*(T/2)),]
+    mylist  <- append(mylist, list(fit[1,1], fit[1,2],fit1[1,1], fit1[1,2]) )
+    fit <- block[(10*(T/2)),]
+    fit1<- block[(11*(T/2)),]
+    mylist  <- append(mylist, list(fit[1,1], fit[1,2],fit1[1,1], fit1[1,2]) )
+     fit <- block[(12*(T/2)),]
+    fit1<- block[(13*(T/2)),]
+    mylist  <- append(mylist, list(fit[1,1], fit[1,2],fit1[1,1], fit1[1,2]) )
+    df_tot[count,] <-mylist
+    count<- count+1
+    
+                    }
+                
+                  }}}}}}}}}}
+renderDataTable( df_tot )
+```

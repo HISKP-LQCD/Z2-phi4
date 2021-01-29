@@ -74,7 +74,7 @@ my_fit_ggplot<-function(d,fit_par, fit_range,n,T, log='no'){
   count<-1
   for(i in c(1:fit_precision)) {
     for (t in c(1: length(d[,1])) ){
-      mylist  <-  list(d$x[t],d$y[t], d$err[t]  ) 
+      mylist  <-  list(d[t,1],d[t,2], d[t,3]  ) 
       mylist  <- append(mylist, list( d[t,colx[i]],d[t,colf[i]], d[t,colferr[i]]  ) )
       mydf[count,]<- mylist
       count<-count+1
@@ -1196,11 +1196,11 @@ $$C_4^{BH}=\frac{1}{8m_0 m_1} \left( 8\pi(m_0^2+m_1^2) P[0] \tilde{t} + 16 P[1] 
       # store in fit the fit value
       fit <- block[(n*(T/2)),]
       
-      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:5])
+      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:8])
       
       d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
                       "fit"=(data[[4]]),"errfit"=(data[[5]]))
-      my_fit_ggplot(d,fit,fit_range,n,T/2)
+      my_fit_ggplot(data,fit,fit_range,n,T/2)
       
       mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
     }
@@ -1290,7 +1290,7 @@ with the fit parameters $E_{N\pi}= P[0]$ , $A_{N\pi\to0}=P[1]$ and $A_{\pi\to N}
       
       d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
                       "fit"=(data[[4]]),"errfit"=(data[[5]]))
-      my_fit_ggplot(d,fit,fit_range,n,T/2, log='yes')
+      my_fit_ggplot(data,fit,fit_range,n,T/2, log='yes')
       
       mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
     }

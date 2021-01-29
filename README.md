@@ -41,6 +41,15 @@ copy the example for the infile (example.in) and create the output directory. Th
    ./main -i example.in
 ```
 
+## Tips
+
+for the GPU pascal of Qbig you need at least 25 local metropolis step to
+saturate the bandwith 
+```
+metropolis_local_hits = 25
+```
+
+
 ## Output
 
 ### Configurations

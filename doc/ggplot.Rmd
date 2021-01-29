@@ -188,7 +188,6 @@ plot(gg)
 
 kable(df[,c(1,2,7,8,30,31)])
 
-
 gg <- ggplot(df, aes(x=msq0, y=a_01,color =as.factor(L), shape=as.factor(msq1) )) + geom_point(size=3) 
 gg <- gg +geom_errorbar(aes(x=msq0, ymin=a_01-a_01err, ymax=a_01+a_01err), width=0.002)  
 #gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)

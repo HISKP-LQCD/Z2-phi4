@@ -55,7 +55,7 @@ my_fit_ggplot<-function(d,fit_par, fit_range,n,T){
   count<-1
   for(i in c(1:fit_precision)) {
     for (t in c(1: length(d[,1])) ){
-      mylist  <-  list(d$x[t],d$y[t], d$err[t]  ) 
+      mylist  <-  list(d[t,1],d[t,2], d[t,3]  ) 
       mylist  <- append(mylist, list( d[t,colx[i]],d[t,colf[i]], d[t,colferr[i]]  ) )
       mydf[count,]<- mylist
       count<-count+1
@@ -245,7 +245,7 @@ for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
         for (l1 in c(2.5)){    
           for (mu in c(5.0)){    
             for (g in c(0)){
-              for (L in c(10,20)){
+              for (L in c(10,20,40)){
                 for (T in c(24,48)){
                   for (rep in c(0)){
                     file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
