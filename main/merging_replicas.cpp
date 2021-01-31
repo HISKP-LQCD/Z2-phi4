@@ -21,9 +21,10 @@
 #include <fstream>
 #include <memory>
 //#include "IO_params.hpp"
-
-
-
+using namespace std;
+std::vector<int> replicas;
+std::vector<int> seeds;
+std::vector<int> confs;
 namespace cluster {
 
 struct LatticeDataContainer { // Just the thing that holds all variables
@@ -214,6 +215,8 @@ public:
 
 } // end of n
 
+
+
 int read_nconfs( FILE *stream, cluster::IO_params params){
 
    long int tmp;
@@ -268,8 +271,9 @@ void read_header(FILE *stream, cluster::IO_params &params ){
      fread(&params.data.cluster_min_size, sizeof(double), 1, stream); 
 
      fread(&params.data.seed, sizeof(int), 1, stream); 
+     seeds.emplace_back(params.data.seed);
      fread(&params.data.replica, sizeof(int), 1, stream); 
-     
+     replicas.emplace_back(params.data.replica);
      
     
      fread(&params.data.ncorr, sizeof(int), 1, stream); 
@@ -281,6 +285,8 @@ void read_header(FILE *stream, cluster::IO_params &params ){
      params.data.header_size=ftell(stream);
      printf("header size=%d\n",params.data.header_size);
 }
+
+
 
 
 void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
@@ -303,77 +309,134 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.cluster_hits, sizeof(int), 1, f_conf); 
      fwrite(&params.data.cluster_min_size, sizeof(double), 1, f_conf); 
 
-     fwrite(&params.data.seed, sizeof(int), 1, f_conf); 
+     fwrite(&params.data.seed, sizeof(int), 1, f_conf);
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
-     
-     
      
      fwrite(&params.data.ncorr, sizeof(int), 1, f_conf); 
      
-     
      fwrite(&params.data.size, sizeof(size_t), 1, f_conf); 
+}
 
+
+
+template <typename T>
+void error_header(FILE *f_conf, T expected, const char *message){
+     T read;
+     fread(&read, sizeof(T), 1, f_conf);
+     if (read != expected){
+         cout <<"error:" << message << "   read=" << read << "  expected="<< expected << endl; 
+//         printf("error: %s read=%d   expected %d \n",message,rconf,iconf);
+         exit(2);
+     }
+}
+void check_header(FILE *f_conf, cluster::IO_params &params ){
+
+     error_header(f_conf,params.data.L[0],"L0" ); 
+     error_header(f_conf,params.data.L[1],"L1" ); 
+     error_header(f_conf,params.data.L[2],"L2" ); 
+     error_header(f_conf,params.data.L[3],"L3" ); 
+
+     char string[100];
+     fread(&string, sizeof(char)*100, 1, f_conf); 
+     if (strcmp(params.data.formulation.c_str() ,string ) ){
+         printf("error: formulation read=%s   expected %s \n",string,params.data.formulation.c_str());
+         exit(2);
+     }
+     
+
+     error_header(f_conf,params.data.msq0,"msq0" ); 
+     error_header(f_conf,params.data.msq1,"msq1" ); 
+     error_header(f_conf,params.data.lambdaC0,"lambdaC0" ); 
+     error_header(f_conf,params.data.lambdaC1,"lambdaC1" ); 
+     error_header(f_conf,params.data.muC,"muC" ); 
+     error_header(f_conf,params.data.gC,"gC" ); 
+     
+     error_header(f_conf,params.data.metropolis_local_hits,"metropolis_local_hits" ); 
+     error_header(f_conf,params.data.metropolis_global_hits,"metropolis_global_hits" ); 
+     error_header(f_conf,params.data.metropolis_delta,"metropolis_delta" ); 
+     error_header(f_conf,params.data.cluster_hits,"cluster_hits" ); 
+     error_header(f_conf,params.data.cluster_min_size,"cluster_min_size" ); 
+     int tmp;
+     //error_header(f_conf,params.data.seed,"seed" ); 
+     fread(&tmp, sizeof(int), 1, f_conf);
+     for (int &s : seeds){
+         if(s==tmp) {
+             printf("error two replicas have the same seed\n"); exit(1);
+        }
+     }
+     seeds.emplace_back(tmp);
+     
+     fread(&tmp, sizeof(int), 1, f_conf);
+     for (int &s : replicas){
+         if(s==tmp) {
+             printf("error you select two identical replicas\n"); exit(1);
+        }
+         
+    }
+    replicas.emplace_back(tmp);
+     
+     //error_header(f_conf,params.data.replica,"replica" ); 
+     
+     //error_header(f_conf,iconf,"iconf" ); 
+     error_header(f_conf,params.data.ncorr,"ncorr" ); 
+     error_header(f_conf,params.data.size,"size" );
+     
+    
 }
 
 
 int main(int argc, char **argv){
    
-    if (argc!=3) {
-        printf("\nusage:   ./binning_contraction  fine  bin_size\n\n");
+    if (argc<3) {
+        printf("\nusage:   ./meargin_replicas  file1  file2 ...\n\n");
         exit(0);
     }
-    
+      
    char namefile[10000];
    cluster::IO_params params;
-   
+  
    
    sprintf(namefile,"%s",argv[1]);
-   FILE *infile=NULL;
-   infile=fopen(namefile,"r+");
-   if (infile==NULL) {printf("can not open contraction file \n"); exit(1);}
-   read_header(infile,params);   
-    
-   int confs=read_nconfs( infile,  params);
-   int bin=atoi(argv[2]);
-   int Neff=confs/bin;
+   FILE **infiles=NULL;
+   infiles=(FILE**) malloc(sizeof(FILE*)*(argc-1));
+   infiles[0]=NULL;
+   infiles[0]=fopen(namefile,"r+");
+   if (infiles[0]==NULL) {printf("can not open contraction file \n"); exit(1);}
+   read_header(infiles[0],params); 
+   confs.emplace_back( read_nconfs( infiles[0],  params)  ); 
+    printf("argc=%d\n",argc);
+
    
-   sprintf(namefile,"%s_bin%d",argv[1],bin);
-   FILE *outfile=NULL;
-   outfile=fopen(namefile,"w+");
-   if (outfile==NULL) {printf("can not open binning output file file\n %s \n",namefile); exit(1);}
-   write_header_measuraments(outfile,params);   
+   for (int r=1 ;r < (argc-1);r++){
+      infiles[r]=NULL;
+      infiles[r]=fopen(argv[1+r],"r+"); 
+      if (infiles[r]==NULL) {printf("can not open contraction file \n"); exit(1);}
+      check_header(infiles[r],params  )  ;
+      confs.emplace_back( read_nconfs( infiles[r],  params)  );    
+   }
    
+   sprintf(namefile,"%s_merged",argv[1]);
+   FILE *outfile = fopen(namefile, "w+"); 
+   if (outfile==NULL) {printf("can not open output file \n"); exit(1);}  
    
-   double *in_data=(double*) malloc(sizeof(double)*(params.data.size));
-   double *out_data=(double*) calloc(params.data.size,sizeof(double));
-   
+   write_header_measuraments(outfile,params);
+   double *data=(double*) malloc(sizeof(double)*(params.data.size));
    int iii;
-   int ib=0;
-   for (int i=1;i<=confs;i++){  
-       fread(&iii,sizeof(int),1,infile);
-       fread(in_data,sizeof(double),params.data.size, infile); 
-       for (int j=0;j<params.data.size;j++){
-             out_data[j]+=in_data[j];
-             
+   for (int r=0 ;r < (argc-1);r++){
+       for(int iconf=0; iconf < confs[r];iconf++){
+           fread(&iii,sizeof(int),1,infiles[r]);
+           fread(data,sizeof(double),params.data.size, infiles[r]);
+           fwrite(&iii,sizeof(int),1,outfile);
+           fwrite(data,sizeof(double),params.data.size,outfile);
+            
        }
-       if ((i%(bin))==0){
-             for (int j=0;j<params.data.size;j++)
-                out_data[j]/=(double) bin;
-             fwrite(&ib,sizeof(int),1,outfile);
-             fwrite(out_data,sizeof(double),params.data.size,outfile);
-             for (int j=0;j<params.data.size;j++){
-                out_data[j]=0;
-             }
-             ib++;
-        }
+        fclose(infiles[r]);
    }
    fclose(outfile);
-   fclose(infile);
-   
-   printf("binned output:\n  %s\n",namefile);
   
-   free(in_data);free(out_data);
+   free(data);
    
- 
-    return 0;   
+       
 }
+ 
+    
