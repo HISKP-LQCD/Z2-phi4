@@ -7,6 +7,9 @@ require(ggplot2)
 require(scales) # to access break formatting functions
 library(latex2exp)
 library(pander)
+library(dplyr)
+
+if(!exists("foo", mode="function")) source("Rread_block.R")
 
 panderOptions('knitr.auto.asis', FALSE)
 
@@ -21,10 +24,10 @@ set_xmargin<- function(fit_range, T){
 #####################################################################
 
 myggplot<-function(d,fit, fit_range,n,T){
-  
-  gg <- ggplot(d, aes(x=x, y=y)) + geom_point() 
+
+  gg <- ggplot(d, aes(x=d[,1], y=d[,2])) + geom_point() 
   gg  <- gg + xlim(set_xmargin(fit_range,T) ) + ylim(fit[1,1]-15*fit[1,2], fit[1,1]+15*fit[1,2]) 
-  gg <- gg +geom_errorbar(aes(ymin=y-err, ymax=y+err),  width = 1)  
+  gg <- gg +geom_errorbar(aes(ymin=d[,2]-d[,3], ymax=d[,2]+d[,3]),  width = 1)  
   gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$m_{eff}$'))
   # plot orizontal line with fit 
   gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1], xend = fit_range[2], yend = fit[1,1]) , linetype="dashed", color = "red")
@@ -62,6 +65,7 @@ my_fit_ggplot<-function(d,fit_par, fit_range,n,T){
     }
     
   }
+  
   #get the extra column in a single dataframe 
   #mydf <-data.frame('x'=c(d$x,d$x), 'y'=c(d$y,d$y), 'err'=c(d$err,d$err),  'xfit'=c(d$x,d$xp), 'fit'=c(d$fit,d$fitp), 'errfit'=c(d$errfit,d$errfitp) )  
   gg <- ggplot(mydf, aes(x=x, y=y)) + geom_point() 
@@ -95,35 +99,40 @@ my_fit_ggplot<-function(d,fit_par, fit_range,n,T){
   #pander(paste0("  fit: $m_{eff}=",s,"\\pm",err,"$")) 
   plot(gg)
 }
+
+
 #####################################################################
 #####################################################################
-plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
-  columns_file<-c(1:20)  
-  block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
-                      col.names =columns_file)
-  block_full <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1, comment.char = "",   col.names = columns_file)
-  l<-grep("fit",block_full[,2])
+plot_two_comp_new<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
   
-  meff <- data.frame('ave'=c(0), 'err'=c(0))
-  len<- length(block[,1])
+  #block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=FALSE,skip=1,
+  #                    col.names =columns_file)
+  #block_full <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1, comment.char = "",   col.names = columns_file)
+  
+  
+  mt<-read_df(file)
+  
+  lr<- length(mt[,1])
+  
+  l<-grep("fit",mt[,3])
+  
+  len<- mt[lr,1]
   count<-1
   mylist<- list(  L,T)
   
   cat('\n\n#### Mass  \n\n')
   for (n in c(2,3)){
-    if (len >= (n*(T/2)-1)){
+    
+    
+    if (len >= 2*n+1){
       cat('index n=',n%%2,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
       
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
+      d<- get_block_n(mt,n)
+      fit<- get_fit_n(mt,n)
+      fit_range<- get_plateaux_range(mt,n)
       
-      data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:3])
-      #plot data
-      d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
       myggplot(d,fit,fit_range,n,T/2) 
+      
       #meff[count,]<- list(fit[1,1],fit[1,2])
       mylist  <- append(mylist, list(fit[1,1],fit[1,2]) )
       count <- count+1
@@ -136,18 +145,14 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
   
   cat('\n\n#### Two particle energy  \n\n')
   for (n in c(5,6,7)){
-    if (len >= (n*(T/2)-1)){
+    
+    if (len >= 2*n+1){
+      
       cat('index n=',n-5,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
+      d<- get_block_n(mt,n)
+      fit<- get_fit_n(mt,n)
+      fit_range<- get_plateaux_range(mt,n)
       
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:3])
-      #plot data
-      d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
       myggplot(d,fit,fit_range,n,T/2) 
       
       mylist  <- append(mylist, list(fit[1,1],fit[1,2]) )
@@ -158,22 +163,14 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
   
   cat('\n\n#### Three particle energy  \n\n')
   for (n in c(8,9,10) ){    #
-    if (len >= (n*(T/2)-1)){
+     if (len >= 2*n+1){
+      
       cat('index n=',n-8,'\n\n')
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
-      
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),])
-      
-      d <- data.frame("x"=data[[1]],"y"=abs(data[[2]]),"err"=abs(data[[3]]),
-                      "fit"=abs(data[[4]]),"errfit"=abs(data[[5]]), 
-                      "xp"=abs(data[[6]]), "fitp"=abs(data[[7]]), "errfitp"= abs(data[[8]]) )
-      
-      #my_fit_ggplot(d,fit,fit_range,n,T/2)
+      d<- get_block_n(mt,n)
+      fit<- get_fit_n(mt,n)
+      fit_range<- get_plateaux_range(mt,n)
+       
+      my_fit_ggplot(d,fit,fit_range,n,T/2)
       
       mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
     }
@@ -184,22 +181,16 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
   
   cat('\n\n#### C4_BH  \n\n')
   for (n in c(11,12,13) ){   # c(11,12,13,14,15,16,17,18)
-    if (len >= (n*(T/2)-1)){
-      cat('index n=',n-11,block_full[l,1][n] ,'\n\n')
+   
+    if (len >= 2*n+1){
       
-      a1<-gsub("\\[","c\\(", block_full[l,4][n])
-      a2<-gsub("\\]","\\)", a1)
-      fit_range <- eval(parse(text=a2))
+      cat('index n=',n-11 ,'\n\n')
       
-      # store in fit the fit value
-      fit <- block[(n*(T/2)),]
-      
-      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:5])
-      
-      d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
-                      "fit"=(data[[4]]),"errfit"=(data[[5]]))
+      d<- get_block_n(mt,n)
+      fit<- get_fit_n(mt,n)
+      fit_range<- get_plateaux_range(mt,n)
       if(n==13)
-      my_fit_ggplot(d,fit,fit_range,n,T/2)
+        my_fit_ggplot(d,fit,fit_range,n,T/2)
       
       mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
     }
@@ -207,6 +198,24 @@ plot_two_comp<- function(file,df,T,L,msq0,msq1,l0,l1,mu,g,rep ){
     count<-count+1
   }
   
+  
+  cat('\n\n#### $E_{N\\pi}$  \n\n')
+  for (n in c(20) ){   # c(11,12,13,14,15,16,17,18)
+    
+    if (len >= 2*n){
+      
+      cat('index n=',n-11 ,'\n\n')
+      
+      d<- get_block_n(mt,n)
+      fit<- get_fit_n(mt,n)
+      fit_range<- get_plateaux_range(mt,n)
+      my_fit_ggplot(d,fit,fit_range,n,T/2)
+      
+     # mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
+    }
+    #else mylist  <-append(mylist, list("NaN","NaN") )
+    count<-count+1
+  }
   
   #append to df
   count=length(df[,1])             
@@ -262,7 +271,7 @@ for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
                       pander(paste0("$g^2 = ", g,"\\quad$"))
                       pander(paste0("replica = ", rep,' '))
                       cat("\n\n")
-                      df<-plot_two_comp(file,df, T, L ,msq0,msq1,l0,l1,mu,g,rep )
+                      df<-plot_two_comp_new(file,df, T, L ,msq0,msq1,l0,l1,mu,g,rep )
                       
                       
                       

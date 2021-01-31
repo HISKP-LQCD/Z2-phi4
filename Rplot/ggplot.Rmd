@@ -9,7 +9,11 @@ output:
     latex_engine: xelatex
 vignette: "%\\VignetteIndexEntry{gplots} %\\VignetteEngine{knitr::rmarkdown} \\usepackage[utf8]{inputenc}
   \ \n"
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
+
 ```{r setup, include=FALSE}
 library(knitr)
 
@@ -23,49 +27,58 @@ library(pander)
 panderOptions('knitr.auto.asis', FALSE)
 ```
 
-
 The plots for each ensemble are
 
- - effective mass meff0 from $\langle \phi_0(t) \phi_0(0)\rangle$
- - effective mass meff1 from $\langle \phi_1(t) \phi_1(0)\rangle$
-   - meff is extracted fitting the correlator as 
-    $$
-    c_1(t)=|A_{1-0}|^2 \exp(-M \frac{T}{2}) \cosh\left(M (t-\frac{T}{2})\right) 
-    $$
- - Two particle energy for $\langle \phi_0^2(t) \phi_0^2(0)\rangle$
- - Two particle energy for $\langle \phi_1^2(t) \phi_1^2(0)\rangle$
- - Two particle energy for $\langle \phi^2(t) \phi^{*2}(0)\rangle$
-   - The two particle energy $E_2$ is extracted from the correlator 
-    $$
-     c_2(t)=|A_{2-0}|^2 \exp(-E_2 \frac{T}{2}) \cosh\left(E_2 (t-\frac{T}{2})\right)+
-     |A_{1-1}|^2 \exp(-M T).
-    $$
-    to remove the extra term $|A_{1-1}|^2 \exp(-M T)$ we take the difference 
-     $$
-     \tilde{c}_2(t)=c(t)-c(t+1)=|A_{2-0}|^2 \exp(-E_2 \frac{T}{2}) \sinh\left(E_2 (t-\frac{T-1}{2})\right).
-    $$
-    The third correlator is constructed with the complex field  
- $$
-     \phi=\phi_0+i\phi_1
- $$
- - Two particle energy for $\langle \phi_0^3(t) \phi_0^3(0)\rangle$
- - Two particle energy for $\langle \phi_1^3(t) \phi_1^3(0)\rangle$
- - Two particle energy for $\langle \phi^3(t) \phi^{*3}(0)\rangle$
-   - The three particle energy $E_3$ is extracted from the correlator 
-    $$
-     c_3(t)=|A_{3-0}|^2 \exp(-E_3 \frac{T}{2}) \cosh\left(E_3 (t-\frac{T}{2})\right)+\\
-     |A_{2-1}|^2 \exp(-(E_2+M) \frac{T}{2}) \cosh\left((E_2-M) (t-\frac{T}{2})\right).
-    $$
- - BH four point function $\langle \phi_0(\frac{T}{2})\phi_0(t)\phi_0(\frac{T}{8}) \phi_0(0)\rangle$
- - BH four point function $\langle \phi_1(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_1(0)\rangle$
- - BH four point function $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
-{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
- 
+-   effective mass meff0 from $\langle \phi_0(t) \phi_0(0)\rangle$
 
+-   effective mass meff1 from $\langle \phi_1(t) \phi_1(0)\rangle$
+
+    -   meff is extracted fitting the correlator as $$
+         c_1(t)=|A_{1-0}|^2 \exp(-M \frac{T}{2}) \cosh\left(M (t-\frac{T}{2})\right) 
+         $$
+
+-   Two particle energy for $\langle \phi_0^2(t) \phi_0^2(0)\rangle$
+
+-   Two particle energy for $\langle \phi_1^2(t) \phi_1^2(0)\rangle$
+
+-   Two particle energy for $\langle \phi^2(t) \phi^{*2}(0)\rangle$
+
+    -   The two particle energy $E_2$ is extracted from the correlator
+        $$
+        c_2(t)=|A_{2-0}|^2 \exp(-E_2 \frac{T}{2}) \cosh\left(E_2 (t-\frac{T}{2})\right)+
+        |A_{1-1}|^2 \exp(-M T).
+         $$ to remove the extra term $|A_{1-1}|^2 \exp(-M T)$ we take
+        the difference $$
+        \tilde{c}_2(t)=c(t)-c(t+1)=|A_{2-0}|^2 \exp(-E_2 \frac{T}{2}) \sinh\left(E_2 (t-\frac{T-1}{2})\right).
+         $$ The third correlator is constructed with the complex field\
+        $$
+        \phi=\phi_0+i\phi_1
+         $$
+
+-   Two particle energy for $\langle \phi_0^3(t) \phi_0^3(0)\rangle$
+
+-   Two particle energy for $\langle \phi_1^3(t) \phi_1^3(0)\rangle$
+
+-   Two particle energy for $\langle \phi^3(t) \phi^{*3}(0)\rangle$
+
+    -   The three particle energy $E_3$ is extracted from the correlator
+        $$
+        c_3(t)=|A_{3-0}|^2 \exp(-E_3 \frac{T}{2}) \cosh\left(E_3 (t-\frac{T}{2})\right)+\\
+        |A_{2-1}|^2 \exp(-(E_2+M) \frac{T}{2}) \cosh\left((E_2-M) (t-\frac{T}{2})\right).
+         $$
+
+-   BH four point function
+    $\langle \phi_0(\frac{T}{2})\phi_0(t)\phi_0(\frac{T}{8}) \phi_0(0)\rangle$
+
+-   BH four point function
+    $\langle \phi_1(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_1(0)\rangle$
+
+-   BH four point function
+    $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+    {\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
 
 ```{r  echo=FALSE, results="asis",code=readLines("ggplot.R")}
 ```
-
 
 # Masses
 
@@ -95,7 +108,6 @@ gg <- gg+theme_bw()
 plot(gg)
 
 ```
-
 
 ```{r}
 
@@ -151,7 +163,6 @@ plot(gg)
 
 ```
 
-
 # Three particle energy
 
 ```{r echo=FALSE}
@@ -197,13 +208,9 @@ gg <- gg+theme_bw()
 plot(gg)
 ```
 
-
-
-
-# to be compared with the result of the paper  https://arxiv.org/abs/1806.02367
+# to be compared with the result of the paper <https://arxiv.org/abs/1806.02367>
 
 ```{r echo=FALSE}
 paper_table <- read.table("paper_data.txt",fill = TRUE , blank.lines.skip=TRUE,skip=0)
 kable(paper_table)
 ```
-
