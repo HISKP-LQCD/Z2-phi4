@@ -44,24 +44,24 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
         double phi_n = phi(comp_n,x);
         // compute the neighbour sum
         double neighbourSum = 0.0;
-	//x=x3+ x2*L3+x1*L2*L3 + x0*L1*L2*L3  
+    	//x=x3+ x2*L3+x1*L2*L3 + x0*L1*L2*L3  
         // direction  0
-	size_t xp=x /(params.data.L[3]* params.data.L[2]*params.data.L[1]);
+        size_t xp=x /(params.data.L[3]* params.data.L[2]*params.data.L[1]);
         size_t xm=x+( -xp+ (xp+params.data.L[0]- 1)%params.data.L[0]  )*( params.data.L[3]* params.data.L[2]*params.data.L[1]);
         xp=x+(- xp+  (xp+1)%params.data.L[0]) *( params.data.L[3]* params.data.L[2]*params.data.L[1]) ;
         neighbourSum += phi(comp, xp ) + phi(comp,xm );
         // direction 1
-	xp=(x %(params.data.L[3]* params.data.L[2]*params.data.L[1])) / (params.data.L[3]* params.data.L[2] );
+        xp=(x %(params.data.L[3]* params.data.L[2]*params.data.L[1])) / (params.data.L[3]* params.data.L[2] );
         xm=x+( -xp+ (xp+params.data.L[1]- 1)%params.data.L[1]  )*( params.data.L[3]* params.data.L[2]);
         xp=x+(- xp+  (xp+1)%params.data.L[1]) *( params.data.L[3]* params.data.L[2]) ;
         neighbourSum += phi(comp, xp ) + phi(comp,xm );
         // direction 3
-	xp=(x %(params.data.L[3]));
+        xp=(x %(params.data.L[3]));
         xm=x+( -xp+ (xp+params.data.L[3]- 1)%params.data.L[3]  );
         xp=x+(- xp+  (xp+1)%params.data.L[3])  ;
         neighbourSum += phi(comp, xp ) + phi(comp,xm );
         // direction 2
-	xp=(x %(params.data.L[3]*params.data.L[2]  ))/params.data.L[3];
+        xp=(x %(params.data.L[3]*params.data.L[2]  ))/params.data.L[3];
         xm=x+( -xp+ (xp+params.data.L[2]- 1)%params.data.L[2]  )*params.data.L[3];
         xp=x+(- xp+  (xp+1)%params.data.L[2]) *params.data.L[3] ;
         neighbourSum += phi(comp, xp ) + phi(comp,xm );
