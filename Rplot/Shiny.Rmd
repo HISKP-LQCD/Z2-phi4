@@ -4,6 +4,10 @@ author: "Marco Garofalo"
 date: "1/26/2021"
 output: html_document
 runtime: shiny
+resource_files:
+- data/G2t_T24_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_output
+- data/G2t_T24_L10_msq0-4.950000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_output
+- data/G2t_T24_L10_msq0-4.950000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep1_output
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +21,7 @@ library(latex2exp)
 library(knitr)
 library(dplyr) #data frame manipulation
 require(scales) # to access break formatting functions
-
+library(shiny)
 panderOptions('knitr.auto.asis', FALSE)
 ```
 
@@ -83,8 +87,8 @@ my_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no"){
      mydf[,6]<- mydf[,6]/mydf[,5]
      mydf<-mutate_at(mydf,c(2,5) ,function(x) log10(x))
    }
-   gg <- gg+ scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x)))
+   #gg <- gg+ scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+    #            labels = trans_format("log10", math_format(10^.x)))
    
 
    
@@ -114,6 +118,32 @@ my_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no"){
    
   return(gg)
 } 
+#####################################################################
+#####################################################################
+
+residual<-function(d,fit_par, fit_range,T, logscale="no"){
+  
+
+
+   
+   gg <- ggplot(d, aes(x=d[,1], y=(d[,2] -d[,4] )   ) ) + geom_point() 
+   gg <- gg +geom_errorbar(aes(ymin=d[,2]-d[,4]-d[,3], ymax=d[,2]-d[,4]+d[,3]),  width = 0.3)  
+  #
+
+   #gg <- gg +geom_ribbon( aes(x=xfit, ymin=fit-errfit,ymax=fit+errfit ), color="red",alpha=0.3) 
+   gg <- gg+ geom_line( aes(x=fit_range[1]), color="gray", linetype="dashed") 
+   gg <- gg+ geom_line( aes(x=fit_range[2]), color="gray", linetype="dashed") 
+  
+   
+  # 
+  #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
+  # 
+  # u
+  gg <- gg+theme_bw()
+  
+  return(gg)
+} 
+
 
 ```
 
@@ -137,12 +167,13 @@ inputPanel(
   selectInput("g", label = "g",
               choices =c(0.0), selected = 0),
   selectInput("rep", label = "rep",
-              choices =c(0,1,2), selected = 0),
+              choices =c(0,1,2), selected = 1),
   selectInput("Obs", label = "Obs",
-              choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3","C4_BH","E2_01"), selected = "C4_BH"),
+              choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                         "C4_BH","E2_01", "meff(E2_01)"),
+              selected = "C4_BH"),
   selectInput("logscale", label = "logscale",
               choices =c("no","yes"), selected = "no")
-  
   
 )
 ```
@@ -159,24 +190,43 @@ file<-reactive({
   g <- as.double(input$g)
   rep<-as.integer(input$rep)
   dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+  #dir <- "Data" 
   
   file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",                         dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
   return(file)
 })
+file_meff<-reactive({
+  T<-as.integer(input$T)
+  L<-as.integer(input$L)
+  msq0<-as.double(input$msq0)
+  msq1<-as.double(input$msq1)
+  l0<-as.double(input$l0)
+  l1<-as.double(input$l1)
+  mu<-as.double(input$mu)
+  g <- as.double(input$g)
+  rep<-as.integer(input$rep)
+  dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+  #dir <- "Data" 
+  
+  file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_meff_correlators",                         dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
+  return(file)
+})
+
 
 n_and_plot<-reactive({
-  if (input$Obs=="meff0")   { n<- 2 ;fun<-  myggplot             }
-  if (input$Obs=="meff1")    {n<- 3 ;fun<-  myggplot     }
-  if (input$Obs=="E2_0")  {  n<- 4;fun<-  myggplot     }
-  if (input$Obs=="E2_1")  {  n<- 5; fun<-  myggplot     }
-  if (input$Obs=="E2")    {  n<- 6; fun<-  myggplot     }
-  if (input$Obs=="E3_0")  {  n<- 7; fun<-  my_fit_ggplot     }
-  if (input$Obs=="E3_1")   { n<- 8; fun<-  my_fit_ggplot     }
-  if (input$Obs=="E3")    {n<- 9 ; fun<-  my_fit_ggplot     }
-  if (input$Obs=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot       }
-  if (input$Obs=="E2_01")    {n<- 20; fun<-  my_fit_ggplot       }
+  if (input$Obs=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
+  if (input$Obs=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
+  if (input$Obs=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
+  if (input$Obs=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
+  if (input$Obs=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
+  if (input$Obs=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
+  if (input$Obs=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
+  if (input$Obs=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
+  if (input$Obs=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
+  if (input$Obs=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
+  if (input$Obs=="meff(E2_01)")    {n<- 21; fun<-  my_fit_ggplot  ; nmeff<-12     }
 
-  return (c(n,fun))
+  return (c(n,fun, nmeff))
 })
 
 ```
@@ -225,8 +275,25 @@ gg_new<-reactive({
   #plot data
   tmp<-n_and_plot()[[2]]
   gg<-tmp(d,fit,fit_range,T/2,input$logscale)
-  
+
   #plot(gg)
+  return(gg)
+})
+gg_residual<-reactive({  
+  file<-file_meff()
+  n1<-n_and_plot()
+  n<-n1[[3]]
+  T<-as.integer(input$T)
+  mt<-read_df(file)
+  
+  d<- get_block_n(mt,n)
+  fit<- get_fit_n(mt,n)
+  fit_range<- get_plateaux_range(mt,n)
+  
+  #plot data
+  tmp<-n_and_plot()[[2]]
+  gg<-tmp(d,fit,fit_range,T/2, input$logscale)
+
   return(gg)
 })
 
@@ -250,8 +317,8 @@ mass_tables<-reactive({
 
 mass_tables_compact<-reactive({  
 
-    df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E_01"=c(0),    
-    "DE_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH"=c(0)    )
+    df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_01"=c(0),    
+    "DE2_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH_01"=c(0)    )
    
     file<-file()
     T<-as.integer(input$T)
@@ -270,12 +337,60 @@ mass_tables_compact<-reactive({
     return(df)
     
 })
+
+mass_tables_0<-reactive({  
+
+    df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_0"=c(0),    
+    "DE2_0"=c(0)   , "a_Luscher"=c(0)  , "a_BH_0"=c(0)    )
+   
+    file<-file()
+    T<-as.integer(input$T)
+
+    mt<-read_df(file)
+    fit<- get_fit_n(mt,2)
+    fit1<- get_fit_n(mt,3)
+    fit01<- get_fit_n(mt,5)
+    fitBH<- get_fit_n(mt,11)
+    df[ 1,]<- list( mean_print(fit[1,1], fit[1,2]), 
+                    mean_print(fit1[1,1], fit1[1,2]),
+                    mean_print(fit01[1,1], fit01[1,2]),
+                    mean_print(fit01[2,3], fit01[2,4]) ,
+                    mean_print(fit01[2,1], fit01[2,2]),
+                    mean_print(fitBH[1,1], fitBH[1,2])        )
+    return(df)
+    
+})
+
+mass_tables_1<-reactive({  
+
+    df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_1"=c(0),    
+    "DE2_0"=c(0)   , "a_Luscher"=c(0)  , "a_BH_1"=c(0)    )
+   
+    file<-file()
+    T<-as.integer(input$T)
+
+    mt<-read_df(file)
+    fit<- get_fit_n(mt,2)
+    fit1<- get_fit_n(mt,3)
+    fit01<- get_fit_n(mt,6)
+    fitBH<- get_fit_n(mt,12)
+    df[ 1,]<- list( mean_print(fit[1,1], fit[1,2]), 
+                    mean_print(fit1[1,1], fit1[1,2]),
+                    mean_print(fit01[1,1], fit01[1,2]),
+                    mean_print(fit01[2,3], fit01[2,4]) ,
+                    mean_print(fit01[2,1], fit01[2,2]),
+                    mean_print(fitBH[1,1], fitBH[1,2])        )
+    return(df)
+    
+})
 ```
 
 ```{r, echo=FALSE}
 #renderDataTable( mass_tables() )
 #renderTable( mass_tables(),digit=-4 )
 renderTable( mass_tables_compact())
+renderTable( mass_tables_0())
+renderTable( mass_tables_1())
 ```
 
 
@@ -284,20 +399,30 @@ ggly<-reactive({
   ggly<-ggplotly(gg_new())
   return(ggly)
 })
-
-  
   
   renderPrint({file()})
   #renderPlot(gg())
   renderPlotly(ggly())
   
+
+```
+
+##  Effective Mass correlator
+
+```{r , echo=FALSE, results="asis"}
+
+gg2ly<-reactive({
+  ggly<-ggplotly(gg_residual()) 
+  return(ggly)
+})
+  
+ renderPlotly(gg2ly())
+
   
   mypl<-renderText({"$m_0^2=$"})
   mypl()
 
 ```
-
-
 
 
 # Summary Table
@@ -315,6 +440,7 @@ df_tot_compact<- data.frame(  "L"=c(0),"T"=c(0),
                   "mu"=c(0), "g"=c(0), "rep"=c(0)  )
 count<-1
 for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
+#for (dir in c( "Data" )){  
   for (msq1 in c(-4.9,-4.89,-4.85)){
     for (msq0 in c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0)){
       for (l0 in c(2.5)){  
@@ -369,11 +495,18 @@ for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
     
                     }
                 
-                  }}}}}}}}}}
+}}}}}}}}}}
 renderDataTable( df_tot_compact )
 ```
 
 
+```{r echo=FALSE, warning=FALSE}
+#rows<-which(df_tot_compact["msq0"]==-4.925 & df_tot_compact["msq1"]==-4.85 )
+#xx <- c(10,20,40)
+#yy<-c(0.054,0.0014, 0.002)
+#dy<-c(0.022, 0.0036, 0.019)
+#wnlmod <- nls(yy ~ A * exp(B * xx), start = list(A = 1, B = -1), weights = dy^-2)
+```
 # Full Table
 
 ```{r echo=FALSE, warning=FALSE}
@@ -394,6 +527,7 @@ df_tot<- data.frame(  "L"=c(0),"T"=c(0),
                   "a_01"=c(0),"a_01err"=c(0))
 count<-1
 for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
+#for (dir in c( "Data" )){  
   for (msq1 in c(-4.9,-4.89,-4.85)){
     for (msq0 in c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0)){
       for (l0 in c(2.5)){  
