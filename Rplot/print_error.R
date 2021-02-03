@@ -53,5 +53,5 @@ mean_print<-function(ave,err){
   
 }
 ave=1.4
-err=0.4
-mean_print("aaa","bb")
+err=0.1*1000/1001
+mean_print(ave,err)

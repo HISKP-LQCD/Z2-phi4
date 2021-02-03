@@ -27,14 +27,18 @@ read_df<- function(file){
 get_block_n<- function(df,n){
   bo<-which(df[,1]==(n*2-1))
   data <- df[bo,-1]
-  data<-data[-grep("^#", data[,1])  ,  ]
+  if (!is_empty(grep("^#", data[,1]) ) ) {
+    data<-data[-grep("^#", data[,1])  ,  ]
+  }
   data<-mutate_all(data, function(x) as.numeric(as.character(x)))
   return(data)
 }
 get_fit_n<- function(df,n){
   be<-which(df[,1]==(n*2))
   data <- df[be,-1]
-  data<-data[-grep("^#", data[,1])  ,  ]
+  if (!is_empty(grep("^#", data[,1]) ) ){
+    data<-data[-grep("^#", data[,1])  ,  ]
+  }
   data<-mutate_all(data, function(x) as.numeric(as.character(x)))
   return(data)
 }
@@ -47,3 +51,9 @@ get_plateaux_range<-function(df,n){
   return(fit_range)
 }
 
+dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+#dir <- "Data" 
+
+file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_meff_correlators",
+             dir, 48, 20,  -4.925,  -4.85,  2.5,  2.5,  5,  0,  1)
+mt<-read_df(file)
