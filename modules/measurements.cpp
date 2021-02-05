@@ -170,14 +170,54 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=12;//number of correlators
+     int ncorr=14;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
      fwrite(&size, sizeof(size_t), 1, f_conf); 
 
 }
- 
+/////////////////////////////////////////////////
+ namespace sample {  // namespace helps with name resolution in reduction identity 
+   template< class ScalarType, int N >
+   struct array_type {
+     ScalarType the_array[N];
+  
+     KOKKOS_INLINE_FUNCTION   // Default constructor - Initialize to 0's
+     array_type() { 
+       for (int i = 0; i < N; i++ ) { the_array[i] = 0; }
+     }
+     KOKKOS_INLINE_FUNCTION   // Copy Constructor
+     array_type(const array_type & rhs) { 
+        for (int i = 0; i < N; i++ ){
+           the_array[i] = rhs.the_array[i];
+        }
+     }
+     KOKKOS_INLINE_FUNCTION   // add operator
+     array_type& operator += (const array_type& src) {
+       for ( int i = 0; i < N; i++ ) {
+          the_array[i]+=src.the_array[i];
+       }
+       return *this;
+     } 
+     KOKKOS_INLINE_FUNCTION   // volatile add operator 
+     void operator += (const volatile array_type& src) volatile {
+       for ( int i = 0; i < N; i++ ) {
+         the_array[i]+=src.the_array[i];
+       }
+     }
+   };
+   //momentum 0,1 for x,y,z  re_im
+   typedef array_type<double,7> ValueType;  // used to simplify code below
+}
+namespace Kokkos { //reduction identity must be defined in Kokkos namespace
+   template<>
+   struct reduction_identity< sample::ValueType > {
+      KOKKOS_FORCEINLINE_FUNCTION static sample::ValueType sum() {
+         return sample::ValueType();
+      }
+   };
+}
  
  
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,6 +243,37 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
        }
     }
 
+ /* 
+    sample::ValueType tr; 
+    for (int comp=0; comp<2;comp++){
+       for(int t=0; t<T; t++) {
+           h_phip(comp,t) = 0;
+           Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::ValueType & upd ) {
+               size_t i0= x+t*Vs;
+               int ix=x%params.data.L[1];
+               int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+
+               int iz=x /(Vs/params.data.L[3]);
+               double twopi=6.28318530718;//2.*3.1415926535;
+               upd.the_array[0]+=phi(comp,i0);
+               upd.the_array[1]+=phi(comp,i0)*(cos(twopi*ix /(double (params.data.L[1])) ));//mom1 x
+               upd.the_array[2]+=phi(comp,i0)*(sin(twopi*ix /(double (params.data.L[1])) ));
+               
+               upd.the_array[3]+=phi(comp,i0)*(cos(twopi*iy /(double (params.data.L[2])) ));//mom1 y
+               upd.the_array[4]+=phi(comp,i0)*(sin(twopi*iy /(double (params.data.L[2])) ));
+               
+               upd.the_array[5]+=phi(comp,i0)*(cos(twopi*iz /(double (params.data.L[3])) ));//mom1 z
+               upd.the_array[6]+=phi(comp,i0)*(sin(twopi*iz /(double (params.data.L[3])) ));
+               
+               
+               
+               
+           }, Kokkos::Sum<sample::ValueType>(tr)  );
+           h_phip(comp,t)=tr.the_array[0]/((double) Vs *norm[comp]);
+       }
+    }
+    */
+
     // now we continue on the host 
     for(int t=0; t<T; t++) {
         double G2t0=0;
@@ -217,6 +288,9 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         double C41=0;
         double C401=0;
         double C201=0;
+        double C2_0to1=0;
+        double four0totwo1=0;
+        double four0totwo0=0;
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
             double pp0=h_phip(0,t1) *h_phip(0 , tpt1);
@@ -241,6 +315,10 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
             C401+=h_phip(0,t1)*h_phip(1,(T/8+t1)%T )* h_phip(1,tpt1)*h_phip(0,(T/2+t1)%T );
             
             C201+=h_phip(0,t1)*h_phip(1,t1)  *  h_phip(0,tpt1)*h_phip(1,tpt1); 
+            C2_0to1+= h_phip(0,t1)*h_phip(0,t1) *  h_phip(1,tpt1)*h_phip(1,tpt1);
+            four0totwo1+= h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1) *     h_phip(1,tpt1)*h_phip(1,tpt1)   ;
+            four0totwo0+= h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1) *     h_phip(0,tpt1)*h_phip(0,tpt1)   ;
+
             
         } 
        
@@ -256,6 +334,8 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         C40/=((double) T);
         C401/=((double) T);
         C201/=((double) T);
+        four0totwo1/=((double) T);
+        four0totwo0/=((double) T);
         
         fwrite(&G2t0,sizeof(double),1,f_G2t);
         fwrite(&G2t1,sizeof(double),1,f_G2t);
@@ -269,6 +349,8 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         fwrite(&C41,sizeof(double),1,f_G2t); // 10 corr
         fwrite(&C401,sizeof(double),1,f_G2t);
         fwrite(&C201,sizeof(double),1,f_G2t);
+        fwrite(&four0totwo1,sizeof(double),1,f_G2t);
+        fwrite(&four0totwo0,sizeof(double),1,f_G2t);
     }
 
     
