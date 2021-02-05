@@ -234,11 +234,11 @@ int read_nconfs( FILE *stream, cluster::IO_params params){
    int c= (tmp)/ ( sizeof(int)+(s)*sizeof(double) );
 
    
-   std::cout<< "confs="<<c<<std::endl;
+    // std::cout<< "confs="<<c<<std::endl;
    fseek(stream, params.data.header_size, SEEK_SET);
    
-        printf("header size=%d\n",params.data.header_size);
-     printf("size=%ld\n",params.data.size);
+   //    printf("header size=%d\n",params.data.header_size);
+   //    printf("size=%ld\n",params.data.size);
 
    
    return c;
@@ -409,7 +409,8 @@ int main(int argc, char **argv){
    
    for (int r=1 ;r < (argc-1);r++){
       infiles[r]=NULL;
-      infiles[r]=fopen(argv[1+r],"r+"); 
+      infiles[r]=fopen(argv[1+r],"r+");
+      printf("considering file:  %s\n",argv[1+r] );
       if (infiles[r]==NULL) {printf("can not open contraction file \n"); exit(1);}
       check_header(infiles[r],params  )  ;
       confs.emplace_back( read_nconfs( infiles[r],  params)  );    
