@@ -13,7 +13,7 @@ d<-array(dim = c(header$ncorr, header$L[1], header$confs) )
 
 for (iconf in  c(1:header$confs)){
   configurations<-append(configurations, readBin(to.read, integer(),n = 1, endian = "little"))
-  for(t in c(1:header$L[1] -1) ){
+  for(t in c(1:header$L[1] ) ){
     for (corr in  c(1:header$ncorr)){
           d[corr, t, iconf]<-readBin(to.read, double(),n = 1, endian = "little")
       }
@@ -27,7 +27,7 @@ for (iconf in  c(1:header$confs)){
 #<phi1(t) phi1(0)>
 #in the cf hadron container and compute the effective mass
 mycf<-cf()
-for(i in c(12)) {
+for(i in c(1)) {
   mycf_tmp <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
   mycf_tmp <- cf_orig(mycf_tmp, cf = t(d[i, ,]))
   mycf_tmp <- symmetrise.cf(mycf_tmp, sym.vec = c(1))

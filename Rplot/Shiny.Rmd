@@ -22,131 +22,15 @@ library(knitr)
 library(dplyr) #data frame manipulation
 require(scales) # to access break formatting functions
 library(shiny)
+library(shinyWidgets)
 panderOptions('knitr.auto.asis', FALSE)
 ```
 
 ```{r , echo=FALSE}
 if(!exists("Rread_block.R", mode="function")) source("Rread_block.R")
 if(!exists("print_error.R", mode="function")) source("print_error.R")
-
-set_xmargin<- function(fit_range, T){
-  xmin <-fit_range[1]-7
-  xmax <-fit_range[2]+7
-  if (xmin<0 ){ xmin<-0}
-  if (xmax>T ){ xmax<-T}
-  c(xmin,xmax)
-}
-
-#####################################################################
-#####################################################################
-
-myggplot<-function(d,fit, fit_range,T,logscale="no"){
-  
-  gg <- ggplot(d, aes(x=d[,1], y=d[,2])) + geom_point() 
-  #gg  <- gg + xlim(set_xmargin(fit_range,T) ) + ylim(fit[1,1]-15*fit[1,2], fit[1,1]+15*fit[1,2]) 
-  gg <- gg +geom_errorbar(aes(ymin=d[,2]-d[,3], ymax=d[,2]+d[,3]),  width = 1)  
-  gg <- gg+ labs(x = 't', y= 'y')
-  # plot orizontal line with fit 
-  gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1], xend = fit_range[2], yend = fit[1,1]) , linetype="dashed", color = "red")
-  gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1]-fit[1,2], xend = fit_range[2], yend = fit[1,1]-fit[1,2]) , linetype="solid", color = "red")
-  gg <- gg+ geom_segment(aes(x = fit_range[1], y = fit[1,1]+fit[1,2], xend = fit_range[2], yend = fit[1,1]+fit[1,2]) , linetype="solid", color = "red")
-  gg <- gg+theme_bw()
-  s<- sprintf("%.6f",fit[1,1])
-  err<- sprintf("%.6f",fit[1,2])
-  
-  
-  pander(paste0("  fit: $m_{eff}=",s,"\\pm",err,"$")) 
-  #plot(gg)
-  return(gg)
-}
-#####################################################################
-#####################################################################
-
-my_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no"){
-  
-   l<- length(d[1,])
-   fit_precision<- 2 #(l -2)/3  # the number of x of the fits
-   mydf <-data.frame('x'=c(0), 'y'=c(0), 'err'=c(0)
-                     ,'xfit'=c(0), 'fit'=c(0), 'errfit'=c(0) )
-   mydf<- mydf[-1,]
-   # 
-   colx <- c(1,c(1:fit_precision*3))[-2] # 1, 6, 9, 12,..#columns of the x
-   colf <- c(4,c(1:fit_precision*3+1))[-2]# 4, 7, 10, 13,..#columns of the fit
-   colferr <- c(5,c(1:fit_precision*3+2))[-2]# 5, 8, 11, 14,..#columns of the fit
-   count<-1
-   for(i in c(1:fit_precision)) {
-     for (t in c(1: length(d[,1])) ){
-       mylist  <-  list(d[t,1],d[t,2], d[t,3]  ) 
-       mylist  <- append(mylist, list( d[t,colx[i]],d[t,colf[i]], d[t,colferr[i]]  ) )
-       mydf[count,]<- mylist
-       count<-count+1
-     }
-   }
-   if (logscale=="yes"){
-     mydf[,3]<- mydf[,3]/mydf[,2]
-     mydf[,6]<- mydf[,6]/mydf[,5]
-     mydf<-mutate_at(mydf,c(2,5) ,function(x) log10(x))
-   }
-   #gg <- gg+ scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-    #            labels = trans_format("log10", math_format(10^.x)))
-   
-
-   
-   gg <- ggplot(mydf, aes(x=x, y=y)) + geom_point() 
-   gg <- gg +geom_errorbar(aes(ymin=y-err, ymax=y+err),  width = 0.3)  
-  #
-
-   gg <- gg +geom_ribbon( aes(x=xfit, ymin=fit-errfit,ymax=fit+errfit ), color="red",alpha=0.3) 
-   gg <- gg+ geom_line( aes(x=fit_range[1]), color="gray", linetype="dashed") 
-   gg <- gg+ geom_line( aes(x=fit_range[2]), color="gray", linetype="dashed") 
-  
-   
-  # 
-  #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
-  # 
-  # 
-  gg <- gg+theme_bw()
-  len<-length(fit_par[1,])  /2-1
-  for(i in c(1:len )  ){
-    if(! is.na(fit_par[1,i*2])) {
-       s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
-       err<- sprintf("%.6f",fit_par[1,i*2])
-       pander(paste0("$",s,"\\pm ",err,"$ ")) 
-     }
-   }
-   
-   
-  return(gg)
-} 
-#####################################################################
-#####################################################################
-
-residual<-function(d,fit_par, fit_range,T, logscale="no"){
-  
-
-
-   
-   gg <- ggplot(d, aes(x=d[,1], y=(d[,2] -d[,4] )   ) ) + geom_point() 
-   gg <- gg +geom_errorbar(aes(ymin=d[,2]-d[,4]-d[,3], ymax=d[,2]-d[,4]+d[,3]),  width = 0.3)  
-  #
-
-   #gg <- gg +geom_ribbon( aes(x=xfit, ymin=fit-errfit,ymax=fit+errfit ), color="red",alpha=0.3) 
-   gg <- gg+ geom_line( aes(x=fit_range[1]), color="gray", linetype="dashed") 
-   gg <- gg+ geom_line( aes(x=fit_range[2]), color="gray", linetype="dashed") 
-  
-   
-  # 
-  #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
-  # 
-  # u
-  gg <- gg+theme_bw()
-  
-  return(gg)
-} 
-
-
+if(!exists("print_error.R", mode="function")) source("plot_routines.R")
 ```
-
 
 ```{r , echo=FALSE, results="asis"}
 inputPanel(
@@ -173,10 +57,45 @@ inputPanel(
                          "C4_BH","E2_01", "meff(E2_01)"),
               selected = "C4_BH"),
   selectInput("logscale", label = "logscale",
-              choices =c("no","yes"), selected = "no")
-  
+              choices =c("no","yes"), selected = "no"),
+  #checkboxGroupInput("manyObs", label = "Obs",
+  #            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+  #                       "C4_BH","E2_01", "meff(E2_01)"),
+  #            selected = "C4_BH"),
+  pickerInput(
+  inputId = "manyObs",
+  label = "Obs",
+  choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                         "C4_BH","E2_01", "meff(E2_01)"),
+  options = list(
+    `actions-box` = TRUE,
+    size = 10,
+    `selected-text-format` = "count > 3"
+    
+  ),
+  multiple = TRUE,
+  selected = "C4_BH"
 )
+)
+
 ```
+
+```{r, echo=FALSE}
+tmp<-reactive({
+  
+  return(input$manyObs)
+})
+
+tmp1<-reactive({
+  for (f in tmp()){
+    l<-f
+  }
+  return(f)
+})
+renderPrint(tmp())
+renderPrint(tmp1())
+```
+
 
 ```{r, echo=FALSE}
 file<-reactive({
@@ -232,35 +151,6 @@ n_and_plot<-reactive({
 ```
 
 ```{r, echo=FALSE}
-gg<-reactive({  
-  file<-file()
-  n<-index()
-  T<-as.integer(input$T)
-  columns_file<-c(1:20)  
-  block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
-                     col.names =columns_file)
-  block_full <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
-                            comment.char = "",   col.names = columns_file)
-  l<-grep("fit",block_full[,2])
-   
-  meff <- data.frame('ave'=c(0), 'err'=c(0))
-  len<- length(block[,1])
-  a1<-gsub("\\[","c\\(", block_full[l,4][n])
-  a2<-gsub("\\]","\\)", a1)
-  fit_range <- eval(parse(text=a2))
-  
-  # store in fit the fit value
-  fit <- block[(n*( T/2)),]
-  data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:8])
-  #plot data
-  #d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
-  tmp<-plot_routine()
-  gg<-tmp(data,fit,fit_range,T/2, input$logscale)
-  
-  
-  #plot(gg)
-  return(gg)
-})
 gg_new<-reactive({  
   file<-file()
   n1<-n_and_plot()
@@ -298,24 +188,8 @@ gg_residual<-reactive({
 })
 
 
-mass_tables<-reactive({  
 
-    df<- data.frame(  "meff0"=c(0), "Emeff0"=c(0), "meff1"=c(0) , "Emeff1"=c(0) ,      "E_01"=c(0),    "errorE_01"=c(0), 
-    "DE_01"=c(0),        "errorDE_01"=c(0)          )
-   
-    file<-file()
-    T<-as.integer(input$T)
-
-    mt<-read_df(file)
-    fit<- get_fit_n(mt,2)
-    fit1<- get_fit_n(mt,3)
-    fit01<- get_fit_n(mt,20)
-    df[ 1,]<- list( fit[1,1], fit[1,2],fit1[1,1], fit1[1,2],
-                    fit01[1,1], fit01[1,2],fit01[2,3], fit01[2,4] )
-    return(df)
-})
-
-mass_tables_compact<-reactive({  
+mass_tables_01<-reactive({  
 
     df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_01"=c(0),    
     "DE2_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH_01"=c(0)    )
@@ -386,13 +260,11 @@ mass_tables_1<-reactive({
 ```
 
 ```{r, echo=FALSE}
-#renderDataTable( mass_tables() )
-#renderTable( mass_tables(),digit=-4 )
-renderTable( mass_tables_compact())
+
+renderTable( mass_tables_01())
 renderTable( mass_tables_0())
 renderTable( mass_tables_1())
 ```
-
 
 ```{r , echo=FALSE, results="asis"}
 ggly<-reactive({
@@ -407,9 +279,13 @@ ggly<-reactive({
 
 ```
 
-##  Effective Mass correlator
+## Effective Mass correlator $\log \frac{c(t)}{c(t+1)}$
 
 ```{r , echo=FALSE, results="asis"}
+renderText({"correlator:"})
+
+renderText(input$Obs)
+
 
 gg2ly<-reactive({
   ggly<-ggplotly(gg_residual()) 
@@ -423,6 +299,78 @@ gg2ly<-reactive({
   mypl()
 
 ```
+
+
+
+```{r, echo=FALSE}
+
+n_and_plot_many<-function(input)({
+  if (input=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
+  if (input=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
+  if (input=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
+  if (input=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
+  if (input=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
+  if (input=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
+  if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
+  if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
+  if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
+  if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
+
+  return (c(n,fun, nmeff))
+})
+gg_many<-reactive({  
+  gg<- ggplot()
+  for (obs in input$manyObs){
+  file<-file()
+  n1<-n_and_plot_many(obs)
+  n<-n1[[1]]
+  T<-as.integer(input$T)
+  mt<-read_df(file)
+  
+  d<- get_block_n(mt,n)
+  fit<- get_fit_n(mt,n)
+  fit_range<- get_plateaux_range(mt,n)
+      
+  #plot data
+  tmp<-n1[[2]]
+  gg<- many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg)
+
+  #plot(gg)
+  }
+  return(gg)
+  
+})
+gg_residual<-reactive({  
+  file<-file_meff()
+  n1<-n_and_plot()
+  n<-n1[[3]]
+  T<-as.integer(input$T)
+  mt<-read_df(file)
+  
+  d<- get_block_n(mt,n)
+  fit<- get_fit_n(mt,n)
+  fit_range<- get_plateaux_range(mt,n)
+  
+  #plot data
+  tmp<-n_and_plot()[[2]]
+  gg<-tmp(d,fit,fit_range,T/2, input$logscale)
+
+  return(gg)
+})
+
+
+gg2ly_many<-reactive({
+  ggly<-ggplotly(gg_many()) 
+  return(ggly)
+})
+  
+renderPlotly(gg2ly_many())
+
+  
+
+```
+
+
 
 
 # Summary Table
@@ -499,7 +447,6 @@ for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
 renderDataTable( df_tot_compact )
 ```
 
-
 ```{r echo=FALSE, warning=FALSE}
 #rows<-which(df_tot_compact["msq0"]==-4.925 & df_tot_compact["msq1"]==-4.85 )
 #xx <- c(10,20,40)
@@ -507,6 +454,7 @@ renderDataTable( df_tot_compact )
 #dy<-c(0.022, 0.0036, 0.019)
 #wnlmod <- nls(yy ~ A * exp(B * xx), start = list(A = 1, B = -1), weights = dy^-2)
 ```
+
 # Full Table
 
 ```{r echo=FALSE, warning=FALSE}
