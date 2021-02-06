@@ -78,22 +78,21 @@ my_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no"){
   # 
   # 
   gg <- gg+theme_bw()
-  len<-length(fit_par[1,])  /2-1
-  for(i in c(1:len )  ){
-    if(! is.na(fit_par[1,i*2])) {
-      s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
-      err<- sprintf("%.6f",fit_par[1,i*2])
-      pander(paste0("$",s,"\\pm ",err,"$ ")) 
-    }
-  }
+  # len<-length(fit_par[1,])  /2-1
+  # for(i in c(1:len )  ){
+  #   if(! is.na(fit_par[1,i*2])) {
+  #     s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
+  #     err<- sprintf("%.6f",fit_par[1,i*2])
+  #     pander(paste0("$",s,"\\pm ",err,"$ ")) 
+  #   }
+  # }
   
   
   return(gg)
 } 
 #####################################################################
 #####################################################################
-icolor<-1
-many_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no", g){
+many_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no", g, mylabel){
   
   l<- length(d[1,])
   fit_precision<- 2 #(l -2)/3  # the number of x of the fits
@@ -121,35 +120,37 @@ many_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no", g){
   #gg <- gg+ scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
   #            labels = trans_format("log10", math_format(10^.x)))
   
-  gg <- g + geom_point(data=mydf,mapping=aes(x=x, y=y),inherit.aes = FALSE)
+  gg <- g + geom_point(data=mydf,mapping=aes(x=x, y=y,color=mylabel),inherit.aes = FALSE)
 
-  
-  gg <- gg +geom_errorbar(data=mydf, mapping=aes(x=x, ymin=y-err, ymax=y+err),
+  gg <- gg +geom_errorbar(data=mydf, mapping=aes(x=x, ymin=y-err, ymax=y+err,color=mylabel),
                           width = 0.3,inherit.aes = FALSE)  
   #
   
-  gg <- gg +geom_ribbon( data=mydf, mapping=aes(x=xfit, ymin=fit-errfit,ymax=fit+errfit ),
-                         color="darkgreen",alpha=0.3,fill="darkgreen",
-                         inherit.aes = FALSE) 
-  #gg <- gg+ geom_line(data=mydf, aes(x=fit_range[1]), color="red", linetype="dashed") 
-  #gg <- gg+ geom_line( data=mydf ,aes(x=fit_range[2]), color="red", linetype="dashed") 
-  gg<- gg + geom_vline(xintercept =fit_range[1],color="red", linetype="dashed" )
-  gg<- gg + geom_vline(xintercept =fit_range[2],color="red", linetype="dashed" )
+  gg <- gg +geom_ribbon( data=mydf, mapping=aes(x=xfit, ymin=fit-errfit,ymax=fit+errfit
+                                                ,color=mylabel,fill=mylabel)
+                         #, color="darkgreen"  
+                         ,alpha=0.3
+                         #,fill="darkgreen"    
+                         ,inherit.aes = FALSE) 
+  gg <- gg+ geom_line(data=mydf, aes(x=fit_range[1],y=y), color="black", linetype="dashed") 
+  gg <- gg+ geom_line( data=mydf ,aes(x=fit_range[2],y=y), color="black", linetype="dashed") 
+  #gg<- gg + geom_vline(xintercept =fit_range[1]     ,color="red"   , linetype="dashed" )
+  #gg<- gg + geom_vline(xintercept =fit_range[2],color="red"     , linetype="dashed" )
   
-  # 
+  #gg<- gg +geom_text(data=mydf, aes(x=x,y=y), label=mylabel) 
   #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
   # 
   # 
   gg <- gg+theme_bw()
-  len<-length(fit_par[1,])  /2-1
-  for(i in c(1:len )  ){
-    if(! is.na(fit_par[1,i*2])) {
-      s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
-      err<- sprintf("%.6f",fit_par[1,i*2])
-      pander(paste0("$",s,"\\pm ",err,"$ ")) 
-    }
-  }
-  
+  # len<-length(fit_par[1,])  /2-1
+  # for(i in c(1:len )  ){
+  #   if(! is.na(fit_par[1,i*2])) {
+  #     s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
+  #     err<- sprintf("%.6f",fit_par[1,i*2])
+  #     pander(paste0("$",s,"\\pm ",err,"$ ")) 
+  #   }
+  # }
+  # 
   
   return(gg)
 } 

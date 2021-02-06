@@ -23,6 +23,7 @@ library(dplyr) #data frame manipulation
 require(scales) # to access break formatting functions
 library(shiny)
 library(shinyWidgets)
+library(ggrepel)
 panderOptions('knitr.auto.asis', FALSE)
 ```
 
@@ -57,45 +58,42 @@ inputPanel(
                          "C4_BH","E2_01", "meff(E2_01)"),
               selected = "C4_BH"),
   selectInput("logscale", label = "logscale",
-              choices =c("no","yes"), selected = "no"),
-  #checkboxGroupInput("manyObs", label = "Obs",
-  #            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-  #                       "C4_BH","E2_01", "meff(E2_01)"),
-  #            selected = "C4_BH"),
-  pickerInput(
-  inputId = "manyObs",
-  label = "Obs",
-  choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                         "C4_BH","E2_01", "meff(E2_01)"),
-  options = list(
-    `actions-box` = TRUE,
-    size = 10,
-    `selected-text-format` = "count > 3"
-    
-  ),
-  multiple = TRUE,
-  selected = "C4_BH"
-)
+              choices =c("no","yes"), selected = "no")
+  
+#   pickerInput(
+#   inputId = "manyObs",
+#   label = "Obs",
+#   choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+#                          "C4_BH","E2_01", "meff(E2_01)"),
+#   options = list(
+#     `actions-box` = TRUE,
+#     size = 10,
+#     `selected-text-format` = "count > 3"
+#     
+#   ),
+#   multiple = TRUE,
+#   selected = "C4_BH"
+# )
 )
 
 ```
 
-```{r, echo=FALSE}
+```{r eval=FALSE, include=FALSE}
 tmp<-reactive({
   
   return(input$manyObs)
 })
 
 tmp1<-reactive({
-  for (f in tmp()){
-    l<-f
+  l<-list()
+  for (f in input$manyObs){
+    l<-append(l,f)
   }
-  return(f)
+  return(l)
 })
-renderPrint(tmp())
+renderPrint(input$manyObs)
 renderPrint(tmp1())
 ```
-
 
 ```{r, echo=FALSE}
 file<-reactive({
@@ -165,6 +163,7 @@ gg_new<-reactive({
   #plot data
   tmp<-n_and_plot()[[2]]
   gg<-tmp(d,fit,fit_range,T/2,input$logscale)
+  
 
   #plot(gg)
   return(gg)
@@ -266,7 +265,7 @@ renderTable( mass_tables_0())
 renderTable( mass_tables_1())
 ```
 
-```{r , echo=FALSE, results="asis"}
+```{r , echo=FALSE, results="asis", include=FALSE}
 ggly<-reactive({
   ggly<-ggplotly(gg_new())
   return(ggly)
@@ -279,9 +278,9 @@ ggly<-reactive({
 
 ```
 
-## Effective Mass correlator $\log \frac{c(t)}{c(t+1)}$
 
-```{r , echo=FALSE, results="asis"}
+
+```{r , echo=FALSE, results="asis", include=FALSE}
 renderText({"correlator:"})
 
 renderText(input$Obs)
@@ -300,10 +299,31 @@ gg2ly<-reactive({
 
 ```
 
-
+```{r, echo=FALSE}
+inputPanel(
+  
+  #checkboxGroupInput("manyObs", label = "Obs",
+  #            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+  #                       "C4_BH","E2_01", "meff(E2_01)"),
+  #            selected = "C4_BH"),
+  pickerInput(
+  inputId = "manyObs",
+  label = "Obs",
+  choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                         "C4_BH","E2_01"),
+  options = list(
+    `actions-box` = TRUE,
+    size = 10
+   ,`selected-text-format` = "count > 3"
+    
+  ),
+  multiple = TRUE,
+  selected = "C4_BH"
+)
+)
+```
 
 ```{r, echo=FALSE}
-
 n_and_plot_many<-function(input)({
   if (input=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
   if (input=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
@@ -318,11 +338,14 @@ n_and_plot_many<-function(input)({
 
   return (c(n,fun, nmeff))
 })
+
+
+
 gg_many<-reactive({  
   gg<- ggplot()
-  for (obs in input$manyObs){
+  for (myobs in input$manyObs){
   file<-file()
-  n1<-n_and_plot_many(obs)
+  n1<-n_and_plot_many(myobs)
   n<-n1[[1]]
   T<-as.integer(input$T)
   mt<-read_df(file)
@@ -332,17 +355,38 @@ gg_many<-reactive({
   fit_range<- get_plateaux_range(mt,n)
       
   #plot data
-  tmp<-n1[[2]]
-  gg<- many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg)
-
-  #plot(gg)
-  }
-  return(gg)
+  #gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
   
+  if(myobs=="meff0")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff0")
+  if(myobs=="meff1")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff1")
+  if(myobs=="E2_0")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_0")
+  if(myobs=="E2_1")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_1")
+  if(myobs=="E2")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2")
+  if(myobs=="E3_0")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_0")
+  if(myobs=="E3_1")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_1")
+  if(myobs=="E3")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3")
+  if(myobs=="C4_BH")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH")
+  if(myobs=="E2_01")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_01")
+  
+}
+  
+  return(gg)
 })
-gg_residual<-reactive({  
+gg_many_meff<-reactive({  
+ gg<- ggplot()
+  for (myobs in input$manyObs){
   file<-file_meff()
-  n1<-n_and_plot()
+  n1<-n_and_plot_many(myobs)
   n<-n1[[3]]
   T<-as.integer(input$T)
   mt<-read_df(file)
@@ -350,28 +394,51 @@ gg_residual<-reactive({
   d<- get_block_n(mt,n)
   fit<- get_fit_n(mt,n)
   fit_range<- get_plateaux_range(mt,n)
-  
+      
   #plot data
-  tmp<-n_and_plot()[[2]]
-  gg<-tmp(d,fit,fit_range,T/2, input$logscale)
+  #tmp<-tostring(myobs)
 
+  #gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
+  
+  if(myobs=="meff0")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff0")
+  if(myobs=="meff1")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff1")
+  if(myobs=="E2_0")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_0")
+  if(myobs=="E2_1")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_1")
+  if(myobs=="E2")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2")
+  if(myobs=="E3_0")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_0")
+  if(myobs=="E3_1")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_1")
+  if(myobs=="E3")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3")
+  if(myobs=="C4_BH")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH")
+  if(myobs=="E2_01")
+  gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_01")
+  
+}
+  
   return(gg)
 })
-
-
-gg2ly_many<-reactive({
-  ggly<-ggplotly(gg_many()) 
-  return(ggly)
-})
-  
-renderPlotly(gg2ly_many())
-
-  
-
 ```
 
 
+```{r echo=FALSE, warning=FALSE}
+renderPlotly(ggplotly(gg_many()  )  )
 
+```
+
+## Effective Mass correlator $\log \frac{c(t)}{c(t+1)}$
+
+```{r echo=FALSE, warning=FALSE}
+renderPlotly(ggplotly(gg_many_meff()  )  )
+
+```
 
 # Summary Table
 
@@ -521,4 +588,5 @@ for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
                 
                   }}}}}}}}}}
 renderDataTable( df_tot )
+
 ```
