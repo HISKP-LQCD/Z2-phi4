@@ -288,7 +288,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         double C41=0;
         double C401=0;
         double C201=0;
-        double C2_0to1=0;
+        double two0totwo1=0;
         double four0totwo1=0;
         double four0totwo0=0;
         for(int t1=0; t1<T; t1++) {
@@ -315,7 +315,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
             C401+=h_phip(0,t1)*h_phip(1,(T/8+t1)%T )* h_phip(1,tpt1)*h_phip(0,(T/2+t1)%T );
             
             C201+=h_phip(0,t1)*h_phip(1,t1)  *  h_phip(0,tpt1)*h_phip(1,tpt1); 
-            C2_0to1+= h_phip(0,t1)*h_phip(0,t1) *  h_phip(1,tpt1)*h_phip(1,tpt1);
+            two0totwo1+= h_phip(0,t1)*h_phip(0,t1) *  h_phip(1,tpt1)*h_phip(1,tpt1);
             four0totwo1+= h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1) *     h_phip(1,tpt1)*h_phip(1,tpt1)   ;
             four0totwo0+= h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1) *     h_phip(0,tpt1)*h_phip(0,tpt1)   ;
 
@@ -334,6 +334,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         C40/=((double) T);
         C401/=((double) T);
         C201/=((double) T);
+        two0totwo1/=((double) T);
         four0totwo1/=((double) T);
         four0totwo0/=((double) T);
         
@@ -349,6 +350,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         fwrite(&C41,sizeof(double),1,f_G2t); // 10 corr
         fwrite(&C401,sizeof(double),1,f_G2t);
         fwrite(&C201,sizeof(double),1,f_G2t);
+        fwrite(&two0totwo1,sizeof(double),1,f_G2t);
         fwrite(&four0totwo1,sizeof(double),1,f_G2t);
         fwrite(&four0totwo0,sizeof(double),1,f_G2t);
     }
