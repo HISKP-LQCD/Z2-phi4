@@ -170,7 +170,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=14;//number of correlators
+     int ncorr=15;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
@@ -352,7 +352,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         fwrite(&C201,sizeof(double),1,f_G2t);
         fwrite(&two0totwo1,sizeof(double),1,f_G2t);
         fwrite(&four0totwo1,sizeof(double),1,f_G2t);
-        fwrite(&four0totwo0,sizeof(double),1,f_G2t);
+        fwrite(&four0totwo0,sizeof(double),1,f_G2t);// 15 corr
     }
 
     
