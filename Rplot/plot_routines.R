@@ -134,8 +134,7 @@ many_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no", g, mylabel){
                          ,inherit.aes = FALSE) 
   gg <- gg+ geom_line(data=mydf, aes(x=fit_range[1],y=y), color="black", linetype="dashed") 
   gg <- gg+ geom_line( data=mydf ,aes(x=fit_range[2],y=y), color="black", linetype="dashed") 
-  #gg<- gg + geom_vline(xintercept =fit_range[1]     ,color="red"   , linetype="dashed" )
-  #gg<- gg + geom_vline(xintercept =fit_range[2],color="red"     , linetype="dashed" )
+  #gg  <- gg + xlim(set_xmargin(fit_range,128/2) ) + ylim(-2e+4, 1e+4) 
   
   #gg<- gg +geom_text(data=mydf, aes(x=x,y=y), label=mylabel) 
   #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
@@ -180,3 +179,14 @@ residual<-function(d,fit_par, fit_range,T, logscale="no"){
   return(gg)
 } 
 
+print_fit<- function(fit_par){
+len<-length(fit_par[1,])  /2-1
+ for(i in c(1:len )  ){
+   if(! is.na(fit_par[1,i*2])) {
+     s<- sprintf("P[%d]=%.6f ", i,fit_par[1,i*2-1])
+     err<- sprintf("%.6f",fit_par[1,i*2])
+     pander(paste0("$",s,"\\pm ",err,"$ ")) 
+   }
+ }
+ 
+}

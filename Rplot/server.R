@@ -157,7 +157,7 @@ shinyServer(function(input, output) {
             #plot data
             #tmp<-tostring(myobs)
             
-           # gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
+            gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
             
             if(myobs=="meff0")
                 gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff0")
@@ -189,7 +189,10 @@ shinyServer(function(input, output) {
         
     })
     output$plot_many<-renderPlotly({
-        ggplotly(gg_many())
+        ggplotly(gg_many(),dynamicTicks = TRUE)%>%
+        layout(   yaxis = list( showexponent = "all", exponentformat = "e")    )
+        #add the config if you want to zoom with the wheel of mouse
+        # ggplotly(gg_many(),dynamicTicks = TRUE) %>% config(scrollZoom = TRUE)
     })
     gg_many_meff<-reactive({  
         gg<- ggplot()
@@ -236,7 +239,8 @@ shinyServer(function(input, output) {
         return(gg)
     })
     output$plot_many_meff<-renderPlotly({
-        ggplotly(gg_many_meff())
+        ggplotly(gg_many_meff(),dynamicTicks = TRUE)%>%
+        layout(   yaxis = list( showexponent = "all", exponentformat = "e")    )
     })
     gg_many_raw<-reactive({  
         gg<- ggplot()
@@ -283,7 +287,8 @@ shinyServer(function(input, output) {
         return(gg)
     })
     output$plot_many_raw<-renderPlotly({
-        ggplotly(gg_many_raw())
+        ggplotly(gg_many_raw(),dynamicTicks = TRUE)%>%
+        layout(   yaxis = list( showexponent = "all", exponentformat = "e")    )
     })
     
     
