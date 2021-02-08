@@ -315,7 +315,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
             C401+=h_phip(0,t1)*h_phip(1,(T/8+t1)%T )* h_phip(1,tpt1)*h_phip(0,(T/2+t1)%T );
             
             C201+=h_phip(0,t1)*h_phip(1,t1)  *  h_phip(0,tpt1)*h_phip(1,tpt1); 
-            two0totwo1+= h_phip(0,t1)*h_phip(0,t1) *  h_phip(1,tpt1)*h_phip(1,tpt1);
+            two0totwo1+= h_phip(0,t1)*h_phip(0,t1)    *     h_phip(1,tpt1)*h_phip(1,tpt1);
             four0totwo1+= h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1) *     h_phip(1,tpt1)*h_phip(1,tpt1)   ;
             four0totwo0+= h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1)*h_phip(0,t1) *     h_phip(0,tpt1)*h_phip(0,tpt1)   ;
 
@@ -338,21 +338,21 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         four0totwo1/=((double) T);
         four0totwo0/=((double) T);
         
-        fwrite(&G2t0,sizeof(double),1,f_G2t);
+        fwrite(&G2t0,sizeof(double),1,f_G2t); // 0 c++  || 1 R 
         fwrite(&G2t1,sizeof(double),1,f_G2t);
         fwrite(&C2t0,sizeof(double),1,f_G2t);
         fwrite(&C2t1,sizeof(double),1,f_G2t);
-        fwrite(&C2t,sizeof(double),1,f_G2t); // 5 corr
-        fwrite(&C3t0,sizeof(double),1,f_G2t);
+        fwrite(&C2t,sizeof(double),1,f_G2t); // 4 c++  || 5 R 
+        fwrite(&C3t0,sizeof(double),1,f_G2t); // 5 c++  || 6 R 
         fwrite(&C3t1,sizeof(double),1,f_G2t);
         fwrite(&C3t,sizeof(double),1,f_G2t);
         fwrite(&C40,sizeof(double),1,f_G2t);
-        fwrite(&C41,sizeof(double),1,f_G2t); // 10 corr
-        fwrite(&C401,sizeof(double),1,f_G2t);
+        fwrite(&C41,sizeof(double),1,f_G2t); // 9 c++  || 10 R 
+        fwrite(&C401,sizeof(double),1,f_G2t);// 10 c++  || 11 R 
         fwrite(&C201,sizeof(double),1,f_G2t);
-        fwrite(&two0totwo1,sizeof(double),1,f_G2t);
+        fwrite(&two0totwo1,sizeof(double),1,f_G2t);  //12 c++  || 13 R 
         fwrite(&four0totwo1,sizeof(double),1,f_G2t);
-        fwrite(&four0totwo0,sizeof(double),1,f_G2t);// 15 corr
+        fwrite(&four0totwo0,sizeof(double),1,f_G2t);// 14 c++  || 15 R 
     }
 
     

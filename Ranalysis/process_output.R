@@ -1,7 +1,7 @@
 library(hadron)
 if(!exists("foo", mode="function")) source("read_header.R")
 
-to.read = file("/home/marco/analysis/phi4/tuning_masses/G2t_T48_L20_msq0-4.925000_msq1-4.850000_l02.500000_l12.500000_mu5.000000_g0.000000_rep123_bin10000", "rb")
+to.read = file("/home/marco/analysis/phi4/tuning_masses/G2t_T128_L20_msq0-4.925000_msq1-4.850000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_bin10000", "rb")
 
 #read the header in to the structure header
 header<-read_header(to.read)
@@ -27,7 +27,7 @@ for (iconf in  c(1:header$confs)){
 #<phi1(t) phi1(0)>
 #in the cf hadron container and compute the effective mass
 mycf<-cf()
-for(i in c(1)) {
+for(i in c(13)) {
   mycf_tmp <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
   mycf_tmp <- cf_orig(mycf_tmp, cf = t(d[i, ,]))
   mycf_tmp <- symmetrise.cf(mycf_tmp, sym.vec = c(1))

@@ -4,7 +4,7 @@ mean_print<-function(ave,err){
     s=sprintf("NA")
     return(s)
   }
-  if(!is.numeric(err) | is.na(err) ){
+  if(!is.numeric(err) | is.na(err) | err==0 ){
     s=sprintf("%g",ave)
     return(s)
   }  

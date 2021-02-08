@@ -77,7 +77,7 @@ my_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no"){
   #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
   # 
   # 
-  gg <- gg+theme_bw()
+  # gg <- gg+theme_bw()
   # len<-length(fit_par[1,])  /2-1
   # for(i in c(1:len )  ){
   #   if(! is.na(fit_par[1,i*2])) {
@@ -141,7 +141,7 @@ many_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no", g, mylabel){
   #gg <- gg+ labs(x = TeX('x_0/a'), y= TeX('$c(x_0/a)$'))
   # 
   # 
-  gg <- gg+theme_bw()
+   gg <- gg+theme_bw()
   # len<-length(fit_par[1,])  /2-1
   # for(i in c(1:len )  ){
   #   if(! is.na(fit_par[1,i*2])) {

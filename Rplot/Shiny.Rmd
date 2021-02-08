@@ -550,7 +550,7 @@ for (dir in c( "/home/marco/analysis/phi4/tuning_masses/out" )){
           for (mu in c(5.0)){    
             for (g in c(0)){
               for (L in c(10,20,40)){
-                for (T in c(24,48)){
+                for (T in c(24,48,128)){
                   for (rep in c(0,1,2)){
                     file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
                                  dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
