@@ -99,6 +99,11 @@ shinyUI(fluidPage(
                 plotlyOutput(outputId = "plot_many_meff", height ="600px"),
                 h2("Raw correlator"),
                 plotlyOutput(outputId = "plot_many_raw", height ="600px"),
+                h2("Shifeted correlator"),
+                plotlyOutput(outputId = "plot_many_shift", height ="600px"),
+                h2("log_meff Shifeted correlator"),
+                plotlyOutput(outputId = "plot_many_log_meff_shifted", height ="600px"),
+                
     ),
                 #####################################
                 tableOutput("mass_table_0"),
