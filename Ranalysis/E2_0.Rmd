@@ -1,0 +1,139 @@
+---
+title: "Cross check E2 with hadron"
+author: "Marco Garofalo"
+date: "2/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+```
+
+## Opening the file and loading libraries
+
+```{r }
+library(hadron)
+if(!exists("foo", mode="function")) source("read_header.R")
+
+to.read = file("/home/marco/analysis/phi4/tuning_masses/G2t_T128_L20_msq0-4.925000_msq1-4.850000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_bin10000", "rb")
+
+```
+
+## Read the header
+
+```{r}
+header<-read_header(to.read)
+header
+```
+
+## Reading the configuration 
+
+We read the configuration from the file in to the three dimensional array d
+
+```{r}
+configurations <- list()
+d<-array(dim = c(header$ncorr, header$L[1], header$confs) )
+
+for (iconf in  c(1:header$confs)){
+  configurations<-append(configurations, readBin(to.read, integer(),n = 1, endian = "little"))
+  for(t in c(1:header$L[1] ) ){
+    for (corr in  c(1:header$ncorr)){
+          d[corr, t, iconf]<-readBin(to.read, double(),n = 1, endian = "little")
+      }
+  }
+}
+```
+
+## construct the cf container
+
+
+
+here we select the correlator n=1
+$$\langle \phi_0(t) \phi_0(0)\rangle$$
+
+ 
+```{r}
+n<-1
+
+mycf <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
+mycf <- cf_orig(mycf, cf = t(d[n, ,]))
+mycf <- symmetrise.cf(mycf, sym.vec = c(1))
+# Bootstrap cf
+boot.R <- 150
+boot.l <- 1
+seed <- 1433567
+cfb <- bootstrap.cf(cf=mycf, boot.R=boot.R, boot.l=boot.l, seed=seed)
+
+
+```
+
+
+## Single particle energy
+
+here we are plotting the "log" effective mass $\log c(t)/c(t+1)$
+```{r, warning=FALSE}
+
+
+log_meff <-bootstrap.effectivemass(cfb, type='log')
+plot(log_meff)
+
+```
+
+## Two particel energy
+
+ Here we select the correlator n=3 
+ $$
+ \langle\phi_0(t)^2 \phi_0(0)^2 \rangle
+ $$
+```{r}
+n<-3
+
+mycf <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
+mycf <- cf_orig(mycf, cf = t(d[n, ,]))
+mycf <- symmetrise.cf(mycf, sym.vec = c(1))
+# Bootstrap cf
+boot.R <- 150
+boot.l <- 1
+seed <- 1433567
+cfb <- bootstrap.cf(cf=mycf, boot.R=boot.R, boot.l=boot.l, seed=seed)
+
+```
+
+The plot of the effective mass is not what we expected, ignoring finite T pollution this should be a constant as in the case of one particle.
+
+```{r}
+  log_meff <-bootstrap.effectivemass(cfb, type='log')
+  plot(log_meff)
+```
+
+The shifted effective mass instead looks fine
+
+```{r}
+  scf<-removeTemporal.cf(cfb)
+  shifted_log_meff <-bootstrap.effectivemass(scf, type='shifted')
+  plot(shifted_log_meff)
+```
+
+
+# Two different particle energy 
+
+ Here we select the correlator n=12
+ $$
+ \langle\phi_0(t)\phi_1(t) \phi_0(0)\phi_1(0) \rangle   
+ $$
+```{r, warning=FALSE}
+n<-12
+
+mycf <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
+mycf <- cf_orig(mycf, cf = t(d[n, ,]))
+mycf <- symmetrise.cf(mycf, sym.vec = c(1))
+# Bootstrap cf
+boot.R <- 150
+boot.l <- 1
+seed <- 1433567
+cfb <- bootstrap.cf(cf=mycf, boot.R=boot.R, boot.l=boot.l, seed=seed)
+log_meff <-bootstrap.effectivemass(cfb, type='log')
+plot(log_meff)
+
+```
+
