@@ -1,0 +1,322 @@
+---
+title: "Untitled"
+author: "Marco Garofalo"
+date: "2/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require("gplots")
+
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+library(htmlwidgets)
+library(pander)
+library(latex2exp)
+library(knitr)
+library(dplyr) #data frame manipulation
+require(scales) # to access break formatting functions
+library(shiny)
+library(shinyWidgets)
+library(ggrepel)
+
+library(Rose)
+#source("./Rread_block.R")
+#library("Rose")
+```
+
+```{r ,include=FALSE}
+  #######################################################################################
+    #symmary table
+    ####################################################################################### 
+    df_tot_compact<- data.frame(  "L"=c(0),"T"=c(0),
+                                  "msq0"=c(0), "msq1"=c(0),
+                                  "meff0"=c(0),  "meff1"=c(0) , 
+                                  #   "E2_0"=c(0),  "E2_1"=c(0),
+                                  #   "E3_0"=c(0),  "E3_1"=c(0),
+                                  "a_01_BH"=c(0),
+                                  "a_01_luscher"=c(0) ,"E2_01"=c(0) ,"DeltaE2_01"=c(0) ,
+                                  "lambda0"=c(0) , "lambda1"=c(0),
+                                  "mu"=c(0), "g"=c(0), "rep"=c(0)  
+                                  ,"a_0_luscher"=c(0) ,"E2_0"=c(0) ,"DeltaE2_0"=c(0) 
+                                  ,"a_1_luscher"=c(0) ,"E2_1"=c(0) ,"DeltaE2_1"=c(0) 
+                                  ,"a_01_BH_c"=c(0) , "muE2"=c(0))
+
+     df<- data.frame(  "L"=c(0),"T"=c(0),
+                                  "msq0"=c(0), "msq1"=c(0),
+                                  "meff0"=c(0),"meff0_err"=c(0),  "meff1"=c(0) ,
+                                  "meff1_err"=c(0) ,
+                                  "a_01_BH"=c(0),"a_01_BH_err"=c(0),
+                                  "a_01_luscher"=c(0),"a_01_luscher_err"=c(0) ,
+                                  "E2_01"=c(0) ,"E2_01_err"=c(0) 
+                                   ,"DeltaE2_01"=c(0),"DeltaE2_01_err"=c(0) 
+                                  ,"lambda0"=c(0) , "lambda1"=c(0),
+                                  "mu"=c(0), "g"=c(0), "rep"=c(0) , 
+                                  "a_0_luscher"=c(0),"a_0_luscher_err"=c(0) ,
+                       "E2_0"=c(0) ,"E2_0_err"=c(0) ,"DeltaE2_0"=c(0) ,"DeltaE2_0_err"=c(0) 
+                                  ,"a_1_luscher"=c(0) ,"a_1_luscher_err"=c(0) ,
+                       "E2_1"=c(0) ,"E2_1_err"=c(0) ,"DeltaE2_1"=c(0),"DeltaE2_1_err"=c(0)
+                       ,"a_01_BH_c"=c(0) ,"a_01_BH_c_err"=c(0)
+                       , "muE2"=c(0), "muE2_err"=c(0))
+     
+    count<-1
+    for (dir in c( "Data" )){
+        #for (dir in c( "Data" )){  
+        for (msq1 in c(-4.85)){
+            for (msq0 in c(-4.925)){
+                for (l0 in c(2.5)){  
+                    for (l1 in c(2.5)){    
+                        for (mu in c(5.0)){    
+                            for (g in c(0)){
+                                for (L in c(10,16,20,24,40)){
+                                    for (T in c(24,32,48,128)){
+                                        for (rep in c(0)){
+                                            file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
+                                                          dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
+                                            if (file.exists(file1)){
+                                                
+                                                
+                                                
+                                                columns_file<-c(1:20)  
+                                                mylist<- list(  L,T)
+                                                mylist  <-append(mylist, list(msq0, msq1 ))
+                                                dflist<- list(L,T,msq0,msq1)
+                                                
+                                                mt<-read_df(file1)
+                                                
+                                                fit<- get_fit_n(mt,2)
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                                fit<- get_fit_n(mt,3)
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2]))
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                                #E2
+                                                fit<- get_fit_n(mt,3)
+                                                #mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                fit<- get_fit_n(mt,5)
+                                                #mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                
+                                                #E3
+                                                fit<- get_fit_n(mt,7)
+                                                #mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                fit<- get_fit_n(mt,8)
+                                                #mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                
+                                                #a_BH
+                                                fit<- get_fit_n(mt,13)
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2]))
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                                #a_lusher, E2,deltaE2   
+                                                fit<- get_fit_n(mt,20)
+                                                mylist  <- append(mylist, mean_print(fit[2,1], fit[2,2]) )
+                                                dflist<- append(dflist, list(fit[2,1], fit[2,2]))
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                                mylist  <- append(mylist, mean_print(fit[2,3], fit[2,4]))
+                                                dflist<- append(dflist, list(fit[2,3], fit[2,4]))
+                                                
+                                                mylist  <-append(mylist, list( l0,l1,mu,g,rep ))
+                                                dflist<- append(dflist, list( l0,l1,mu,g,rep ))
+                                                #a_0_lusher, E2_0,deltaE2_0   
+                                                fit<- get_fit_n(mt,5)
+                                                mylist  <- append(mylist, mean_print(fit[2,1], fit[2,2]) )
+                                                dflist<- append(dflist, list(fit[2,1], fit[2,2]))
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                                mylist  <- append(mylist, mean_print(fit[2,3], fit[2,4]))
+                                                dflist<- append(dflist, list(fit[2,3], fit[2,4]))
+                                                
+                                                
+                                                #a_1_lusher, E2_1,deltaE2_1   
+                                                fit<- get_fit_n(mt,6)
+                                                mylist  <- append(mylist, mean_print(fit[2,1], fit[2,2]) )
+                                                dflist<- append(dflist, list(fit[2,1], fit[2,2]))
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                                mylist  <- append(mylist, mean_print(fit[2,3], fit[2,4]))
+                                                dflist<- append(dflist, list(fit[2,3], fit[2,4]))
+                                                
+                                                
+                                                #a_BH+c
+                                                fit<- get_fit_n(mt,18)
+                                                mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2]))
+                                                dflist<- append(dflist, list(fit[1,1], fit[1,2]))
+                                             
+                                                
+                                                #muE2
+                                                fit<- get_fit_n(mt,20)
+                                                mylist  <- append(mylist, mean_print(fit[2,7], fit[2,8]) )
+                                                dflist<- append(dflist, list(fit[2,7], fit[2,8]))
+                                              
+                          
+                                                df_tot_compact[count,] <-mylist
+                                                df[count,] <-dflist
+                                                count<- count+1
+                                                
+                                            }
+                                            
+                                        }}}}}}}}}}
+    
+  
+    
+
+
+```
+
+## Masses
+
+
+```{r , echo=FALSE}
+
+
+kable(df_tot_compact[,c("L","T","meff0","meff1","E2_01","DeltaE2_01","a_01_luscher") ])
+
+gg <- ggplot(df, aes(x=L, y=meff0 ,label=T )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes(x=L, ymin=meff0-meff0_err, ymax=meff0+meff0_err), width=0.002)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$m_{eff0}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+
+plot(gg)
+
+gg <- ggplot(df, aes(x=L, y=meff1 ,label=T )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes(x=L, ymin=meff1-meff1_err, ymax=meff1+meff1_err), width=0.002)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$m_{eff1}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+
+plot(gg)
+```
+
+## Two particle energy and scattering length with Luscher method
+
+$$
+\langle \phi_0\phi_1 (t)  \phi_0\phi_1(0) \rangle= |A_{N\pi\to0}| \left(e^{-tE_{N\pi} }+ e^{-(T-t)E_{N\pi} }\right)+
+|A_{\pi\to N}|^2  \left(e^{-TE_\pi -tE_{N}+tE_\pi }+ e^{-TE_N -tE_{\pi}+tE_N  }\right)
+$$
+$$
+\Delta E_2=E2_{01}-m_{meff0}-m_{meff1} = -\frac{2\pi a }{\mu_{12}L^3}\left[1+c_1 \frac{a}{L}+c_2\left(\frac{a}{L}\right)^2\right]+ O\left(\frac{1}{L^6}\right)
+$$
+
+```{r ,echo=FALSE, warning=FALSE,results='asis'}
+xx<-df[,"L"]
+yy<-df[,"muE2"]*df[,"L"]^3
+dy<-df[,"muE2_err"]*df[,"L"]^3
+c1<- -2.837297
+c2<- 6.375183
+wnlmod <- nls(yy ~ -(2*pi *a)*(1+c1*a/xx+c2*(a/L)^2) , start = list(a = 1), weights = dy^-2)
+res<-summary(wnlmod)$coefficients
+kable(res)
+#kable(df_tot_compact[,c("L","T","E2_01","msq1","meff0","meff1") ])
+
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=E2_01,label=T  )  ) + geom_point(size=2) 
+
+gg <- gg +geom_errorbar(aes( ymin=E2_01-E2_01_err, ymax=E2_01+E2_01_err), width=0.002)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$E2_{01}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+
+plot(gg)
+
+
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=muE2*L^3,label=T  )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes( ymin=(muE2-muE2_err)*L^3, ymax=(muE2+muE2_err)*L^3, width=0.002))  
+#mml <- data.frame(S = seq(0, 100))
+#mml$v<-predict.nls(wnlmod, newdata = mml)
+gg <- gg+ geom_line( aes( y=predict(wnlmod)  ))
+#gg<- gg+  geom_smooth(wnlmod)
+#gg <- gg+lines(xx, predict(wnlmod), col = "red")
+gg <- gg+ labs(x = TeX('L'), y= TeX('$L^3\\mu_{01}E2_{01}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+plot(gg)
+###
+
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=a_01_luscher,label=T  )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes( ymin=a_01_luscher-a_01_luscher_err, ymax=a_01_luscher+a_01_luscher_err), color="blue", width=0.2)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{01}^{luscher}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+
+
+plot(gg)
+```
+
+## Comparing with BH method
+
+$$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+    {\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
+    
+    
+
+Fit function:
+$$C_4^{BH}=\frac{1}{8m_0 m_1} \left(8\pi(m_0+m_1) a_N (t-T/8) + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 (t-T/8) }\right)$$
+
+    
+
+```{r, echo=FALSE, warning=FALSE}
+
+kable(df_tot_compact[,c("L","T","a_01_luscher", "a_01_BH") ])
+
+gg <- ggplot(df, aes(x=L, y=a_01_BH ,label=T )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes(x=L, ymin=a_01_BH-a_01_BH_err, ymax=a_01_BH+a_01_BH_err),color="red", width=0.2)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{01}^{BH}$') )
+gg<- gg+xlim(9,41)+ ylim(-0.005,1e-3)
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+plot(gg)
+
+
+
+```
+
+### Zoom
+
+```{r,echo=FALSE, warning=FALSE}
+gg<- gg+xlim(15,25)+ ylim(-3e-4,1e-4)
+
+gg
+```
+
+## Adding a constant in BH method
+
+$$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+    {\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} $$
+    
+    
+
+Fit function:
+$$C_4^{BH}=\frac{1}{8m_0 m_1} \left(8\pi(m_0+m_1) a_N (t-T/8) + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 (t-T/8) }+const  \right)$$
+
+```{r, echo=FALSE, warning=FALSE}
+kable(df_tot_compact[,c("L","T","a_01_luscher", "a_01_BH","a_01_BH_c") ])
+
+gg <- ggplot(df, aes(x=L, y=a_01_BH_c ,label=T )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes(x=L, ymin=a_01_BH_c-a_01_BH_c_err, ymax=a_01_BH_c+a_01_BH_c_err),color="red", width=0.2)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{01}^{BH}$') )
+#gg<- gg+xlim(9,41)+ ylim(-0.005,1e-3)
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+plot(gg)
+
+
+
+```
+
+
+
+```{r }
+newdf<-data.frame("L"=df[,"L"],"T"=df[,"T"], "a_01_luscher"=df_tot_compact[,"a_01_luscher"], "test"=df[,"a_01_BH"],"test_err"= df[,"a_01_BH_err"])
+newdf[,"test"]<-newdf[,"test"]*newdf[,"L"]*newdf[,"L"]*newdf[,"L"]
+newdf[,"test_err"]<-newdf[,"test_err"]*newdf[,"L"]*newdf[,"L"]*newdf[,"L"]
+kable(newdf)
+```
