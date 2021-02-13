@@ -20,12 +20,13 @@ require(scales) # to access break formatting functions
 library(shiny)
 library(shinyWidgets)
 library(ggrepel)
+library(Rose)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-    if(!exists("Rread_block.R", mode="function")) source("Rread_block.R")
-    if(!exists("print_error.R", mode="function")) source("print_error.R")
-    if(!exists("print_error.R", mode="function")) source("plot_routines.R")
+    #if(!exists("Rread_block.R", mode="function")) source("Rread_block.R")
+    #if(!exists("print_error.R", mode="function")) source("print_error.R")
+    #if(!exists("print_error.R", mode="function")) source("plot_routines.R")
     #######################################################################################
     #files
     ####################################################################################### 
@@ -167,17 +168,20 @@ shinyServer(function(input, output) {
         if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
         if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
         if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
+        if (input=="C4_BH+c")    {n<- 18; fun<-  my_fit_ggplot  ; nmeff<-11     }
         if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
         
         if (input=="two0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-13   }
         if (input=="four0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-14   }
         if (input=="four0_to_two0")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-15   }
         if (input=="GEVP_01")    {n<- 21; fun<-  my_fit_ggplot    ; nmeff<-NA   }
+      
         
         return (c(n,fun, nmeff))
     })
     gg_many<-reactive({  
         gg<- ggplot()
+        
         for (myobs in input$manyObs){
             file<-file()
             n1<-n_and_plot_many(myobs)
@@ -212,6 +216,8 @@ shinyServer(function(input, output) {
                 gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3")
             if(myobs=="C4_BH")
                 gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH")
+            if(myobs=="C4_BH+c")
+              gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH+c")
             if(myobs=="E2_01")
                 gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_01")
             if(myobs=="GEVP_01")
@@ -529,8 +535,8 @@ shinyServer(function(input, output) {
                     for (l1 in c(2.5)){    
                         for (mu in c(5.0)){    
                             for (g in c(0)){
-                                for (L in c(10,20,40)){
-                                    for (T in c(24,48,128)){
+                                for (L in c(10,16,20,24,40)){
+                                    for (T in c(24,32,48,128)){
                                         for (rep in c(0,1,2)){
                                             file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
                                                           dir,T,L,msq0,msq1,l0,l1,mu,g,rep)

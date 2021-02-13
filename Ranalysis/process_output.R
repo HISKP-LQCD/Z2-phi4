@@ -22,12 +22,12 @@ for (iconf in  c(1:header$confs)){
 ###############################################################
 
 
-#We can put the correlator 1 and 2 which are the twopt
+#We can put the correlator 1 and 2, which are the twopt
 #<phi0(t) phi0(0)>
 #<phi1(t) phi1(0)>
 #in the cf hadron container and compute the effective mass
 mycf<-cf()
-for(i in c(13)) {
+for(i in c(3)) {
   mycf_tmp <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
   mycf_tmp <- cf_orig(mycf_tmp, cf = t(d[i, ,]))
   mycf_tmp <- symmetrise.cf(mycf_tmp, sym.vec = c(1))
@@ -42,7 +42,15 @@ for(i in c(13)) {
 
   fit_sample <- new_matrixfit(cfb, 2, 10, model = 'single')
   plot(fit_sample, xlab="t" , ylab="$m_{eff}$" )
-  residual_plot(fit_sample, ylim = c(1/1.05, 1.05))
+  #residual_plot(fit_sample, ylim = c(1/1.05, 1.05))
+  
+  log_meff <-bootstrap.effectivemass(cfb, type='log')
+  plot(log_meff)
+  
+  scf<-removeTemporal.cf(cfb)
+  shifted_log_meff <-bootstrap.effectivemass(scf, type='shifted')
+  plot(shifted_log_meff)
+  
   
 }
 

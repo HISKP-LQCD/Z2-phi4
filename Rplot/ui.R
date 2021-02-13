@@ -20,7 +20,7 @@ require(scales) # to access break formatting functions
 library(shiny)
 library(shinyWidgets)
 library(ggrepel)
-
+require(Rose)
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
 
@@ -30,9 +30,9 @@ shinyUI(fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarPanel(
         selectInput("L", label = "L",
-                    choices =as.integer( c(10, 20,40)), selected = 20),
+                    choices =as.integer( c(10,16, 20,24,40)), selected = 20),
         selectInput("T", label = "T",
-                    choices =as.integer( c(24, 48,96,128)), selected = 128),
+                    choices =as.integer( c(24,32, 48,96,128)), selected = 128),
         selectInput("msq0", label = "msq0",
                     choices = c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0), selected = -4.925),
         selectInput("msq1", label = "msq1",
@@ -61,7 +61,7 @@ shinyUI(fluidPage(
             inputId = "manyObs",
             label = "Obs",
             choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH","E2_01","GEVP_01"),
+                       "C4_BH","C4_BH+c","E2_01","GEVP_01"),
             options = list(
                 `actions-box` = TRUE,
                 size = 10

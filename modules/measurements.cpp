@@ -301,6 +301,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
             G2t0+=pp0;
             G2t1+=pp1; 
             C2t0+=pp0*pp0;
+            printf("t=%d t1=%d    G2t=%g    G2t^2=%g      C2t0=%g  pp0=%g\n ",t,t1,G2t0,G2t0*G2t0,C2t0,pp0);
             C2t1+=pp1*pp1;
             C2t+= pp0*pp0 + pp1*pp1 + 4*pp0*pp1
                 - h_phip(0,t1) *h_phip(0 , t1)* h_phip(1,tpt1) *h_phip(1 , tpt1)

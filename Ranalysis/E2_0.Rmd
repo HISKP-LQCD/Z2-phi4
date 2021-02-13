@@ -15,7 +15,7 @@ output: html_document
 library(hadron)
 if(!exists("foo", mode="function")) source("read_header.R")
 
-to.read = file("/home/marco/analysis/phi4/tuning_masses/G2t_T128_L20_msq0-4.925000_msq1-4.850000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_bin10000", "rb")
+to.read = file("/home/marco/analysis/phi4/tuning_masses/G2t_T128_L20_msq0-4.925000_msq1-4.850000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_merged_bin10000", "rb")
 
 ```
 
@@ -137,3 +137,60 @@ plot(log_meff)
 
 ```
 
+
+```{r}
+n_00<-3
+n_11<-4
+n_01<-12
+mycf<- cf()
+for (n in c(n_00,n_11,n_01)){
+  cf_tmp <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
+  cf_tmp <- cf_orig(cf_tmp, cf = t(d[n, ,]))
+  cf_tmp <- symmetrise.cf(cf_tmp, sym.vec = c(1))
+  mycf<- c(mycf, cf_tmp)
+}
+# Bootstrap cf
+boot.R <- 150
+boot.l <- 1
+seed <- 1433567
+cfb <- bootstrap.cf(cf=mycf, boot.R=boot.R, boot.l=boot.l, seed=seed)
+
+cf_new<- cfb$cf/sqrt(cfb$cf*cfb$cf)
+
+plot(cf_new)
+
+```
+
+
+# T48
+
+```{r}
+
+to.read = file("/home/marco/analysis/phi4/tuning_masses/G2t_T48_L20_msq0-4.925000_msq1-4.850000_l02.500000_l12.500000_mu5.000000_g0.000000_rep1_bin10000", "rb")
+header<-read_header(to.read)
+configurations <- list()
+d<-array(dim = c(header$ncorr, header$L[1], header$confs) )
+
+for (iconf in  c(1:header$confs)){
+  configurations<-append(configurations, readBin(to.read, integer(),n = 1, endian = "little"))
+  for(t in c(1:header$L[1] ) ){
+    for (corr in  c(1:header$ncorr)){
+          d[corr, t, iconf]<-readBin(to.read, double(),n = 1, endian = "little")
+      }
+  }
+}
+n<-3
+
+mycf <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
+mycf <- cf_orig(mycf, cf = t(d[n, ,]))
+mycf <- symmetrise.cf(mycf, sym.vec = c(1))
+# Bootstrap cf
+boot.R <- 150
+boot.l <- 1
+seed <- 1433567
+cfb <- bootstrap.cf(cf=mycf, boot.R=boot.R, boot.l=boot.l, seed=seed)
+ log_meff <-bootstrap.effectivemass(cfb, type='log')
+  plot(log_meff)
+
+
+```
