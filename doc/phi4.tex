@@ -82,8 +82,8 @@ Where we have summed both the forward and backward signal
 
  \item Denominator 1
 $$
-\langle \phi_1(t) \phi_1(\frac{T}{8})\rangle = \frac{1}{2m_N}|\langle 0| N | \pi\rangle|^2  \left(e^{- (t-\frac{T}{8})E_N}+  e^{(T-t+\frac{T}{8})E_N}  \right)
-=\frac{1}{2m_N}|\langle 0| N | \pi\rangle|^2  e^{- (t-\frac{T}{8})E_N}
+\langle \phi_1(t) \phi_1(\frac{T}{8})\rangle = \frac{1}{2m_N}|\langle 0| \phi_1 | N\rangle|^2  \left(e^{- (t-\frac{T}{8})E_N}+  e^{(T-t+\frac{T}{8})E_N}  \right)
+\approx\frac{1}{2m_N}|\langle 0| \phi_1 | N\rangle|^2  e^{- (t-\frac{T}{8})E_N}
 $$
 We can ignore the second term since $T/8<t<T/2$
 
@@ -95,7 +95,7 @@ C_4^{BH}=\frac{m_N}{ 2 m_\pi }\frac{
   e^{ (t-\frac{T}{8})(E_N+E\pi)} \langle \pi|   \phi_1 e^{-(t-\frac{T}{8})H}\phi_1 
  | \pi\rangle  
 }{
- |\langle 0| N | \pi\rangle|^2  
+ |\langle 0| \phi_1 | N\rangle|^2  
 }-1
 \end{gather}
 \begin{tcolorbox}
@@ -127,7 +127,7 @@ c^{\Theta, N \pi}_{\vec 0}(t', t \vert \, M_0) _{\sf c} = 8 \pi (m_N + m_\pi) \,
 Finally our formula become 
 
 \begin{multline}
- C_4^{BH}=  \frac{1}{8m_\pi m_N}\left[ 8 \pi (m_N + m_\pi) \, a_{N\pi} \, (t' - t ) 
+ C_4^{BH}=  \frac{1}{8m_\pi m_N L^3}\left[ 8 \pi (m_N + m_\pi) \, a_{N\pi} \, (t' - t ) 
 - 16 \, a_{N \pi}^2 \sqrt{2 \pi (m_N + m_\pi) m_N m_\pi (t'-t)} + \mathcal O \big ((t'-t)^0\big) \right]\,.\nonumber
 \end{multline} 
  

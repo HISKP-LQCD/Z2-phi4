@@ -23,6 +23,9 @@ library(shiny)
 library(shinyWidgets)
 library(ggrepel)
 
+library(pander)
+panderOptions('knitr.auto.asis', FALSE)
+
 library(Rose)
 #source("./Rread_block.R")
 #library("Rose")
@@ -43,7 +46,8 @@ library(Rose)
                                   "mu"=c(0), "g"=c(0), "rep"=c(0)  
                                   ,"a_0_luscher"=c(0) ,"E2_0"=c(0) ,"DeltaE2_0"=c(0) 
                                   ,"a_1_luscher"=c(0) ,"E2_1"=c(0) ,"DeltaE2_1"=c(0) 
-                                  ,"a_01_BH_c"=c(0) , "muE2"=c(0))
+                                  ,"a_01_BH_c"=c(0) , "muDE2"=c(0),
+                                  "a_01_m0_m1"=c(0), "a_00_m0"=c(0),"muDE2_0"=c(0))
 
      df<- data.frame(  "L"=c(0),"T"=c(0),
                                   "msq0"=c(0), "msq1"=c(0),
@@ -60,7 +64,10 @@ library(Rose)
                                   ,"a_1_luscher"=c(0) ,"a_1_luscher_err"=c(0) ,
                        "E2_1"=c(0) ,"E2_1_err"=c(0) ,"DeltaE2_1"=c(0),"DeltaE2_1_err"=c(0)
                        ,"a_01_BH_c"=c(0) ,"a_01_BH_c_err"=c(0)
-                       , "muE2"=c(0), "muE2_err"=c(0))
+                       , "muDE2"=c(0), "muDE2_err"=c(0)
+                       ,"a_01_m0_m1"=c(0),"a_01_m0_m1_err"=c(0)
+                       ,"a_00_m0"=c(0),"a_00_m0err"=c(0)
+                       , "muDE2_0"=c(0), "muDE2_0_err"=c(0)  )
      
     count<-1
     for (dir in c( "Data" )){
@@ -71,8 +78,11 @@ library(Rose)
                     for (l1 in c(2.5)){    
                         for (mu in c(5.0)){    
                             for (g in c(0)){
-                                for (L in c(10,16,20,24,40)){
-                                    for (T in c(24,32,48,128)){
+                                #for (L in c(10,16,20,24,40)){
+                                  #for (L in c(10,16,20,24,32)){
+                                    for (L in c(20,24,32)){
+                                    #for (T in c(24,32,48,128)){
+                                      for (T in c(32,128,48)){
                                         for (rep in c(0)){
                                             file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
                                                           dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
@@ -146,11 +156,25 @@ library(Rose)
                                                 dflist<- append(dflist, list(fit[1,1], fit[1,2]))
                                              
                                                 
-                                                #muE2
+                                                #muDE2
                                                 fit<- get_fit_n(mt,20)
                                                 mylist  <- append(mylist, mean_print(fit[2,7], fit[2,8]) )
                                                 dflist<- append(dflist, list(fit[2,7], fit[2,8]))
-                                              
+                                                
+                                                
+                                                #a_01*(m0+m1)
+                                                fit<- get_fit_n(mt,20)
+                                                mylist  <- append(mylist, mean_print(fit[2,9], fit[2,10]) )
+                                                dflist<- append(dflist, list(fit[2,9], fit[2,10]))
+                                                #a_0*(m0)
+                                                fit<- get_fit_n(mt,5)
+                                                mylist  <- append(mylist, mean_print(fit[2,9], fit[2,10]) )
+                                                dflist<- append(dflist, list(fit[2,9], fit[2,10]))
+                                                
+                                                #muDE2_0
+                                                fit<- get_fit_n(mt,5)
+                                                mylist  <- append(mylist, mean_print(fit[2,7], fit[2,8]) )
+                                                dflist<- append(dflist, list(fit[2,7], fit[2,8]))
                           
                                                 df_tot_compact[count,] <-mylist
                                                 df[count,] <-dflist
@@ -204,14 +228,7 @@ $$
 $$
 
 ```{r ,echo=FALSE, warning=FALSE,results='asis'}
-xx<-df[,"L"]
-yy<-df[,"muE2"]*df[,"L"]^3
-dy<-df[,"muE2_err"]*df[,"L"]^3
-c1<- -2.837297
-c2<- 6.375183
-wnlmod <- nls(yy ~ -(2*pi *a)*(1+c1*a/xx+c2*(a/L)^2) , start = list(a = 1), weights = dy^-2)
-res<-summary(wnlmod)$coefficients
-kable(res)
+
 #kable(df_tot_compact[,c("L","T","E2_01","msq1","meff0","meff1") ])
 
 gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=E2_01,label=T  )  ) + geom_point(size=2) 
@@ -225,29 +242,65 @@ gg<- gg+geom_text_repel()
 plot(gg)
 
 
-gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=muE2*L^3,label=T  )  ) + geom_point(size=2) 
-gg <- gg +geom_errorbar(aes( ymin=(muE2-muE2_err)*L^3, ymax=(muE2+muE2_err)*L^3, width=0.002))  
-#mml <- data.frame(S = seq(0, 100))
-#mml$v<-predict.nls(wnlmod, newdata = mml)
-gg <- gg+ geom_line( aes( y=predict(wnlmod)  ))
-#gg<- gg+  geom_smooth(wnlmod)
-#gg <- gg+lines(xx, predict(wnlmod), col = "red")
-gg <- gg+ labs(x = TeX('L'), y= TeX('$L^3\\mu_{01}E2_{01}$') )
-gg <- gg+theme_bw()
-gg<- gg+geom_text_repel()
-plot(gg)
-###
-
 gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=a_01_luscher,label=T  )  ) + geom_point(size=2) 
 gg <- gg +geom_errorbar(aes( ymin=a_01_luscher-a_01_luscher_err, ymax=a_01_luscher+a_01_luscher_err), color="blue", width=0.2)  
 #gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
-gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{01}^{luscher}$') )
+gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{hl}^{luscher}$') )
 gg <- gg+theme_bw()
 gg<- gg+geom_text_repel()
 
+gg<- gg+geom_text_repel()+theme(axis.text=element_text(size=12), axis.title=element_text(size=17,face="bold"))
 
 plot(gg)
+pdf("a_01_luscher.pdf", width = 8, height = 5)
+plot(gg)
+dev.off()
+
 ```
+
+## Fitting all data
+
+```{r,echo=FALSE}
+xx<-df[,"L"]
+yy<-df[,"muDE2"]*df[,"L"]^3
+dy<-df[,"muDE2_err"]*df[,"L"]^3
+c1<- -2.837297
+c2<- 6.375183
+
+wnlmod <- nls(yy ~ -(2*pi *a)*(1+c1*a/xx+c2*(a/xx)^2) , start = list(a = 1), weights = dy^-2)
+res<-summary(wnlmod)$coefficients
+kable(res)
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=muDE2*L^3,label=T  )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes( ymin=(muDE2-muDE2_err)*L^3, ymax=(muDE2+muDE2_err)*L^3, width=0.002)  ,color="blue", width=0.2)  
+dx<-data.frame(xx=seq(min(df[,"L"]-2),max(df[,"L"]+2), length.out=50   ))
+dx$v<-predict(wnlmod, newdata = dx)
+gg <- gg+ geom_line(data=dx, aes(x=xx, y=v  ))
+#gg <- gg+lines(xx, predict(wnlmod), col = "red")
+gg <- gg+ labs(x = TeX('L'), y= TeX('$L^3\\mu_{hl}\\Delta E2_{hl}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+gg<- gg+geom_text_repel()+theme(axis.text=element_text(size=12), axis.title=element_text(size=17,face="bold"))
+
+plot(gg)
+pdf("fit_a_01_luscher.pdf", width = 8, height = 5)
+plot(gg)
+dev.off()
+
+###
+```
+## Comparison with PT
+
+In perturbation theory we have 
+
+$$ 
+   a_{01} (m_0+m_1)=-\lambda/\pi =0.7957747
+$$
+```{r, echo=FALSE, results='asis'}
+kable(df_tot_compact[,c("L","T","meff0","meff1","a_01_luscher","a_01_m0_m1") ])
+
+
+```
+
 
 ## Comparing with BH method
 
@@ -257,7 +310,7 @@ $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(
     
 
 Fit function:
-$$C_4^{BH}=\frac{1}{8m_0 m_1} \left(8\pi(m_0+m_1) a_N (t-T/8) + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 (t-T/8) }\right)$$
+$$C_4^{BH}=\frac{1}{8m_0 m_1L^3} \left(8\pi(m_0+m_1) a_N (t-T/8) + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 (t-T/8) }\right)$$
 
     
 
@@ -269,7 +322,7 @@ gg <- ggplot(df, aes(x=L, y=a_01_BH ,label=T )  ) + geom_point(size=2)
 gg <- gg +geom_errorbar(aes(x=L, ymin=a_01_BH-a_01_BH_err, ymax=a_01_BH+a_01_BH_err),color="red", width=0.2)  
 #gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
 gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{01}^{BH}$') )
-gg<- gg+xlim(9,41)+ ylim(-0.005,1e-3)
+gg<- gg+xlim(9,41)+ ylim(-2,0)
 gg <- gg+theme_bw()
 gg<- gg+geom_text_repel()
 plot(gg)
@@ -278,13 +331,6 @@ plot(gg)
 
 ```
 
-### Zoom
-
-```{r,echo=FALSE, warning=FALSE}
-gg<- gg+xlim(15,25)+ ylim(-3e-4,1e-4)
-
-gg
-```
 
 ## Adding a constant in BH method
 
@@ -294,18 +340,30 @@ $$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(
     
 
 Fit function:
-$$C_4^{BH}=\frac{1}{8m_0 m_1} \left(8\pi(m_0+m_1) a_N (t-T/8) + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 (t-T/8) }+const  \right)$$
+$$C_4^{BH}=\frac{1}{8m_0 m_1L^3} \left(8\pi(m_0+m_1) a_N (t-T/8) + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 (t-T/8) }+const  \right)$$
 
 ```{r, echo=FALSE, warning=FALSE}
 kable(df_tot_compact[,c("L","T","a_01_luscher", "a_01_BH","a_01_BH_c") ])
 
-gg <- ggplot(df, aes(x=L, y=a_01_BH_c ,label=T )  ) + geom_point(size=2) 
-gg <- gg +geom_errorbar(aes(x=L, ymin=a_01_BH_c-a_01_BH_c_err, ymax=a_01_BH_c+a_01_BH_c_err),color="red", width=0.2)  
+colors <- c("a_01_BH" = "red", "a_01_BH+constant" = "darkgreen")
+
+gg<- ggplot()
+gg <-gg+ geom_point(data=df, aes(x=L, y=a_01_BH_c ,label=T,color="a_01_BH+constant" )  ) 
+gg<- gg+ geom_text_repel(data=df, aes(x=L, y=a_01_BH_c ,label=T,color="a_01_BH+constant" ))
+gg <- gg +geom_errorbar(data=df, aes(x=L, ymin=a_01_BH_c-a_01_BH_c_err, ymax=a_01_BH_c+a_01_BH_c_err,color="a_01_BH+constant"), width=0.2)
+gg<- gg+geom_text_repel()
+
+gg <- gg+geom_point(data=df, aes(x=L+0.5, y=a_01_BH ,label=T ,color="a_01_BH")  ) 
+gg <- gg+geom_text_repel(data=df, aes(x=L+0.5, y=a_01_BH ,label=T ,color="a_01_BH")  ) 
+gg <- gg +geom_errorbar(data=df, aes(x=L+0.5, ymin=a_01_BH-a_01_BH_err, ymax=a_01_BH+a_01_BH_err ,color="a_01_BH"), width=0.2)
+
+
 #gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
 gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{01}^{BH}$') )
 #gg<- gg+xlim(9,41)+ ylim(-0.005,1e-3)
 gg <- gg+theme_bw()
-gg<- gg+geom_text_repel()
+gg<- gg+ labs( color = "Legend") +   scale_color_manual(values = colors)
+gg<- gg+  coord_cartesian(ylim=c(-4,1))
 plot(gg)
 
 
@@ -314,9 +372,94 @@ plot(gg)
 
 
 
-```{r }
-newdf<-data.frame("L"=df[,"L"],"T"=df[,"T"], "a_01_luscher"=df_tot_compact[,"a_01_luscher"], "test"=df[,"a_01_BH"],"test_err"= df[,"a_01_BH_err"])
-newdf[,"test"]<-newdf[,"test"]*newdf[,"L"]*newdf[,"L"]*newdf[,"L"]
-newdf[,"test_err"]<-newdf[,"test_err"]*newdf[,"L"]*newdf[,"L"]*newdf[,"L"]
-kable(newdf)
+
+## Two $\phi_0$ particle energy and scattering length with Luscher method
+
+$$
+\langle \phi_0\phi_0 (t)  \phi_0\phi_0(0) \rangle= |A_{N\pi\to0}| \left(e^{-tE_{N\pi} }+ e^{-(T-t)E_{N\pi} }\right)+
+|A_{\pi\to \pi}|^2  e^{-TE_\pi  }
+$$
+$$
+\Delta E_2=E2_{01}-2m_{meff0} = -\frac{2\pi a }{\mu_{00}L^3}\left[1+c_1 \frac{a}{L}+c_2\left(\frac{a}{L}\right)^2\right]+ O\left(\frac{1}{L^6}\right)
+$$
+where $\mu_00=m_0/2$
+
+```{r ,echo=FALSE, warning=FALSE,results='asis'}
+
+kable(df_tot_compact[,c("L","T","E2_0","DeltaE2_0" ,"a_0_luscher") ])
+
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=E2_0+0.5,label=T  )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes( ymin=E2_0-E2_0_err, ymax=E2_0+E2_0_err), width=0.002)
+
+#gg<- gg+geom_point(aes(x=L+T*0.005-0.5, y=E2_01+0.4,label=T  ),color="blue") 
+#gg <- gg +geom_errorbar(aes( ymin=E2_01-E2_01_err, ymax=E2_01+E2_01_err), width=0.002)
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$E2_{00}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+
+plot(gg)
+
+
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=a_0_luscher,label=T  ) , color="blue" ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes( ymin=a_0_luscher-a_0_luscher_err, ymax=a_0_luscher+a_0_luscher_err), color="blue", width=0.2)  
+#gg <- gg+labs( color = "Legend") +    scale_color_manual(values = colors)
+gg <- gg+ labs(x = TeX('L'), y= TeX('$a_{ll}^{luscher}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()
+
+gg<- gg+geom_text_repel()+theme(axis.text=element_text(size=12), axis.title=element_text(size=17,face="bold"))
+
+plot(gg)
+pdf("a_00_luscher.pdf", width = 8, height = 5)
+plot(gg)
+dev.off()
+
+```
+
+
+
+## Fitting all data
+
+```{r,echo=FALSE}
+xx<-df[,"L"]
+yy<-df[,"muDE2_0"]*df[,"L"]^3
+dy<-df[,"muDE2_0_err"]*df[,"L"]^3
+c1<- -2.837297
+c2<- 6.375183
+
+wnlmod <- nls(yy ~ -(2*pi *a)*(1+c1*a/xx+c2*(a/xx)^2) , start = list(a = 1), weights = dy^-2, trace=TRUE)
+res<-summary(wnlmod)$coefficients
+kable(res)
+gg <- ggplot(df, aes(x=L+T*0.005-0.5, y=muDE2_0*L^3,label=T  )  ) + geom_point(size=2) 
+gg <- gg +geom_errorbar(aes( ymin=(muDE2_0-muDE2_0_err)*L^3, ymax=(muDE2_0+muDE2_0_err)*L^3, width=0.002)  ,color="blue", width=0.2)  
+dx<-data.frame(xx=seq(min(df[,"L"]-2),max(df[,"L"]+2), length.out=50   ))
+dx$v<-predict(wnlmod, newdata = dx)
+gg <- gg+ geom_line(data=dx, aes(x=xx, y=v  ))
+#gg <- gg+lines(xx, predict(wnlmod), col = "red")
+gg <- gg+ labs(x = TeX('L'), y= TeX('$L^3\\mu_{00}\\Delta E2_{00}$') )
+gg <- gg+theme_bw()
+gg<- gg+geom_text_repel()+theme(axis.text=element_text(size=12), axis.title=element_text(size=17,face="bold"))
+
+plot(gg)
+pdf("fit_a_00_luscher.pdf", width = 8, height = 5)
+plot(gg)
+dev.off()
+
+###
+```
+
+
+## Comparison with PT
+
+In perturbation theory we have  for $\lambda=2.5$
+$$ 
+   a_{01} (m_0)=-3\lambda/(4\pi) =0.59683103659  
+$$
+
+```{r, echo=FALSE, results='asis'}
+
+kable(df_tot_compact[,c("L","T","meff0","meff1","a_0_luscher", "a_00_m0") ] )
+
+
 ```

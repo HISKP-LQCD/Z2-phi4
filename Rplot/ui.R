@@ -30,7 +30,7 @@ shinyUI(fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarPanel(
         selectInput("L", label = "L",
-                    choices =as.integer( c(10,16, 20,24,40)), selected = 20),
+                    choices =as.integer( c(10,16, 20,24,32,40)), selected = 20),
         selectInput("T", label = "T",
                     choices =as.integer( c(24,32, 48,96,128)), selected = 128),
         selectInput("msq0", label = "msq0",

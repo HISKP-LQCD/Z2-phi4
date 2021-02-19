@@ -441,7 +441,8 @@ shinyServer(function(input, output) {
     mass_tables_01<-reactive({  
         
         df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_01"=c(0),    
-                          "DE2_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH_01"=c(0)    )
+                          "DE2_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH_01"=c(0),
+                          "m_0+m_1_a_01"=c(0))
         
         file<-file()
         T<-as.integer(input$T)
@@ -456,7 +457,8 @@ shinyServer(function(input, output) {
                         mean_print(fit01[1,1], fit01[1,2]),
                         mean_print(fit01[2,3], fit01[2,4]) ,
                         mean_print(fit01[2,1], fit01[2,2]),
-                        mean_print(fitBH[1,1], fitBH[1,2])        )
+                        mean_print(fitBH[1,1], fitBH[1,2])   ,
+                        mean_print(fit01[2,9], fit01[1,10]))
         return(df)
         
     })
@@ -464,7 +466,8 @@ shinyServer(function(input, output) {
     mass_tables_0<-reactive({  
         
         df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_0"=c(0),    
-                          "DE2_0"=c(0)   , "a_Luscher"=c(0)  , "a_BH_0"=c(0)    )
+                          "DE2_0"=c(0)   , "a_Luscher"=c(0)  , "a_BH_0"=c(0),
+                          "m_0a_00"=c(0))
         
         file<-file()
         T<-as.integer(input$T)
@@ -479,7 +482,8 @@ shinyServer(function(input, output) {
                         mean_print(fit01[1,1], fit01[1,2]),
                         mean_print(fit01[2,3], fit01[2,4]) ,
                         mean_print(fit01[2,1], fit01[2,2]),
-                        mean_print(fitBH[1,1], fitBH[1,2])        )
+                        mean_print(fitBH[1,1], fitBH[1,2]) ,
+                        mean_print(fit01[2,9], fit01[2,10]) )
         return(df)
         
     })
@@ -535,7 +539,7 @@ shinyServer(function(input, output) {
                     for (l1 in c(2.5)){    
                         for (mu in c(5.0)){    
                             for (g in c(0)){
-                                for (L in c(10,16,20,24,40)){
+                                for (L in c(10,16,20,24,32,40)){
                                     for (T in c(24,32,48,128)){
                                         for (rep in c(0,1,2)){
                                             file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",

@@ -138,16 +138,19 @@ plot(log_meff)
 ```
 
 
+# GEVP
+
 ```{r}
 n_00<-3
 n_11<-4
 n_01<-12
 mycf<- cf()
-for (n in c(n_00,n_11,n_01)){
+for (n in c(n_00,n_01,n_01,n_11)){
   cf_tmp <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
   cf_tmp <- cf_orig(cf_tmp, cf = t(d[n, ,]))
   cf_tmp <- symmetrise.cf(cf_tmp, sym.vec = c(1))
   mycf<- c(mycf, cf_tmp)
+  
 }
 # Bootstrap cf
 boot.R <- 150
@@ -155,9 +158,25 @@ boot.l <- 1
 seed <- 1433567
 cfb <- bootstrap.cf(cf=mycf, boot.R=boot.R, boot.l=boot.l, seed=seed)
 
-cf_new<- cfb$cf/sqrt(cfb$cf*cfb$cf)
+scf<-removeTemporal.cf(cfb)
+plot(scf, log="y",xlab=c("t/a"), ylab="C(t)")
 
-plot(cf_new)
+t0 <- 3
+correlatormatrix.gevp <- bootstrap.gevp(cf=scf, t0=t0, element.order=c(1,2,3,4), sort.type="values")
+pc1 <- gevp2cf(gevp=correlatormatrix.gevp, id=1)
+pc2 <- gevp2cf(gevp=correlatormatrix.gevp, id=2)
+plot(pc1, col="red", pch=21, log="y", xlab="t", ylab="C(t)")
+plot(pc2, rep=TRUE, col="blue", pch=22)
+
+pc1.matrixfit <- matrixfit(cf=pc1, t1=4, t2=10, useCov=TRUE,parlist=array(c(1,1), dim=c(2,1)),sym.vec=c("cosh"), fit.method="lm")
+plot(pc1.matrixfit, do.qqplot=FALSE,xlab="t", ylab="C(t)")
+
+plot(pc1.matrixfit, do.qqplot=FALSE,
+xlab="t", ylab="C(t)", plot.raw=FALSE)
+abline(h=1, lty=2)
+
+summary(pc1.matrixfit)
+
 
 ```
 
