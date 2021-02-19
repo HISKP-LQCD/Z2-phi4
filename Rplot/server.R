@@ -22,6 +22,46 @@ library(shinyWidgets)
 library(ggrepel)
 library(Rose)
 
+n_and_plot_many<-function(input)({
+  if (input=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
+  if (input=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
+  if (input=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
+  if (input=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
+  if (input=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
+  if (input=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
+  if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
+  if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
+  if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
+  if (input=="C4_BH+c")    {n<- 18; fun<-  my_fit_ggplot  ; nmeff<-11     }
+  if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
+  
+  if (input=="two0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-13   }
+  if (input=="four0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-14   }
+  if (input=="four0_to_two0")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-15   }
+  if (input=="GEVP_01")    {n<- 21; fun<-  my_fit_ggplot    ; nmeff<-NA   }
+  
+  
+  return (c(n,fun, nmeff))
+})
+add_plot<-function(file, obs, T, logscale ,gg, index,prefix=""){
+
+  for (myobs in obs){
+    n1<-n_and_plot_many(myobs)
+    n<-n1[[index]]
+    mt<-read_df(file)
+    
+    d<- get_block_n(mt,n)
+    fit<- get_fit_n(mt,n)
+    fit_range<- get_plateaux_range(mt,n)
+    
+    label<-paste(prefix,myobs)
+    gg<-  many_fit_ggplot(d,fit,fit_range,T/2,logscale,gg,  label  )
+    
+   
+  }
+  return(gg)
+}
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
     #if(!exists("Rread_block.R", mode="function")) source("Rread_block.R")
@@ -158,48 +198,16 @@ shinyServer(function(input, output) {
         ggplotly(gg_new())
     })
     
-    n_and_plot_many<-function(input)({
-        if (input=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
-        if (input=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
-        if (input=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
-        if (input=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
-        if (input=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
-        if (input=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
-        if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
-        if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
-        if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
-        if (input=="C4_BH+c")    {n<- 18; fun<-  my_fit_ggplot  ; nmeff<-11     }
-        if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
-        
-        if (input=="two0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-13   }
-        if (input=="four0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-14   }
-        if (input=="four0_to_two0")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-15   }
-        if (input=="GEVP_01")    {n<- 21; fun<-  my_fit_ggplot    ; nmeff<-NA   }
-      
-        
-        return (c(n,fun, nmeff))
-    })
+    
+    
+    
     gg_many<-reactive({  
         gg<- ggplot()
-        
-        for (myobs in input$manyObs){
-            file<-file()
-            n1<-n_and_plot_many(myobs)
-            n<-n1[[1]]
-            T<-as.integer(input$T)
-            mt<-read_df(file)
-            
-            d<- get_block_n(mt,n)
-            fit<- get_fit_n(mt,n)
-            fit_range<- get_plateaux_range(mt,n)
-            
-            #plot data
-            #tmp<-tostring(myobs)
-            
-            gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
-      
-        
-        }
+        gg<-add_plot(file(), input$manyObs, input$T, input$logscale,gg,1 )
+        gg<-add_plot(file_meff(), input$log_meff_corr, input$T, input$logscale,gg,3,prefix="log_meff" )
+        gg<-add_plot(file_raw(), input$raw_corr, input$T, input$logscale,gg ,3,prefix="raw")
+        gg<-add_plot(file_shift(), input$shifted_corr, input$T, input$logscale,gg,3,prefix="shift" )
+        gg<-add_plot(file_log_meff_shifted(), input$log_meff_shifted_corr, input$T, input$logscale,gg ,3,prefix="log_mass_shift")
         
         return(gg)
         

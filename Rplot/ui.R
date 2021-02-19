@@ -70,12 +70,79 @@ shinyUI(fluidPage(
             ),
             multiple = TRUE,
             selected = c("meff0","C4_BH")
+        ),
+        pickerInput(
+            inputId = "log_meff_corr",
+            label = "log_meff_corr",
+            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "four0_to_two0"),
+            options = list(
+                `actions-box` = TRUE,
+                size = 10
+                ,`selected-text-format` = "count > 3"
+                
+            ),
+            multiple = TRUE,
+            #selected = c("meff0","C4_BH")
+        ),
+        pickerInput(
+            inputId = "raw_corr",
+            label = "raw_corr",
+            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "four0_to_two0"),
+            options = list(
+                `actions-box` = TRUE,
+                size = 10
+                ,`selected-text-format` = "count > 3"
+                
+            ),
+            multiple = TRUE,
+            #selected = c("meff0","C4_BH")
+        ),
+        pickerInput(
+            inputId = "shifted_corr",
+            label = "shifted_corr",
+            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "four0_to_two0"),
+            options = list(
+                `actions-box` = TRUE,
+                size = 10
+                ,`selected-text-format` = "count > 3"
+                
+            ),
+            multiple = TRUE,
+            #selected = c("meff0","C4_BH")
+        ),
+        pickerInput(
+            inputId = "log_meff_shifted_corr",
+            label = "log_meff_shifted_corr",
+            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "four0_to_two0"),
+            options = list(
+                `actions-box` = TRUE,
+                size = 10
+                ,`selected-text-format` = "count > 3"
+                
+            ),
+            multiple = TRUE,
+            #selected = c("meff0","C4_BH")
         )
+        
     )
+   
     ,mainPanel( 
-                plotlyOutput(outputId = "plot_many", height = "600px"),
+                plotlyOutput(outputId = "plot_many", height = "600px")
                 #####################################
-                withMathJax(),
+                ,tableOutput("mass_table_0")
+                ,tableOutput("mass_table_1")
+                ,tableOutput("mass_table_01")
+                
+                #####################################
+                ,withMathJax(),
                 h2("effective mass \\(  \\log c(t)/c(t+1)\\)"),
                 inputPanel(
                     pickerInput(
@@ -105,11 +172,7 @@ shinyUI(fluidPage(
                 plotlyOutput(outputId = "plot_many_log_meff_shifted", height ="600px"),
                 
     ),
-                #####################################
-                tableOutput("mass_table_0"),
-                tableOutput("mass_table_1"),
-                tableOutput("mass_table_01"),
-                #####################################
+                  #####################################
                 h2("Summary Table"),
                 dataTableOutput("summary_table")
     
