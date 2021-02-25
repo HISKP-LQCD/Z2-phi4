@@ -30,7 +30,7 @@ shinyUI(fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarPanel(
         selectInput("L", label = "L",
-                    choices =as.integer( c(10,16, 20,24,32,40)), selected = 20),
+                    choices =as.integer( c(10,16, 20,24,26,32,40)), selected = 20),
         selectInput("T", label = "T",
                     choices =as.integer( c(24,32, 48,96,128)), selected = 128),
         selectInput("msq0", label = "msq0",
@@ -61,7 +61,7 @@ shinyUI(fluidPage(
             inputId = "manyObs",
             label = "Obs",
             choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH","C4_BH+c","E2_01","GEVP_01"),
+                       "C4_BH_0","C4_BH","C4_BH+c","E2_01","GEVP_01"),
             options = list(
                 `actions-box` = TRUE,
                 size = 10
@@ -75,7 +75,7 @@ shinyUI(fluidPage(
             inputId = "log_meff_corr",
             label = "log_meff_corr",
             choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "C4_BH_0","C4_BH","E2_01","two0_to_two1","four0_to_two1",
                        "four0_to_two0"),
             options = list(
                 `actions-box` = TRUE,
@@ -90,7 +90,7 @@ shinyUI(fluidPage(
             inputId = "raw_corr",
             label = "raw_corr",
             choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "C4_BH_0","C4_BH","E2_01","two0_to_two1","four0_to_two1",
                        "four0_to_two0"),
             options = list(
                 `actions-box` = TRUE,
@@ -105,7 +105,7 @@ shinyUI(fluidPage(
             inputId = "shifted_corr",
             label = "shifted_corr",
             choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "C4_BH_0","C4_BH","E2_01","two0_to_two1","four0_to_two1",
                        "four0_to_two0"),
             options = list(
                 `actions-box` = TRUE,
@@ -120,7 +120,7 @@ shinyUI(fluidPage(
             inputId = "log_meff_shifted_corr",
             label = "log_meff_shifted_corr",
             choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH","E2_01","two0_to_two1","four0_to_two1",
+                       "C4_BH_0","C4_BH","E2_01","two0_to_two1","four0_to_two1",
                        "four0_to_two0"),
             options = list(
                 `actions-box` = TRUE,

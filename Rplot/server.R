@@ -31,6 +31,7 @@ n_and_plot_many<-function(input)({
   if (input=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
   if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
   if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
+  if (input=="C4_BH_0")    {n<- 11; fun<-  my_fit_ggplot  ; nmeff<-9     }
   if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
   if (input=="C4_BH+c")    {n<- 18; fun<-  my_fit_ggplot  ; nmeff<-11     }
   if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }

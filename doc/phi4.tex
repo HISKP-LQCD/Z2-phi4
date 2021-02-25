@@ -5,6 +5,7 @@
  \usepackage{amsfonts}
  \usepackage{amssymb}
  \usepackage{graphicx}
+  \usepackage{graphics}
  \usepackage{tcolorbox}
  \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
  \begin{document}
@@ -36,15 +37,21 @@ With
 \mu=\frac{\mu_L}{4\kappa_0\kappa_1} \,,\quad g=\frac{g_L}{4\sqrt{\kappa_0}\kappa_1^{3/2}}
  \end{align}
  
-\section{BH four point function}
+\section{four point function BH arXiv:2012.11488}
  
 
 
-$$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+\begin{equation}
+C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
 {\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1
-$$
+\label{CBH_correlator}
+\end{equation}
+
+In the following we will call $|\pi\rangle$ the state interpolated by the field $\phi_0$ and $|N\rangle$ the state interpolated by $\phi_1$
 
 \subsection{Spectral Decomposition for $t_1<t_2<t_3<t_4$}
+
+
 
 \begin{itemize}
 
@@ -98,8 +105,9 @@ C_4^{BH}=\frac{m_N}{ 2 m_\pi }\frac{
  |\langle 0| \phi_1 | N\rangle|^2  
 }-1
 \end{gather}
+The above equation need to be compared with the expression on the  paper BH arXiv:2012.11488:
 \begin{tcolorbox}
-{To be compared with the expression on the  paper BH:
+{
  \begin{multline}
 \label{eq:cThetaNpiDef}
 c^{\Theta, N \pi}_{\vec q_1' \vec q_2' \vec q_1 \vec q_2}(t', t \vert \, M_0) \equiv \frac{ 2 \omega_{\vec q_2'} e^{\omega_{\vec q_2'} t' } 2 \omega_{\vec q_2 } e^{- \omega_{\vec q_2 } t } }{Z_N} C_{a'b'} C_{ab} \, \\
@@ -117,21 +125,94 @@ Comparing the two equation above we get
 8m_\pi m_N C_4^{BH}=  c^{\Theta, N \pi}_{\vec q_1' \vec q_2' \vec q_1 \vec q_2}(t', t \vert \, M_0)
 \end{equation}
  
+ The result of the paper  paper BH is 
  \begin{tcolorbox}
- To be compared with the expression on the  paper BH:
+ 
  \begin{multline}
 c^{\Theta, N \pi}_{\vec 0}(t', t \vert \, M_0) _{\sf c} = 8 \pi (m_N + m_\pi) \, a_{N\pi} \, (t' - t ) \\
 - 16 \, a_{N \pi}^2 \sqrt{2 \pi (m_N + m_\pi) m_N m_\pi (t'-t)} + \mathcal O \big ((t'-t)^0\big) \,.\nonumber
 \end{multline}
  \end{tcolorbox}
-Finally our formula become 
+ 
+thus we get (we add a factor $L^3$ to match the dimension, we need to understand better the factor in front!)
 
 \begin{multline}
  C_4^{BH}=  \frac{1}{8m_\pi m_N L^3}\left[ 8 \pi (m_N + m_\pi) \, a_{N\pi} \, (t' - t ) 
-- 16 \, a_{N \pi}^2 \sqrt{2 \pi (m_N + m_\pi) m_N m_\pi (t'-t)} + \mathcal O \big ((t'-t)^0\big) \right]\,.\nonumber
+- 16 \, a_{N \pi}^2 \sqrt{2 \pi (m_N + m_\pi) m_N m_\pi (t'-t)} + \mathcal O \big ((t'-t)^0\big) \right]\,.
+\label{C4BH_fit}
 \end{multline} 
  
+\section{Numerical Test}
+For simplicity we set the couplings $\lambda_0=\lambda_1=\mu/2=2.5$, the masses $m_0^2=-4.925$, $m_1^2=-4.85$ and $g=0$.
+First we measured the mass of the two particles from the two point functions
+\begin{equation}
+\langle \phi_0(t) \phi_0(0)\rangle \quad\mbox{and}\quad
+\langle \phi_1(t) \phi_1(0)\rangle
+\end{equation}
+obtaining $m_\pi=0.14653(11)$ and 	$m_N=0.274853(80)$, the corresponding plateaux are in Fig.~\ref{plot_meff}
+\begin{figure}[!ht]
+ \centering
+\includegraphics[scale=0.2]{m0.png}
+\includegraphics[scale=0.2]{m1.png}
+\caption{Effective mass plot of the $m_\pi$ left and $m_N$ right }
+\label{plot_meff}
+\end{figure}
+
+
+
+In Fig.~\ref{plot_C4BH} we show our result for in lattice $L20T32$ for the 
+correlator in eq.(\ref{CBH_correlator}), the value we got from the fit is 
+$a_{N\pi}^{BH}=-0.980(72)$ while with the Lusher method we get $a_{N\pi}^{Luscher}=-0.401(35)$
+\newpage
+\begin{figure}[!ht]
+ \centering
+\includegraphics[scale=0.4]{newplot.png}
+\caption{Correlator of eq.(\ref{CBH_correlator}) fitted with eq.(\ref{C4BH_fit}) in a L20T32 lattice }
+\label{plot_C4BH}
+\end{figure}
  
+\newpage 
+\section{L\"uscher method} 
+
+The L\"uscher method requires to measure the energy shift of the two particle energy, then the scattering length can be computed from the formula
+\begin{equation}
+  \Delta E_{N\pi}=-\frac{2\pi a_{N\pi}}{\mu L^3}\left[ 1 + c_1  \frac{a_{N\pi}}{L} + c_2\left(\frac{a_{N\pi}}{L}\right)^2  \right] +O(\frac{1}{L^6}),
+  \label{luscher_pik}
+\end{equation}
+where $\mu$ is the reduced mass, $c_1=- 2.837297 $,  $c_2=6.375183$.
+The measurement for the masses and the two particle energy are in Table~\ref{tab:spectrum}.
+The values of Table~\ref{tab:spectrum} can be fitted with eq.(\ref{luscher_pik}) as shown in Fig.~\ref{fit_luscher_aNpi} obtaining 
+\begin{gather}
+\chi^2/d.o.f.=2.82759\pm 2.1 \\ 
+a_{N\pi}=-0.401\pm 0.035 \\ 
+\end{gather}
+
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline 
+L & $m_\pi$ & $m_N$ & $E_{N\pi}$ & $\Delta E_{N\pi}$ \\ 
+\hline 
+20 & 0.14653(11)&	0.274850(84)&	0.42407(45)&	0.00269(47) \\ 
+\hline 
+24 & 0.145783(77)&	0.274484(89)&	0.42288(30)&	0.00261(31)\\ 
+\hline 
+26 & 0.145593(96)&	0.274699(80)&	0.42190(37)&	0.00161(35) \\ 
+\hline 
+32 & 0.145261(76)&	0.274538(86)&	0.42095(36)&	0.00116(35) \\ 
+\hline 
+\end{tabular} 
+\caption{Spectrum for $\lambda_0=\lambda_1=\mu/2=2.5$,  $m_0^2=-4.925$, $m_1^2=-4.85$ and $g=0$}
+\label{tab:spectrum}
+ \end{table}
+ 
+ \begin{figure}[!ht]
+ \centering
+\includegraphics[scale=0.4]{unnamed-chunk-8-1.pdf}
+\caption{Fit of eq.(\ref{luscher_pik}) }
+\label{fit_luscher_aNpi}
+\end{figure}
  
  
  \end{document} 

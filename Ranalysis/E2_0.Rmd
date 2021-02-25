@@ -104,6 +104,7 @@ The plot of the effective mass is not what we expected, ignoring finite T pollut
 ```{r}
   log_meff <-bootstrap.effectivemass(cfb, type='log')
   plot(log_meff)
+
 ```
 
 The shifted effective mass instead looks fine
@@ -143,7 +144,7 @@ plot(log_meff)
 ```{r}
 n_00<-3
 n_11<-4
-n_01<-12
+n_01<-13
 mycf<- cf()
 for (n in c(n_00,n_01,n_01,n_11)){
   cf_tmp <- cf_meta(nrObs =1, Time = header$L[1], nrStypes = 1)
@@ -168,11 +169,12 @@ pc2 <- gevp2cf(gevp=correlatormatrix.gevp, id=2)
 plot(pc1, col="red", pch=21, log="y", xlab="t", ylab="C(t)")
 plot(pc2, rep=TRUE, col="blue", pch=22)
 
-pc1.matrixfit <- matrixfit(cf=pc1, t1=4, t2=10, useCov=TRUE,parlist=array(c(1,1), dim=c(2,1)),sym.vec=c("cosh"), fit.method="lm")
-plot(pc1.matrixfit, do.qqplot=FALSE,xlab="t", ylab="C(t)")
+pc1.matrixfit <- matrixfit(cf=pc1, t1=4, t2=10, useCov=TRUE,parlist=array(c(1,1), dim=c(2,1)),sym.vec=c("cosh"), fit.method="lm", model="shifted")
 
-plot(pc1.matrixfit, do.qqplot=FALSE,
-xlab="t", ylab="C(t)", plot.raw=FALSE)
+#plot(pc1.matrixfit, do.qqplot=FALSE,xlab="t", ylab="C(t)")
+library(plotly)
+plot(pc1.matrixfit, do.qqplot=FALSE,xlab="t", ylab="C(t)", plot.raw=FALSE)
+
 abline(h=1, lty=2)
 
 summary(pc1.matrixfit)
@@ -180,6 +182,20 @@ summary(pc1.matrixfit)
 
 ```
 
+
+
+## Compare hadron marco
+
+```{r}
+
+dfh<- data.frame("t"=pc1.matrixfit$CF$t  , "corr"=pc1.matrixfit$M, "err"=pc1.matrixfit$CF$Err)
+gg<-ggplot()
+
+gg<-gg +geom_point(data=dfh, mapping=aes(x=t, y=corr))
+
+plot(gg)
+
+```
 
 # T48
 
