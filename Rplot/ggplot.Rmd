@@ -57,9 +57,9 @@ The plots for each ensemble are
 
 -   Two particle energy for $\langle \phi_0^3(t) \phi_0^3(0)\rangle$
 
--   Two particle energy for $\langle \phi_1^3(t) \phi_1^3(0)\rangle$
+-   three particle energy for $\langle \phi_1^3(t) \phi_1^3(0)\rangle$
 
--   Two particle energy for $\langle \phi^3(t) \phi^{*3}(0)\rangle$
+-   three particle energy for $\langle \phi^3(t) \phi^{*3}(0)\rangle$
 
     -   The three particle energy $E_3$ is extracted from the correlator
         $$

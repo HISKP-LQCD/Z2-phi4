@@ -20,12 +20,54 @@ require(scales) # to access break formatting functions
 library(shiny)
 library(shinyWidgets)
 library(ggrepel)
+library(Rose)
+
+n_and_plot_many<-function(input)({
+  if (input=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
+  if (input=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
+  if (input=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
+  if (input=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
+  if (input=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
+  if (input=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
+  if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
+  if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
+  if (input=="C4_BH_0")    {n<- 11; fun<-  my_fit_ggplot  ; nmeff<-9     }
+  if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
+  if (input=="C4_BH+c")    {n<- 18; fun<-  my_fit_ggplot  ; nmeff<-11     }
+  if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
+  
+  if (input=="two0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-13   }
+  if (input=="four0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-14   }
+  if (input=="four0_to_two0")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-15   }
+  if (input=="GEVP_01")    {n<- 21; fun<-  my_fit_ggplot    ; nmeff<-NA   }
+  
+  
+  return (c(n,fun, nmeff))
+})
+add_plot<-function(file, obs, T, logscale ,gg, index,prefix=""){
+
+  for (myobs in obs){
+    n1<-n_and_plot_many(myobs)
+    n<-n1[[index]]
+    mt<-read_df(file)
+    
+    d<- get_block_n(mt,n)
+    fit<- get_fit_n(mt,n)
+    fit_range<- get_plateaux_range(mt,n)
+    
+    label<-paste(prefix,myobs)
+    gg<-  many_fit_ggplot(d,fit,fit_range,T/2,logscale,gg,  label  )
+    
+   
+  }
+  return(gg)
+}
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-    if(!exists("Rread_block.R", mode="function")) source("Rread_block.R")
-    if(!exists("print_error.R", mode="function")) source("print_error.R")
-    if(!exists("print_error.R", mode="function")) source("plot_routines.R")
+    #if(!exists("Rread_block.R", mode="function")) source("Rread_block.R")
+    #if(!exists("print_error.R", mode="function")) source("print_error.R")
+    #if(!exists("print_error.R", mode="function")) source("plot_routines.R")
     #######################################################################################
     #files
     ####################################################################################### 
@@ -78,6 +120,41 @@ shinyServer(function(input, output) {
                      ,  dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
         return(file)
     })
+    file_shift<-reactive({
+      T<-as.integer(input$T)
+      L<-as.integer(input$L)
+      msq0<-as.double(input$msq0)
+      msq1<-as.double(input$msq1)
+      l0<-as.double(input$l0)
+      l1<-as.double(input$l1)
+      mu<-as.double(input$mu)
+      g <- as.double(input$g)
+      rep<-as.integer(input$rep)
+      #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+      dir <- "Data" 
+      
+      file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_shifted_correlators"
+                   ,  dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
+      return(file)
+    })
+    file_log_meff_shifted<-reactive({
+      T<-as.integer(input$T)
+      L<-as.integer(input$L)
+      msq0<-as.double(input$msq0)
+      msq1<-as.double(input$msq1)
+      l0<-as.double(input$l0)
+      l1<-as.double(input$l1)
+      mu<-as.double(input$mu)
+      g <- as.double(input$g)
+      rep<-as.integer(input$rep)
+      #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+      dir <- "Data" 
+      
+      file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_log_meff_shifted"
+                   ,  dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
+      return(file)
+    })
+    
     
     n_and_plot<-reactive({
         if (input$Obs=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
@@ -122,68 +199,16 @@ shinyServer(function(input, output) {
         ggplotly(gg_new())
     })
     
-    n_and_plot_many<-function(input)({
-        if (input=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
-        if (input=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
-        if (input=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
-        if (input=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
-        if (input=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
-        if (input=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
-        if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
-        if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
-        if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
-        if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
-        
-        if (input=="two0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-13   }
-        if (input=="four0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-14   }
-        if (input=="four0_to_two0")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-15   }
-        if (input=="GEVP_01")    {n<- 21; fun<-  my_fit_ggplot    ; nmeff<-NA   }
-        
-        return (c(n,fun, nmeff))
-    })
+    
+    
+    
     gg_many<-reactive({  
         gg<- ggplot()
-        for (myobs in input$manyObs){
-            file<-file()
-            n1<-n_and_plot_many(myobs)
-            n<-n1[[1]]
-            T<-as.integer(input$T)
-            mt<-read_df(file)
-            
-            d<- get_block_n(mt,n)
-            fit<- get_fit_n(mt,n)
-            fit_range<- get_plateaux_range(mt,n)
-            
-            #plot data
-            #tmp<-tostring(myobs)
-            
-            gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
-            
-            if(myobs=="meff0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff0")
-            if(myobs=="meff1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff1")
-            if(myobs=="E2_0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_0")
-            if(myobs=="E2_1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_1")
-            if(myobs=="E2")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2")
-            if(myobs=="E3_0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_0")
-            if(myobs=="E3_1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_1")
-            if(myobs=="E3")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3")
-            if(myobs=="C4_BH")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH")
-            if(myobs=="E2_01")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_01")
-            if(myobs=="GEVP_01")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"GEVP_01")
-            
-        
-        }
+        gg<-add_plot(file(), input$manyObs, input$T, input$logscale,gg,1 )
+        gg<-add_plot(file_meff(), input$log_meff_corr, input$T, input$logscale,gg,3,prefix="log_meff" )
+        gg<-add_plot(file_raw(), input$raw_corr, input$T, input$logscale,gg ,3,prefix="raw")
+        gg<-add_plot(file_shift(), input$shifted_corr, input$T, input$logscale,gg,3,prefix="shift" )
+        gg<-add_plot(file_log_meff_shifted(), input$log_meff_shifted_corr, input$T, input$logscale,gg ,3,prefix="log_mass_shift")
         
         return(gg)
         
@@ -208,32 +233,8 @@ shinyServer(function(input, output) {
             fit<- get_fit_n(mt,n)
             fit_range<- get_plateaux_range(mt,n)
             
-            if(myobs=="meff0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff0")
-            if(myobs=="meff1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff1")
-            if(myobs=="E2_0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_0")
-            if(myobs=="E2_1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_1")
-            if(myobs=="E2")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2")
-            if(myobs=="E3_0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_0")
-            if(myobs=="E3_1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_1")
-            if(myobs=="E3")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3")
-            if(myobs=="C4_BH")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH")
-            if(myobs=="E2_01")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_01")
-            if(myobs=="two0_to_two1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"two0_to_two1")
-            if(myobs=="four0_to_two1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"four0_to_two1")
-            if(myobs=="four0_to_two0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"four0_to_two0")
+            gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
+   
         }
         
         return(gg)
@@ -255,33 +256,8 @@ shinyServer(function(input, output) {
             d<- get_block_n(mt,n)
             fit<- get_fit_n(mt,n)
             fit_range<- get_plateaux_range(mt,n)
+            gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
             
-            if(myobs=="meff0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff0")
-            if(myobs=="meff1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"meff1")
-            if(myobs=="E2_0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_0")
-            if(myobs=="E2_1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_1")
-            if(myobs=="E2")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2")
-            if(myobs=="E3_0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_0")
-            if(myobs=="E3_1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3_1")
-            if(myobs=="E3")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E3")
-            if(myobs=="C4_BH")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"C4_BH")
-            if(myobs=="E2_01")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"E2_01")
-            if(myobs=="two0_to_two1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"two0_to_two1")
-            if(myobs=="four0_to_two1")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"four0_to_two1")
-            if(myobs=="four0_to_two0")
-                gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,"four0_to_two0")
         }
         
         return(gg)
@@ -291,6 +267,58 @@ shinyServer(function(input, output) {
         layout(   yaxis = list( showexponent = "all", exponentformat = "e")    )
     })
     
+    gg_many_shift<-reactive({
+        
+      gg<- ggplot()
+      for (myobs in input$manyObs_meff){
+        n1<-n_and_plot_many(myobs)
+        file<-file_shift()
+        n<-n1[[3]]
+        T<-as.integer(input$T)
+        mt<-read_df(file)
+        
+        d<- get_block_n(mt,n)
+        fit<- get_fit_n(mt,n)
+        fit_range<- get_plateaux_range(mt,n)
+        gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
+
+      }
+      
+      return(gg)
+    })
+    
+  
+    output$plot_many_shift<-renderPlotly({
+        ggplotly(gg_many_shift(),dynamicTicks = TRUE)%>%
+        layout(   yaxis = list( showexponent = "all", exponentformat = "e")    )
+    })
+    
+    
+    gg_many_log_meff_shifted<-reactive({
+      
+      gg<- ggplot()
+      for (myobs in input$manyObs_meff){
+        n1<-n_and_plot_many(myobs)
+        file<-file_log_meff_shifted()
+        n<-n1[[3]]
+        T<-as.integer(input$T)
+        mt<-read_df(file)
+        
+        d<- get_block_n(mt,n)
+        fit<- get_fit_n(mt,n)
+        fit_range<- get_plateaux_range(mt,n)
+        gg<-  many_fit_ggplot(d,fit,fit_range,T/2,input$logscale,gg,  myobs  )
+        
+      }
+      
+      return(gg)
+    })
+    
+    
+    output$plot_many_log_meff_shifted<-renderPlotly({
+      ggplotly(gg_many_log_meff_shifted(),dynamicTicks = TRUE)%>%
+        layout(   yaxis = list( showexponent = "all", exponentformat = "e")    )
+    })
     
     #######################################################################################
     #mass tables
@@ -298,7 +326,8 @@ shinyServer(function(input, output) {
     mass_tables_01<-reactive({  
         
         df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_01"=c(0),    
-                          "DE2_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH_01"=c(0)    )
+                          "DE2_01"=c(0)   , "a_Luscher"=c(0)  , "a_BH_01"=c(0),
+                          "m_0+m_1_a_01"=c(0))
         
         file<-file()
         T<-as.integer(input$T)
@@ -313,7 +342,8 @@ shinyServer(function(input, output) {
                         mean_print(fit01[1,1], fit01[1,2]),
                         mean_print(fit01[2,3], fit01[2,4]) ,
                         mean_print(fit01[2,1], fit01[2,2]),
-                        mean_print(fitBH[1,1], fitBH[1,2])        )
+                        mean_print(fitBH[1,1], fitBH[1,2])   ,
+                        mean_print(fit01[2,9], fit01[1,10]))
         return(df)
         
     })
@@ -321,7 +351,8 @@ shinyServer(function(input, output) {
     mass_tables_0<-reactive({  
         
         df<- data.frame(  "meff0"=c(0),  "meff1"=c(0) ,      "E2_0"=c(0),    
-                          "DE2_0"=c(0)   , "a_Luscher"=c(0)  , "a_BH_0"=c(0)    )
+                          "DE2_0"=c(0)   , "a_Luscher"=c(0)  , "a_BH_0"=c(0),
+                          "m_0a_00"=c(0))
         
         file<-file()
         T<-as.integer(input$T)
@@ -336,7 +367,8 @@ shinyServer(function(input, output) {
                         mean_print(fit01[1,1], fit01[1,2]),
                         mean_print(fit01[2,3], fit01[2,4]) ,
                         mean_print(fit01[2,1], fit01[2,2]),
-                        mean_print(fitBH[1,1], fitBH[1,2])        )
+                        mean_print(fitBH[1,1], fitBH[1,2]) ,
+                        mean_print(fit01[2,9], fit01[2,10]) )
         return(df)
         
     })
@@ -392,8 +424,8 @@ shinyServer(function(input, output) {
                     for (l1 in c(2.5)){    
                         for (mu in c(5.0)){    
                             for (g in c(0)){
-                                for (L in c(10,20,40)){
-                                    for (T in c(24,48,128)){
+                                for (L in c(10,16,20,24,32,40)){
+                                    for (T in c(24,32,48,128)){
                                         for (rep in c(0,1,2)){
                                             file1=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
                                                           dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
@@ -436,14 +468,14 @@ shinyServer(function(input, output) {
                                                 mylist  <-append(mylist, list( l0,l1,mu,g,rep ))
                                                 
                                                 #a_0_lusher, E2_0,deltaE2_0   
-                                                fit<- get_fit_n(mt,4)
+                                                fit<- get_fit_n(mt,5)
                                                 mylist  <- append(mylist, mean_print(fit[2,1], fit[2,2]) )
                                                 mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
                                                 mylist  <- append(mylist, mean_print(fit[2,3], fit[2,4]))
                                                 
                                                 
                                                 #a_1_lusher, E2_1,deltaE2_1   
-                                                fit<- get_fit_n(mt,5)
+                                                fit<- get_fit_n(mt,6)
                                                 mylist  <- append(mylist, mean_print(fit[2,1], fit[2,2]) )
                                                 mylist  <- append(mylist, mean_print(fit[1,1], fit[1,2])) 
                                                 mylist  <- append(mylist, mean_print(fit[2,3], fit[2,4]))

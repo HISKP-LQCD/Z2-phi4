@@ -132,8 +132,8 @@ many_fit_ggplot<-function(d,fit_par, fit_range,T, logscale="no", g, mylabel){
                          ,alpha=0.3
                          #,fill="darkgreen"    
                          ,inherit.aes = FALSE) 
-  gg <- gg+ geom_line(data=mydf, aes(x=fit_range[1],y=y), color="black", linetype="dashed") 
-  gg <- gg+ geom_line( data=mydf ,aes(x=fit_range[2],y=y), color="black", linetype="dashed") 
+  gg <- gg+ geom_line(data=mydf, aes(x=fit_range[1],y=y,  color=mylabel), linetype="dashed") 
+  gg <- gg+ geom_line( data=mydf ,aes(x=fit_range[2],y=y, color=mylabel), linetype="dashed") 
   #gg  <- gg + xlim(set_xmargin(fit_range,128/2) ) + ylim(-2e+4, 1e+4) 
   
   #gg<- gg +geom_text(data=mydf, aes(x=x,y=y), label=mylabel) 

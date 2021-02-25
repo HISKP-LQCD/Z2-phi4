@@ -1303,3 +1303,222 @@ with the fit parameters $E_{N\pi}= P[0]$ , $A_{N\pi\to0}=P[1]$ and $A_{\pi\to N}
 
 
 
+##############################################################################
+##############################################################################
+
+
+
+```{r echo=FALSE,  results="asis"}
+dir<-"/home/marco/analysis/phi4/tuning_masses/out"
+L<-20
+T<-128
+msq0<--4.925
+msq1<--4.85
+l0<-2.5
+l1<-2.5
+mu<-5
+g<-0
+rep<-0
+file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",
+                                 dir,T,L,msq0,msq1,l0,l1,mu,g,rep)
+cat('# ')
+cat(file)  
+  columns_file<-c(1:20)  
+  block <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,
+                      col.names =columns_file)
+  block_full <- read.table(file,header=FALSE,fill = TRUE , blank.lines.skip=TRUE,skip=1,         comment.char = "",   col.names = columns_file)
+  l<-grep("fit",block_full[,2])
+  
+  meff <- data.frame('ave'=c(0), 'err'=c(0))
+  len<- length(block[,1])
+  count<-1
+  mylist<- list(  L,T)
+  
+  cat('\n\n#### Mass  \n\n')
+  for (n in c(2,3)){
+    if (len >= (n*(T/2)-1)){
+      cat('index n=',n%%2,'\n\n')
+      a1<-gsub("\\[","c\\(", block_full[l,4][n])
+      a2<-gsub("\\]","\\)", a1)
+      fit_range <- eval(parse(text=a2))
+      
+      # store in fit the fit value
+      fit <- block[(n*(T/2)),]
+      
+      data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:3])
+      #plot data
+      d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
+      myggplot(d,fit,fit_range,n,T/2) 
+      #meff[count,]<- list(fit[1,1],fit[1,2])
+      mylist  <- append(mylist, list(fit[1,1],fit[1,2]) )
+      count <- count+1
+    }
+    else mylist <-append(mylist, list("NaN","NaN") )
+    
+  }
+  mylist  <-append(mylist, list(msq0, msq1, l0,l1,mu,g,rep ))
+  
+
+```
+ 
+## C4_BH
+
+$$C_4^{BH}=\frac{\langle \phi_0(\frac{T}{2})\phi_1(t)\phi_1(\frac{T}{8}) \phi_0(0)\rangle}
+{\langle \phi_0(\frac{T}{2}) \phi_0(0)\rangle \langle \phi_1(t)\phi_1(\frac{T}{8}) \rangle} -1$$
+
+
+Fit function:
+$$C_4^{BH}=\frac{1}{8m_0 m_1} \left(8\pi(m_0+m_1) a_N \tilde{t} + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 \tilde{t} }\right)$$
+$\tilde{t}=(t-T/8)$ and $P[0]=a_N$
+
+here is the fit  function plotted for various values of $a_N$
+
+ 
+```{r echo=FALSE,  results="asis"}
+  cat('\n\n#### C4_BH  \n\n')
+  for (n in c(13)){
+    if (len >= (n*(T/2)-1)){
+      cat('index n=',n-11,block_full[l,1][n] ,'\n\n')
+      data<- get_block_n(mt,n)
+      fit<- get_fit_n(mt,n)
+      fit_range<- get_plateaux_range(mt,n)
+            
+      d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
+                      "fit"=(data[[4]]),"errfit"=(data[[5]]))
+      my_fit_ggplot(d,fit,fit_range,n,T/2)
+      
+      mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
+    }
+    else mylist  <-append(mylist, list("NaN","NaN") )
+    count<-count+1
+  }
+  
+```
+
+
+
+#### Fit function
+
+$$C_4^{BH}=\frac{1}{8m_0 m_1} \left( 8\pi(m_0^2+m_1^2) P[0] \tilde{t} + 16 P[1]   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 \tilde{t} }\right)$$
+```{r echo=FALSE,  results="asis"}
+  
+  for (n in c(17)){
+    if (len >= (n*(T/2)-1)){
+      cat('index n=',n-11,block_full[l,1][n] ,'\n\n')
+      
+      a1<-gsub("\\[","c\\(", block_full[l,4][n])
+      a2<-gsub("\\]","\\)", a1)
+      fit_range <- eval(parse(text=a2))
+      
+      # store in fit the fit value
+      fit <- block[(n*(T/2)),]
+      
+      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:8])
+      
+      d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
+                      "fit"=(data[[4]]),"errfit"=(data[[5]]))
+      my_fit_ggplot(data,fit,fit_range,n,T/2)
+      
+      mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
+    }
+    else mylist  <-append(mylist, list("NaN","NaN") )
+    count<-count+1
+  }
+  
+```
+
+### adding a constant term
+$$C_4^{BH}=\frac{1}{8m_0 m_1} \left( 8\pi(m_0+m_1) a_N \tilde{t} + 16 a_N a_N   \sqrt{ 2 \pi  (m_0+m_1)  m_0 m_1 \tilde{t} } +P[1]\right)$$
+&a_N=P[0]&
+```{r echo=FALSE,  results="asis"}
+  
+  for (n in c(18)){
+    if (len >= (n*(T/2)-1)){
+      cat('index n=',n-11,block_full[l,1][n] ,'\n\n')
+      
+      a1<-gsub("\\[","c\\(", block_full[l,4][n])
+      a2<-gsub("\\]","\\)", a1)
+      fit_range <- eval(parse(text=a2))
+      
+      # store in fit the fit value
+      fit <- block[(n*(T/2)),]
+      
+      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:5])
+      
+      d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
+                      "fit"=(data[[4]]),"errfit"=(data[[5]]))
+      my_fit_ggplot(d,fit,fit_range,n,T/2)
+      
+      mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
+    }
+    else mylist  <-append(mylist, list("NaN","NaN") )
+    count<-count+1
+  }
+  
+```
+
+## Two particle energy
+```{r echo=FALSE}
+
+  for (n in c(5,6)){
+    if (len >= (n*(T/2)-1)){
+      cat('index n=',n-5,'\n\n')
+      a1<-gsub("\\[","c\\(", block_full[l,4][n])
+      a2<-gsub("\\]","\\)", a1)
+      fit_range <- eval(parse(text=a2))
+      
+      # store in fit the fit value
+      fit <- block[(n*(T/2)),]
+      
+      data <- na.omit(block[((n-1)*(T/2)+1):(n*(T/2)-1),1:3])
+      #plot data
+      d <- data.frame("x"=data[[1]],"y"=data[[2]],"err"=data[[3]])
+      myggplot(d,fit,fit_range,n,T/2) 
+      
+      mylist  <- append(mylist, list(fit[1,1],fit[1,2]) )
+      count <- count+1
+    }
+    else mylist  <-append(mylist, list("NaN","NaN")) 
+  }
+```
+
+## $E_{N\pi}$
+
+$$
+\langle \phi_0\phi_1 (t)  \phi_0\phi_1(0) \rangle= |A_{N\pi\to0}| \left(e^{-tE_{N\pi} }+ e^{-(T-t)E_{N\pi} }\right)+
+|A_{\pi\to N}|^2  \left(e^{-TE_\pi -tE_{N}+tE_\pi }+ e^{-TE_N -tE_{\pi}+tE_N  }\right)
+$$
+with the fit parameters $E_{N\pi}= P[0]$ , $A_{N\pi\to0}=P[1]$ and $A_{\pi\to N}=P[2]$
+
+```{r echo=FALSE,  results="asis"}
+  
+  for (n in c(20)){
+    if (len >= (n*(T/2)-1)){
+      cat('index n=',n-11,block_full[l,1][n] ,'\n\n')
+      
+      a1<-gsub("\\[","c\\(", block_full[l,4][n])
+      a2<-gsub("\\]","\\)", a1)
+      fit_range <- eval(parse(text=a2))
+      
+      # store in fit the fit value
+      fit <- block[(n*(T/2)),]
+      
+      data <- (block[((n-1)*(T/2)+1):(n*(T/2)-1),1:5])
+      
+      d <- data.frame("x"=data[[1]],"y"=(data[[2]]),"err"=(data[[3]]),
+                      "fit"=(data[[4]]),"errfit"=(data[[5]]))
+      my_fit_ggplot(data,fit,fit_range,n,T/2, log='yes')
+      
+      mylist  <-append(mylist, list(fit[1,1],fit[1,2]) )
+    }
+    else mylist  <-append(mylist, list("NaN","NaN") )
+    count<-count+1
+  }
+  
+```
+
+
+
+
+
+

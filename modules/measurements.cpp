@@ -360,7 +360,7 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         fwrite(&C3t0,sizeof(double),1,f_G2t); // 5 c++  || 6 R 
         fwrite(&C3t1,sizeof(double),1,f_G2t);
         fwrite(&C3t,sizeof(double),1,f_G2t);
-        fwrite(&C40,sizeof(double),1,f_G2t);
+        fwrite(&C40,sizeof(double),1,f_G2t);   // 8 c++ || 9 R
         fwrite(&C41,sizeof(double),1,f_G2t); // 9 c++  || 10 R 
         fwrite(&C401,sizeof(double),1,f_G2t);// 10 c++  || 11 R 
         fwrite(&C201,sizeof(double),1,f_G2t);
