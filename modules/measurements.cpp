@@ -342,14 +342,14 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
         C3t1/=((double) T);
         C3t/=((double) T);
         C40/=((double) T);
-        C40/=((double) T);
+        C41/=((double) T);
         C401/=((double) T);
         C201/=((double) T);
         two0totwo1/=((double) T);
         four0totwo1/=((double) T);
         four0totwo0/=((double) T);
         C40_s/=((double) T);
-        C40_s/=((double) T);
+        C41_s/=((double) T);
         C401_s/=((double) T);
         
         fwrite(&G2t0,sizeof(double),1,f_G2t); // 0 c++  || 1 R 
