@@ -32,6 +32,7 @@ n_and_plot_many<-function(input)({
   if (input=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
   if (input=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
   if (input=="C4_BH_0")    {n<- 11; fun<-  my_fit_ggplot  ; nmeff<-9     }
+  if (input=="C4_BH_1")    {n<- 12; fun<-  my_fit_ggplot  ; nmeff<-10     }
   if (input=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
   if (input=="C4_BH+c")    {n<- 18; fun<-  my_fit_ggplot  ; nmeff<-11     }
   if (input=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
@@ -40,6 +41,10 @@ n_and_plot_many<-function(input)({
   if (input=="four0_to_two1")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-14   }
   if (input=="four0_to_two0")    {n<- NA; fun<-  my_fit_ggplot    ; nmeff<-15   }
   if (input=="GEVP_01")    {n<- 21; fun<-  my_fit_ggplot    ; nmeff<-NA   }
+  if (input=="C4_BH_0_s")    {n<- 22; fun<-  my_fit_ggplot  ; nmeff<-16     }
+  if (input=="C4_BH_1_s")    {n<- 23; fun<-  my_fit_ggplot  ; nmeff<-17     }
+  if (input=="C4_BH_s")    {n<- 24; fun<-  my_fit_ggplot  ; nmeff<-18    }
+  if (input=="C4_BH_s+c")    {n<- 25; fun<-  my_fit_ggplot  ; nmeff<-19    }
   
   
   return (c(n,fun, nmeff))
