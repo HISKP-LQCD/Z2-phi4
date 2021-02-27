@@ -67,6 +67,27 @@ add_plot<-function(file, obs, T, logscale ,gg, index,prefix=""){
   }
   return(gg)
 }
+add_plot_new<-function(file, obs, T, logscale ,gg,prefix=""){
+  
+  for (myobs in obs){
+    mt<-read_df(file)
+    all_obs<- get_all_corr(mt)
+   
+    string=sprintf("\\b%s\\b",myobs)# need to put the delimiters on the word to grep
+    l<-grep(string,all_obs[,"corr"])
+    print(l)
+    n<-all_obs[l,"n"]
+    d<- get_block_n(mt,n)
+    fit<- get_fit_n(mt,n)
+    fit_range<- get_plateaux_range(mt,n)
+    
+    label<-paste(prefix,myobs)
+    gg<-  many_fit_ggplot(d,fit,fit_range,T/2,logscale,gg,  label  )
+    
+    
+  }
+  return(gg)
+}
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
@@ -160,56 +181,25 @@ shinyServer(function(input, output) {
       return(file)
     })
     
-    
-    n_and_plot<-reactive({
-        if (input$Obs=="meff0")   { n<- 2 ;fun<-  myggplot    ; nmeff<-1         }
-        if (input$Obs=="meff1")    {n<- 3 ;fun<-  myggplot  ; nmeff<-2   }
-        if (input$Obs=="E2_0")  {  n<- 5;fun<-  myggplot    ; nmeff<-3 }
-        if (input$Obs=="E2_1")  {  n<- 6; fun<-  myggplot   ; nmeff<-4  }
-        if (input$Obs=="E2")    {  n<- 7; fun<-  myggplot   ; nmeff<-5  }
-        if (input$Obs=="E3_0")  {  n<- 8; fun<-  my_fit_ggplot  ; nmeff<-6   }
-        if (input$Obs=="E3_1")   { n<- 9; fun<-  my_fit_ggplot  ; nmeff<-7   }
-        if (input$Obs=="E3")    {n<- 10 ; fun<-  my_fit_ggplot  ; nmeff<-8   }
-        if (input$Obs=="C4_BH")    {n<- 13; fun<-  my_fit_ggplot  ; nmeff<-11     }
-        if (input$Obs=="E2_01")    {n<- 20; fun<-  my_fit_ggplot    ; nmeff<-12   }
-        if (input$Obs=="meff(E2_01)")    {n<- 21; fun<-  my_fit_ggplot  ; nmeff<-12     }
-        
-        return (c(n,fun, nmeff))
+    output$obs_list <- renderUI({
+      file<-file()
+      mt<-read_df(file)
+      obs<-get_all_corr(mt)
+      pickerInput(
+        inputId = "manyObs",
+        label = "Obs",
+        choices =obs[,"corr"],
+        options = list( `actions-box` = TRUE,  size = 10     ,`selected-text-format` = "count > 3"  ),
+        multiple = TRUE
+      )
     })
     
-    #######################################################################################
-    #plots
-    ####################################################################################### 
-    gg_new<-reactive({  
-        file<-file()
-        n1<-n_and_plot()
-        n<-n1[[1]]
-        T<-as.integer(input$T)
-        mt<-read_df(file)
-        
-        d<- get_block_n(mt,n)
-        fit<- get_fit_n(mt,n)
-        fit_range<- get_plateaux_range(mt,n)
-        
-        #plot data
-        tmp<-n_and_plot()[[2]]
-        gg<-tmp(d,fit,fit_range,T/2,input$logscale)
-        
-        
-        #plot(gg)
-        return(gg)
-    })
-    
-    output$plot<-renderPlotly({
-        ggplotly(gg_new())
-    })
-    
-    
-    
-    
+
     gg_many<-reactive({  
         gg<- ggplot()
-        gg<-add_plot(file(), input$manyObs, input$T, input$logscale,gg,1 )
+        #print(input$manyObs)
+        #gg<-add_plot(file(), input$manyObs, input$T, input$logscale,gg,1 )
+        gg<-add_plot_new(file(), input$manyObs, input$T, input$logscale,gg )
         gg<-add_plot(file_meff(), input$log_meff_corr, input$T, input$logscale,gg,3,prefix="log_meff" )
         gg<-add_plot(file_raw(), input$raw_corr, input$T, input$logscale,gg ,3,prefix="raw")
         gg<-add_plot(file_shift(), input$shifted_corr, input$T, input$logscale,gg,3,prefix="shift" )
