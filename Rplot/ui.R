@@ -57,21 +57,21 @@ shinyUI(fluidPage(
     ),
     
     inputPanel(
-          pickerInput(
-            inputId = "manyObs_old",
-            label = "Obs_old",
-            choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
-                       "C4_BH_0","C4_BH_1","C4_BH","C4_BH+c","E2_01","GEVP_01"
-                       ,"C4_BH_0_s","C4_BH_1_s","C4_BH_s","C4_BH_s+c"),
-            options = list(
-                `actions-box` = TRUE,
-                size = 10
-                ,`selected-text-format` = "count > 3"
-                
-            ),
-            multiple = TRUE,
-            selected = c("meff0","C4_BH")
-        ),
+        #   pickerInput(
+        #     inputId = "manyObs_old",
+        #     label = "Obs_old",
+        #     choices =c("meff0","meff1","E2_0","E2_1","E2","E3_0","E3_1","E3",
+        #                "C4_BH_0","C4_BH_1","C4_BH","C4_BH+c","E2_01","GEVP_01"
+        #                ,"C4_BH_0_s","C4_BH_1_s","C4_BH_s","C4_BH_s+c"),
+        #     options = list(
+        #         `actions-box` = TRUE,
+        #         size = 10
+        #         ,`selected-text-format` = "count > 3"
+        #         
+        #     ),
+        #     multiple = TRUE,
+        #     selected = c("meff0","C4_BH")
+        # ),
         uiOutput("obs_list"),
         pickerInput(
             inputId = "log_meff_corr",
@@ -139,6 +139,7 @@ shinyUI(fluidPage(
    
     ,mainPanel( 
                 plotlyOutput(outputId = "plot_many", height = "600px")
+                ,uiOutput("fit_P")
                 #####################################
                 ,tableOutput("mass_table_0")
                 ,tableOutput("mass_table_1")
