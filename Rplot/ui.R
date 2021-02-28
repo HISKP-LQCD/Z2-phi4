@@ -34,15 +34,15 @@ shinyUI(fluidPage(
         selectInput("T", label = "T",
                     choices =as.integer( c(24,32, 48,96,128)), selected = 128),
         selectInput("msq0", label = "msq0",
-                    choices = c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0), selected = -4.925),
+                    choices = c(0.1,-4.9,-4.95,-4.925,-4.98,-4.99,-5.0), selected = -4.925),
         selectInput("msq1", label = "msq1",
-                    choices =c(-4.9,-4.89,-4.85), selected = -4.85),
+                    choices =c(0.1,-4.9,-4.89,-4.85), selected = -4.85),
         selectInput("l0", label = "$\\lambda_0$",
-                    choices =c(2.5), selected = 2.5),
+                    choices =c(0.05,2.5), selected = 2.5),
         selectInput("l1", label = "lambda_1",
-                    choices =c(2.5), selected = 2.5),
+                    choices =c(0.05,2.5), selected = 2.5),
         selectInput("mu", label = "mu",
-                    choices =c(5), selected = 5),
+                    choices =c(0.1, 5), selected = 5),
         selectInput("g", label = "g",
                     choices =c(0.0), selected = 0),
         selectInput("rep", label = "rep",
@@ -138,6 +138,7 @@ shinyUI(fluidPage(
     )
    
     ,mainPanel( 
+      withMathJax(),
                 plotlyOutput(outputId = "plot_many", height = "600px")
                 ,uiOutput("fit_P")
                 #####################################
@@ -146,7 +147,7 @@ shinyUI(fluidPage(
                 ,tableOutput("mass_table_01")
                 
                 #####################################
-                ,withMathJax(),
+                ,
                 h2("effective mass \\(  \\log c(t)/c(t+1)\\)"),
                 inputPanel(
                     pickerInput(

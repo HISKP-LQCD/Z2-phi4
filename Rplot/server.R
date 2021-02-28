@@ -213,22 +213,7 @@ shinyServer(function(input, output) {
         #add the config if you want to zoom with the wheel of mouse
         # ggplotly(gg_many(),dynamicTicks = TRUE) %>% config(scrollZoom = TRUE)
     })
-    fit_P<-reactive({
-      f<-file()
-      mt<-read_df(f)
-      all_obs<- get_all_corr(mt)
-      s=sprintf("")
-      for (myobs in input$manyObs){
-        s=sprintf("%s%s\n",s,myobs)
-        string=sprintf("\\b%s\\b",myobs)# need to put the delimiters on the word to grep
-        l<-grep(string,all_obs[,"corr"])
-        n<-all_obs[l,"n"]
-        fit<- get_fit_n(mt,n)
-        s=sprintf("%s%s\n",s,mean_print(fit[1,1],fit[1,2]))
-      }
-      return(s)
-    })
-    #output$fit_P<-renderText({fit_P()})
+    
     output$fit_P <- renderUI({
       f<-file()
       mt<-read_df(f)
@@ -239,12 +224,15 @@ shinyServer(function(input, output) {
         string=sprintf("\\b%s\\b",myobs)# need to put the delimiters on the word to grep
         l<-grep(string,all_obs[,"corr"])
         n<-all_obs[l,"n"]
-        str1 <- paste(myobs, "n=",n,"(in c++ ",n-1,")")
+        #   "&nbsp;" is a white space in HTML
+        str1 <- paste(myobs,"&nbsp;&nbsp;  fit range =",all_obs[n,"fit_range"],"&nbsp;&nbsp;"
+                       ,withMathJax("\\( \\chi^2/dof \\)=") ,all_obs[n,"chi2.dof"],
+                       "&nbsp;&nbsp;    n=",n,"(in c++ :",n-1,")")
         fit<- get_fit_n(mt,n)
         str2<-paste("")
         for( i in c(1:(length(fit[1,])/2))*2-1 ){
           if (!is.na(fit[1,i]))
-            str2 <- paste(str2,mean_print(fit[1,i],fit[1,i+1]) )
+            str2 <- paste(str2," ",mean_print(fit[1,i],fit[1,i+1]) )
         }
         str<-paste(str,str1, str2, sep = '<br/>')
       }
