@@ -208,15 +208,99 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      }
    };
    //momentum 0,1 for x,y,z  re_im
-   typedef array_type<double,7> ValueType;  // used to simplify code below
+   //typedef array_type<double,7> ValueType;  // used to simplify code below
+   typedef array_type<double,2>  array2;
+   typedef array_type<double,7>  array7;
+   
+   /////////////////////two component 
+   template< class ScalarType, int N >
+   struct two_component {
+     ScalarType the_array[2][N];
+  
+     KOKKOS_INLINE_FUNCTION   // Default constructor - Initialize to 0's
+     two_component() { 
+       for (int i = 0; i < N; i++ ) { 
+           the_array[0][i] = 0; 
+           the_array[1][i] = 0; 
+       }
+     }
+     KOKKOS_INLINE_FUNCTION   // Copy Constructor
+     two_component(const two_component & rhs) { 
+        for (int i = 0; i < N; i++ ){
+           the_array[0][i] = rhs.the_array[0][i];
+           the_array[1][i] = rhs.the_array[1][i];
+        }
+     }
+     KOKKOS_INLINE_FUNCTION   // add operator
+     two_component& operator += (const two_component& src) {
+       for ( int i = 0; i < N; i++ ) {
+          the_array[0][i]+=src.the_array[0][i];
+          the_array[1][i]+=src.the_array[1][i];
+       }
+       return *this;
+     } 
+     KOKKOS_INLINE_FUNCTION   // volatile add operator 
+     void operator += (const volatile two_component& src) volatile {
+       for ( int i = 0; i < N; i++ ) {
+         the_array[0][i]+=src.the_array[0][i];
+         the_array[1][i]+=src.the_array[1][i];
+       }
+     }
+   };
+   typedef two_component<double,7>  two_component7;
+   
 }
 namespace Kokkos { //reduction identity must be defined in Kokkos namespace
-   template<>
-   struct reduction_identity< sample::ValueType > {
-      KOKKOS_FORCEINLINE_FUNCTION static sample::ValueType sum() {
-         return sample::ValueType();
+   template<int N>
+   struct reduction_identity< sample::array_type<double,N> > {
+      KOKKOS_FORCEINLINE_FUNCTION static sample::array_type<double,N> sum() {
+         return sample::array_type<double,N>();
       }
    };
+   template<int N>
+   struct reduction_identity< sample::two_component<double,N> > {
+      KOKKOS_FORCEINLINE_FUNCTION static sample::two_component<double,N> sum() {
+         return sample::two_component<double,N>();
+      }
+   };
+   
+}
+
+
+void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
+    
+    sample::two_component7 pp;
+    for(int t=0; t<T; t++) {
+        h_phip(0,t) = 0;
+        h_phip(1,t) = 0;
+        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component7 & upd ) {
+            size_t i0= x+t*Vs;
+            int ix=x%params.data.L[1];
+            int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+            int iz=x /(Vs/params.data.L[3]);
+            
+            // this does not work if the dimension are differents
+            double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
+            double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
+            double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
+            for(int comp=0; comp<2; comp++){
+                upd.the_array[comp][0]+=phi(comp,i0);
+                upd.the_array[comp][1]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
+                upd.the_array[comp][2]+=phi(comp,i0)*(sin(twopiLx*ix  ));
+                
+                upd.the_array[comp][3]+=phi(comp,i0)*(cos(twopiLy*iy  ));//mom1 y
+                upd.the_array[comp][4]+=phi(comp,i0)*(sin(twopiLy*iy ));
+                
+                upd.the_array[comp][5]+=phi(comp,i0)*(cos(twopiLz*iz  ));//mom1 z
+                upd.the_array[comp][6]+=phi(comp,i0)*(sin(twopiLz*iz  ));
+            }
+        }, Kokkos::Sum<sample::two_component7>(pp)  );
+        h_phip(0,t)=pp.the_array[0][0]/((double) Vs *norm[0]);
+        h_phip(1,t)=pp.the_array[1][0]/((double) Vs *norm[1]);
+    }
 }
  
  
@@ -230,49 +314,9 @@ void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , 
     Viewphi phip("G2t",2,T);
     Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
 
-    double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
+    
+    compute_FT(phi, params ,   iconf, h_phip);
 
-    for (int comp=0; comp<2;comp++){
-       for(int t=0; t<T; t++) {
-           h_phip(comp,t) = 0;
-           Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, double &inner ) {
-               size_t i0= x+t*Vs;
-               inner+=phi(comp,i0);
-           }, h_phip(comp,t)  );
-           h_phip(comp,t)=h_phip(comp,t)/((double) Vs *norm[comp]);
-       }
-    }
-
- /* 
-    sample::ValueType tr; 
-    for (int comp=0; comp<2;comp++){
-       for(int t=0; t<T; t++) {
-           h_phip(comp,t) = 0;
-           Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::ValueType & upd ) {
-               size_t i0= x+t*Vs;
-               int ix=x%params.data.L[1];
-               int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-
-               int iz=x /(Vs/params.data.L[3]);
-               double twopi=6.28318530718;//2.*3.1415926535;
-               upd.the_array[0]+=phi(comp,i0);
-               upd.the_array[1]+=phi(comp,i0)*(cos(twopi*ix /(double (params.data.L[1])) ));//mom1 x
-               upd.the_array[2]+=phi(comp,i0)*(sin(twopi*ix /(double (params.data.L[1])) ));
-               
-               upd.the_array[3]+=phi(comp,i0)*(cos(twopi*iy /(double (params.data.L[2])) ));//mom1 y
-               upd.the_array[4]+=phi(comp,i0)*(sin(twopi*iy /(double (params.data.L[2])) ));
-               
-               upd.the_array[5]+=phi(comp,i0)*(cos(twopi*iz /(double (params.data.L[3])) ));//mom1 z
-               upd.the_array[6]+=phi(comp,i0)*(sin(twopi*iz /(double (params.data.L[3])) ));
-               
-               
-               
-               
-           }, Kokkos::Sum<sample::ValueType>(tr)  );
-           h_phip(comp,t)=tr.the_array[0]/((double) Vs *norm[comp]);
-       }
-    }
-    */
 
     // now we continue on the host 
     for(int t=0; t<T; t++) {

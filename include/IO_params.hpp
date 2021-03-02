@@ -48,7 +48,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   int total_measure;
   int measure_every_X_updates;
   std::string save_config;
-  std::string save_config_rotated;
+  std::string save_config_FT;
   int save_config_every_X_updates;
   std::string outpath;
   
@@ -175,8 +175,8 @@ private:
                              &data.measure_every_X_updates);
     reader += fscanf(infile, "save_config = %255s\n", readin);
     data.save_config.assign(readin);
-    reader += fscanf(infile, "save_config_rotated = %255s\n", readin);
-    data.save_config_rotated.assign(readin);
+    reader += fscanf(infile, "save_config_FT = %255s\n", readin);
+    data.save_config_FT.assign(readin);
     reader += fscanf(infile, "save_config_every_X_updates = %d\n", 
                              &data.save_config_every_X_updates);
     reader += fscanf(infile, "outpath = %255s\n", readin);

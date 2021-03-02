@@ -159,7 +159,6 @@ int main(int argc, char** argv) {
             Kokkos::Timer timer_2;
 
             double *m=compute_magnetisations( phi,   params);
- 
 
             compute_G2t( phi,   params,f_G2t, ii);
 
@@ -189,7 +188,7 @@ int main(int argc, char** argv) {
             }
             write_viewer(f_conf, layout_value, params , ii , phi ); 
             time = timer3.seconds();
-	    fclose(f_conf);
+	        fclose(f_conf);
             time_writing+=time;
         }    
     }
