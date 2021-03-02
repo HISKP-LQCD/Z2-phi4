@@ -236,3 +236,59 @@ void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int i
      #endif
 
 }
+
+
+////////////////////////////////////////////////////
+// write conf after the FT, only a sublattice is written. 
+////////////////////////////////////////////////////
+
+
+void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , Viewphi::HostMirror h_phip ){
+    
+    #ifdef TIMER
+    Kokkos::Timer timer;
+    #endif
+    write_header(f_conf, params, iconf);
+    #ifdef TIMER
+    double time=timer.seconds();
+    printf("time to write the header %f\n",time);
+    #endif
+    size_t V=7; 
+    
+    if(endian==BIG_ENDIAN){
+        for(size_t x=0; x<V;x++) 
+            for(size_t c=0; c<2;c++)
+                bswap_double(1,&h_phip(c,x));
+    }
+   
+    if (layout_value==1){
+        
+        Viewphi::HostMirror w_phip("w_phi",2,V);
+        for (int x=0;x<V;x++){
+            //phi (c,x ) is stored in the divice with the order i=c+x*2
+            // I want to save it on the disk with order i1=x+c*V
+            // so we need the coordinate c1 and x1 of  i1=c1+x1*2
+            for(size_t c=0; c<2;c++){
+                size_t i1=x+c*V;
+                size_t c1=i1%2;
+                size_t x1=i1/2;
+                w_phip(c1,x1)=h_phip(c,x);
+            }
+        }
+        
+        // Deep copy device views to host views.
+        //Kokkos::deep_copy( h_phi, w_phi );
+        fwrite(&w_phip(0,0), sizeof(double), 2*V, f_conf); 
+        
+        
+    }
+    else{
+        fwrite(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
+        
+    }
+    #ifdef TIMER
+    double time2=timer.seconds()-time;
+    printf("time of fwrite %f\n",time2);
+    #endif
+    
+}

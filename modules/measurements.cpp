@@ -306,17 +306,12 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  compute_G2t(const Viewphi &phi, cluster::IO_params params , FILE *f_G2t , int iconf){
+void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     fwrite(&iconf,sizeof(int),1,f_G2t);        
 
-    Viewphi phip("G2t",2,T);
-    Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
-
     
-    compute_FT(phi, params ,   iconf, h_phip);
-
 
     // now we continue on the host 
     for(int t=0; t<T; t++) {

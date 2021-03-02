@@ -159,14 +159,36 @@ int main(int argc, char** argv) {
             Kokkos::Timer timer_2;
 
             double *m=compute_magnetisations( phi,   params);
-
-            compute_G2t( phi,   params,f_G2t, ii);
+            Viewphi phip("G2t",2,params.data.L[0]);
+            Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
+    
+            compute_FT(phi, params ,   ii, h_phip);
+            
+            compute_G2t( h_phip,   params,f_G2t, ii);
 
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);
            
             time = timer_2.seconds();
             time_mes+=time;
+            if(params.data.save_config_FT == "yes"){
+                Kokkos::Timer timer3;
+                std::string conf_file = params.data.outpath + 
+                    "/T" + std::to_string(params.data.L[0]) +
+                    "_L" + std::to_string(params.data.L[1]) +
+                    "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                    "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                    "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
+                    "_rep" + std::to_string(params.data.replica) + 
+                    "_conf_FT" + std::to_string(ii);
+                FILE *f_conf = fopen(conf_file.c_str(), "wb"); 
+                if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     exit(1);   }
+                write_conf_FT(f_conf, layout_value,params , ii , h_phip );
+                time = timer3.seconds();
+                fclose(f_conf);
+                time_mes+=time;
+            }
+            
 
         }
         // write the configuration to disk
