@@ -62,7 +62,7 @@ y<-"ok"
 for (iconf in  c(1:header$confs)){
    for(t in c(1:header$L[1] ) ){
     for (corr in  c(1:header$ncorr)){
-       if ( abs(d[corr, t, iconf] - d1[corr, t, iconf])> 1e-6 ){
+       if ( abs(d[corr, t, iconf] - d1[corr, t, iconf])> 1e-12 ){
         y<- "error"
         cat("error in cor=",corr, "  time=",t, "  conf=",iconf,"\n")
        }
