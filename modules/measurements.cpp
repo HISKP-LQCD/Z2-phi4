@@ -248,6 +248,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      }
    };
    typedef two_component<double,7>  two_component7;
+   typedef two_component<double,1>  two_component1;
    
 }
 namespace Kokkos { //reduction identity must be defined in Kokkos namespace
@@ -272,23 +273,23 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
-    sample::two_component7 pp;
+    sample::two_component1 pp;
     for(int t=0; t<T; t++) {
         h_phip(0,t) = 0;
         h_phip(1,t) = 0;
-        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component7 & upd ) {
+        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component1 & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
             int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
             int iz=x /(Vs/params.data.L[3]);
             
-            // this does not work if the dimension are differents
-            double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
-            double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
-            double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
+            //double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
+            //double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
+            //double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
+            
             for(int comp=0; comp<2; comp++){
                 upd.the_array[comp][0]+=phi(comp,i0);
-                upd.the_array[comp][1]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
+                /*upd.the_array[comp][1]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
                 upd.the_array[comp][2]+=phi(comp,i0)*(sin(twopiLx*ix  ));
                 
                 upd.the_array[comp][3]+=phi(comp,i0)*(cos(twopiLy*iy  ));//mom1 y
@@ -296,8 +297,9 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 
                 upd.the_array[comp][5]+=phi(comp,i0)*(cos(twopiLz*iz  ));//mom1 z
                 upd.the_array[comp][6]+=phi(comp,i0)*(sin(twopiLz*iz  ));
+        */
             }
-        }, Kokkos::Sum<sample::two_component7>(pp)  );
+        }, Kokkos::Sum<sample::two_component1>(pp)  );
         h_phip(0,t)=pp.the_array[0][0]/((double) Vs *norm[0]);
         h_phip(1,t)=pp.the_array[1][0]/((double) Vs *norm[1]);
     }

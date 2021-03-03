@@ -49,6 +49,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   int measure_every_X_updates;
   std::string save_config;
   std::string save_config_FT;
+  std::string compute_contractions;
   int save_config_every_X_updates;
   std::string outpath;
   
@@ -117,7 +118,13 @@ private:
     reader += fscanf(infile, "lambdaC1 = %lf\n", &data.lambdaC1);
     reader += fscanf(infile, "muC = %lf\n", &data.muC);
     reader += fscanf(infile, "gC = %lf\n", &data.gC);
-
+    
+    if (data.formulation.size()>99){
+        printf("formulation must be a string of maximum 100 char");
+        exit(1);
+    }
+    
+    
     if(data.formulation == "O2"){
       cout << "using O2 version of the two scalars lambdaC0=lambdaC1=muC/2: \n" << endl;
       if ( data.lambdaC1 !=0 || data.muC !=0 ){
@@ -128,6 +135,10 @@ private:
       data.muC= 2.*data.lambdaC0;
 
     }
+    //fill formulation with null char    
+    for (int i=data.formulation.size();i<99;i++)
+        data.formulation=data.formulation+'\0';
+    
     data.kappa0=comp_kappa(data.msq0, data.lambdaC0);
     data.kappa1=comp_kappa(data.msq1, data.lambdaC1);
     data.lambda0=data.lambdaC0 * 4. * data.kappa0 *data.kappa0;
@@ -177,6 +188,16 @@ private:
     data.save_config.assign(readin);
     reader += fscanf(infile, "save_config_FT = %255s\n", readin);
     data.save_config_FT.assign(readin);
+    reader += fscanf(infile, "compute_contractions = %255s\n", readin);
+    data.compute_contractions.assign(readin);
+    if (data.compute_contractions!= "yes" &&  data.save_config_FT!="yes"  &&  data.save_config!="yes"){
+        printf("error: at least one of the following in the input file must be yes \n");
+        printf("save_config    = %s\n",data.save_config.c_str());
+        printf("save_config_FT = %s\n",data.save_config_FT.c_str());
+        printf("compute_contractions = %s\n",data.compute_contractions.c_str());
+        exit(0);
+    }
+    // unused
     reader += fscanf(infile, "save_config_every_X_updates = %d\n", 
                              &data.save_config_every_X_updates);
     reader += fscanf(infile, "outpath = %255s\n", readin);
