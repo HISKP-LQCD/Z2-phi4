@@ -353,6 +353,10 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         double C41_05t20 =0;
         double C401_05t20=0;
         
+        double C410_03t16=0;
+        
+        
+        
         
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
@@ -414,6 +418,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
             C41_05t20+=h_phip(1,t1)*h_phip(1,t5)* h_phip(1,tpt1)*h_phip(1,t20 );
             C401_05t20+=h_phip(0,t1)*h_phip(1,t5)* h_phip(1,tpt1)*h_phip(0,t20 );
             
+            
+            C410_03t16+=h_phip(1,t1)*h_phip(0,t3)* h_phip(0,tpt1)*h_phip(1,t16 );
+            
         } 
        
         G2t0/=((double) T);
@@ -453,6 +460,8 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         C41_05t20/=((double) T); 
         C401_05t20/=((double) T); 
         
+        C410_03t16/=((double) T); 
+        
         
         fwrite(&G2t0,sizeof(double),1,f_G2t); // 0 c++  || 1 R 
         fwrite(&G2t1,sizeof(double),1,f_G2t);
@@ -489,6 +498,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         fwrite(&C40_05t20 ,sizeof(double),1,f_G2t); // 27 c++  || 28 R 
         fwrite(&C41_05t20,sizeof(double),1,f_G2t); // 28 c++  || 29 R 
         fwrite(&C401_05t20,sizeof(double),1,f_G2t); // 29 c++  || 30 R 
+        
+        fwrite(&C410_03t16,sizeof(double),1,f_G2t); // 30 c++  || 31 R 
+        
     }
 
     
