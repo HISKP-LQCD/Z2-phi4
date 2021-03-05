@@ -47,6 +47,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       #run: ctest -C $BUILD_TYPE
       run: cd test
-      run: make 
-      run: ./main -i infile.in
-      run: Rscript diff_meas diff_mesuraments.R
+       make 
+       ./main -i infile.in
+       Rscript diff_meas diff_mesuraments.R
