@@ -51,6 +51,9 @@ int main(int argc, char** argv) {
     cout << "metropolis_delta  " << params.data.metropolis_delta << endl;
     size_t V=params.data.V;
     
+    printf("save_config = %s\n", params.data.save_config.c_str());
+    printf("save_config_FT = %s\n", params.data.save_config_FT.c_str());
+    printf("compute_contractions = %s\n", params.data.compute_contractions.c_str());
     
     
     
@@ -59,7 +62,8 @@ int main(int argc, char** argv) {
     
     // starting kokkos
     Kokkos::initialize( argc, argv );{
-   
+    Kokkos::Timer timer;
+    
     cout << "Kokkos started:"<< endl; 
     cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
     cout << "   host  execution    space:"<<  &Kokkos::HostSpace::name << endl; 
@@ -123,7 +127,8 @@ int main(int argc, char** argv) {
     write_header_measuraments(f_G2t, params ); 
      
      
-    double time_update=0,time_mes=0,time_writing=0;
+    double time_update=0,time_mes=0,time_writing=0 ,time_FT=0;
+    int nFT=0;
     double ave_acc=0;
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
@@ -153,57 +158,70 @@ int main(int argc, char** argv) {
         time = timer1.seconds();
        // printf("time metropolis (%g  s)\n",time);
         time_update+=time;
+        
+        // bool condition in the infile 
+        bool measure =(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0 );
+        bool contractions= (measure &&   params.data.compute_contractions == "yes");
+        bool write_FT=     (measure &&   params.data.save_config_FT == "yes");
+        bool write=        (measure &&   params.data.save_config == "yes");
+
+        Viewphi::HostMirror h_phip("h_phip",2,params.data.L[0]);
+        if( contractions || write_FT ){
+            Kokkos::Timer timer_FT;
+            //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
+            //h_phip=construct_h_phip;
+            compute_FT(phi, params ,   ii, h_phip);
+           
+            time = timer_FT.seconds();
+            time_FT+=time;
+            nFT++;
+        }
+        
 
         //Measure every 
-        if(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0){
+        if( contractions ){
             Kokkos::Timer timer_2;
 
+            
             double *m=compute_magnetisations( phi,   params);
-            Viewphi phip("G2t",2,params.data.L[0]);
-            Viewphi::HostMirror h_phip = Kokkos::create_mirror_view( phip );
-    
-            compute_FT(phi, params ,   ii, h_phip);
+            fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
+            free(m);
             
             compute_G2t( h_phip,   params,f_G2t, ii);
 
-            fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
-            free(m);
-           
             time = timer_2.seconds();
             time_mes+=time;
-            if(params.data.save_config_FT == "yes"){
-                Kokkos::Timer timer3;
-                std::string conf_file = params.data.outpath + 
-                    "/T" + std::to_string(params.data.L[0]) +
-                    "_L" + std::to_string(params.data.L[1]) +
-                    "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
-                    "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                    "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
-                    "_rep" + std::to_string(params.data.replica) + 
-                    "_conf_FT" + std::to_string(ii);
-                FILE *f_conf = fopen(conf_file.c_str(), "wb"); 
-                if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     exit(1);   }
-                write_conf_FT(f_conf, layout_value,params , ii , h_phip );
-                time = timer3.seconds();
-                fclose(f_conf);
-                time_mes+=time;
-            }
-            
-
         }
-        // write the configuration to disk
-        if(params.data.save_config == "yes" && ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.save_config_every_X_updates == 0){
+        // write conf FT
+        if(write_FT){
             Kokkos::Timer timer3;
             std::string conf_file = params.data.outpath + 
-                              "/T" + std::to_string(params.data.L[0]) +
-                              "_L" + std::to_string(params.data.L[1]) +
-                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
-                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
-                              "_rep" + std::to_string(params.data.replica) + 
+                "/T" + std::to_string(params.data.L[0])     +  "_L" + std::to_string(params.data.L[1]) +
+                "_msq0" + std::to_string(params.data.msq0)  +  "_msq1" + std::to_string(params.data.msq1)+
+                "_l0" + std::to_string(params.data.lambdaC0)+  "_l1" + std::to_string(params.data.lambdaC1)+
+                "_mu" + std::to_string(params.data.muC)     +  "_g" + std::to_string(params.data.gC)  + 
+                "_rep" + std::to_string(params.data.replica) + 
+                "_conf_FT" + std::to_string(ii);
+            FILE *f_conf = fopen(conf_file.c_str(), "w+"); 
+            if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     exit(1);   }
+            write_conf_FT(f_conf, layout_value,params , ii , h_phip );
+            time = timer3.seconds();
+            fclose(f_conf);
+            time_writing+=time;
+        }
+        // write the configuration to disk
+        
+        if(write){
+            Kokkos::Timer timer3;
+            std::string conf_file = params.data.outpath + 
+                              "/T" + std::to_string(params.data.L[0])     +  "_L" + std::to_string(params.data.L[1]) +
+                              "_msq0" + std::to_string(params.data.msq0)  +  "_msq1" + std::to_string(params.data.msq1)+
+                              "_l0" + std::to_string(params.data.lambdaC0)+  "_l1" + std::to_string(params.data.lambdaC1)+
+                              "_mu" + std::to_string(params.data.muC)     +  "_g" + std::to_string(params.data.gC)  + 
+                              "_rep" + std::to_string(params.data.replica)+ 
                               "_conf" + std::to_string(ii);
             cout << "Writing configuration to: " << conf_file << endl;
-            FILE *f_conf = fopen(conf_file.c_str(), "wb"); 
+            FILE *f_conf = fopen(conf_file.c_str(), "w+"); 
             if (f_conf == NULL) {
                printf("Error opening file %s!\n", conf_file.c_str());
                exit(1);
@@ -220,13 +238,16 @@ int main(int argc, char** argv) {
     printf("average acceptance rate= %g\n", ave_acc/(params.data.start_measure+params.data.total_measure));
     
     printf("  time updating = %f s (%f per single operation)\n", time_update, time_update/(params.data.start_measure+params.data.total_measure) );
+    printf("  time FT       = %f s (%f per single operation)\n", time_FT   , time_FT/(params.data.total_measure/ params.data.measure_every_X_updates ));
     printf("  time mesuring = %f s (%f per single operation)\n", time_mes   , time_mes/(params.data.total_measure/ params.data.measure_every_X_updates ));
-    printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.save_config_every_X_updates) );
-    printf("total time = %f s\n",time_writing+ time_mes+ time_update );
+    printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.measure_every_X_updates) );
+    
+    printf("sum time = %f s\n",time_writing+ time_mes+ time_update );
 
 
     fclose(f_G2t);
     fclose(f_mes);
+    printf("total kokkos time = %f s\n", timer.seconds());
     }
     Kokkos::finalize();
     

@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
     cout << "metropolis_delta  " << params.data.metropolis_delta << endl;
     size_t V=params.data.V;
     
+    printf("ignoring line\n compute_contractions = %s\n", params.data.compute_contractions.c_str());
     
     
     
@@ -128,39 +129,75 @@ int main(int argc, char** argv) {
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
         double time; 
-        //reading
-        if(params.data.save_config == "yes" && ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.save_config_every_X_updates == 0){
-            Kokkos::Timer timer3;
+        
+        // bool condition in the infile 
+        bool measure =(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0 );
+        bool read_FT=     (measure &&   params.data.save_config_FT == "yes");
+        //bool read=        (measure &&   params.data.save_config == "yes");
+        
+        if(measure){
+            Viewphi::HostMirror h_phip;
             
-            std::string conf_file = params.data.outpath + 
-                              "/T" + std::to_string(params.data.L[0]) +
-                              "_L" + std::to_string(params.data.L[1]) +
-                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
-                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
-                              "_rep" + std::to_string(params.data.replica) + 
-                              "_conf" + std::to_string(ii);
-            cout << "reading configuration : " << conf_file << endl;
-            FILE *f_conf = fopen(conf_file.c_str(), "r"); 
-            if (f_conf == NULL) {
-               printf("Error opening file %s!\n", conf_file.c_str());
-               exit(1);
+            if(read_FT){
+                Kokkos::Timer timer3;
+                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
+                h_phip=construct_h_phip;
+                
+                std::string conf_file = params.data.outpath + 
+                    "/T" + std::to_string(params.data.L[0]) +
+                    "_L" + std::to_string(params.data.L[1]) +
+                    "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                    "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                    "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
+                    "_rep" + std::to_string(params.data.replica) + 
+                    "_conf_FT" + std::to_string(ii);
+                cout << "reading configuration : " << conf_file << endl;
+                FILE *f_conf = fopen(conf_file.c_str(), "r"); 
+                if (f_conf == NULL) {
+                    printf("Error opening file %s!\n", conf_file.c_str());
+                    exit(1);
+                }
+                read_conf_FT(f_conf, layout_value, params , ii , h_phip ); 
+                fclose(f_conf);
+                time = timer3.seconds();
+                time_writing+=time;
             }
-            read_viewer(f_conf, layout_value, params , ii , phi ); 
-            fclose(f_conf);
-            time = timer3.seconds();
-            time_writing+=time;
-        }    
-       
-        //Measure every 
-        if(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0){
+            else{
+                Kokkos::Timer timer3;
+                std::string conf_file = params.data.outpath + 
+                "/T" + std::to_string(params.data.L[0]) +
+                "_L" + std::to_string(params.data.L[1]) +
+                "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
+                "_rep" + std::to_string(params.data.replica) + 
+                "_conf" + std::to_string(ii);
+                cout << "reading configuration : " << conf_file << endl;
+                FILE *f_conf = fopen(conf_file.c_str(), "r"); 
+                if (f_conf == NULL) {
+                    printf("Error opening file %s!\n", conf_file.c_str());
+                    exit(1);
+                }
+                read_viewer(f_conf, layout_value, params , ii , phi ); 
+                
+                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
+                h_phip=construct_h_phip;
+                compute_FT(phi, params ,   ii, h_phip);
+                
+                fclose(f_conf);
+                time = timer3.seconds();
+                time_writing+=time;
+            }
+        
+        
+            //Measure every 
             Kokkos::Timer timer_2;
             double *m=compute_magnetisations( phi,   params);
-            compute_G2t( phi,   params,f_G2t, ii);
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
-
             free(m);//free(G2);
-           
+            
+            compute_G2t( h_phip,   params,f_G2t, ii);
+            
             time = timer_2.seconds();
             time_mes+=time;
 

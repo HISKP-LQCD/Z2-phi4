@@ -86,7 +86,7 @@ void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
 }
 
 
-void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , const Viewphi &phi  ){
+void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , const Viewphi phi  ){
  
      #ifdef TIMER
          Kokkos::Timer timer;
@@ -97,7 +97,7 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
          printf("time to write the header %f\n",time);
      #endif
      size_t V=params.data.V; 
-     Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
+     Viewphi::HostMirror h_phi("write_host",2,V);// = Kokkos::create_mirror_view( phi ); does not create a new one if the device is a CPU
           
      if (layout_value==0){
          // Deep copy device views to host views.
@@ -242,7 +242,6 @@ void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int i
 // write conf after the FT, only a sublattice is written. 
 ////////////////////////////////////////////////////
 
-
 void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , Viewphi::HostMirror h_phip ){
     
     #ifdef TIMER
@@ -253,7 +252,7 @@ void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int
     double time=timer.seconds();
     printf("time to write the header %f\n",time);
     #endif
-    size_t V=7; 
+    size_t V=params.data.L[0]; 
     
     if(endian==BIG_ENDIAN){
         for(size_t x=0; x<V;x++) 
@@ -286,9 +285,62 @@ void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int
         fwrite(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
         
     }
+    
+    if(endian==BIG_ENDIAN){
+        for(size_t x=0; x<V;x++) 
+            for(size_t c=0; c<2;c++)
+                bswap_double(1,&h_phip(c,x));
+    }
     #ifdef TIMER
     double time2=timer.seconds()-time;
     printf("time of fwrite %f\n",time2);
     #endif
     
 }
+
+
+void read_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , Viewphi::HostMirror &h_phip ){
+    #ifdef TIMER
+    Kokkos::Timer timer;
+    #endif
+    check_header(f_conf, params, iconf);
+    #ifdef TIMER
+    double time=timer.seconds();
+    printf("time to check header %f\n",time);
+    #endif
+    size_t V=params.data.L[0]; 
+    
+    
+    fread(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
+    #ifdef TIMER
+    double time1=timer.seconds()-time;
+    printf("time to read on Host %f\n",time1);
+    #endif
+    
+    if (layout_value==1){
+        Viewphi r_phip("r_phip",2,V);
+        
+        for (int x=0;x<V;x++){
+            //phi (c,x ) is stored in the divice with the order i=c+x*2
+            // I want to save it on the disk with order i1=x+c*V
+            // so we need the coordinate c1 and x1 of  i1=c1+x1*2
+            for(size_t c=0; c<2;c++){
+                size_t i1=c+x*2;
+                size_t c1=i1/V;
+                size_t x1=i1%V;
+                r_phip(c1,x1)=h_phip(c,x);
+            }
+        }
+        for (int x=0;x<V;x++)
+            for(size_t c=0; c<2;c++)
+                h_phip(c,x)=r_phip(c,x);
+        
+    }
+    
+    #ifdef TIMER
+    double time2=timer.seconds()-time-time1;
+    printf("time to copy on device %f\n",time2);
+    #endif
+    
+}
+

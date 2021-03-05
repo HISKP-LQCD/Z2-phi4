@@ -170,7 +170,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=30;//number of correlators
+     int ncorr=31;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
@@ -248,6 +248,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      }
    };
    typedef two_component<double,7>  two_component7;
+   typedef two_component<double,1>  two_component1;
    
 }
 namespace Kokkos { //reduction identity must be defined in Kokkos namespace
@@ -272,23 +273,23 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
-    sample::two_component7 pp;
+    sample::two_component1 pp;
     for(int t=0; t<T; t++) {
         h_phip(0,t) = 0;
         h_phip(1,t) = 0;
-        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component7 & upd ) {
+        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component1 & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
             int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
             int iz=x /(Vs/params.data.L[3]);
             
-            // this does not work if the dimension are differents
-            double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
-            double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
-            double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
+            //double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
+            //double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
+            //double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
+            
             for(int comp=0; comp<2; comp++){
                 upd.the_array[comp][0]+=phi(comp,i0);
-                upd.the_array[comp][1]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
+                /*upd.the_array[comp][1]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
                 upd.the_array[comp][2]+=phi(comp,i0)*(sin(twopiLx*ix  ));
                 
                 upd.the_array[comp][3]+=phi(comp,i0)*(cos(twopiLy*iy  ));//mom1 y
@@ -296,8 +297,9 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 
                 upd.the_array[comp][5]+=phi(comp,i0)*(cos(twopiLz*iz  ));//mom1 z
                 upd.the_array[comp][6]+=phi(comp,i0)*(sin(twopiLz*iz  ));
+        */
             }
-        }, Kokkos::Sum<sample::two_component7>(pp)  );
+        }, Kokkos::Sum<sample::two_component1>(pp)  );
         h_phip(0,t)=pp.the_array[0][0]/((double) Vs *norm[0]);
         h_phip(1,t)=pp.the_array[1][0]/((double) Vs *norm[1]);
     }
@@ -350,6 +352,10 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         double C40_05t20 =0;
         double C41_05t20 =0;
         double C401_05t20=0;
+        
+        double C410_03t16=0;
+        
+        
         
         
         for(int t1=0; t1<T; t1++) {
@@ -412,6 +418,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
             C41_05t20+=h_phip(1,t1)*h_phip(1,t5)* h_phip(1,tpt1)*h_phip(1,t20 );
             C401_05t20+=h_phip(0,t1)*h_phip(1,t5)* h_phip(1,tpt1)*h_phip(0,t20 );
             
+            
+            C410_03t16+=h_phip(1,t1)*h_phip(0,t3)* h_phip(0,tpt1)*h_phip(1,t16 );
+            
         } 
        
         G2t0/=((double) T);
@@ -451,6 +460,8 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         C41_05t20/=((double) T); 
         C401_05t20/=((double) T); 
         
+        C410_03t16/=((double) T); 
+        
         
         fwrite(&G2t0,sizeof(double),1,f_G2t); // 0 c++  || 1 R 
         fwrite(&G2t1,sizeof(double),1,f_G2t);
@@ -487,6 +498,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         fwrite(&C40_05t20 ,sizeof(double),1,f_G2t); // 27 c++  || 28 R 
         fwrite(&C41_05t20,sizeof(double),1,f_G2t); // 28 c++  || 29 R 
         fwrite(&C401_05t20,sizeof(double),1,f_G2t); // 29 c++  || 30 R 
+        
+        fwrite(&C410_03t16,sizeof(double),1,f_G2t); // 30 c++  || 31 R 
+        
     }
 
     
