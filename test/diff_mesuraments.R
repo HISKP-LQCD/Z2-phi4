@@ -64,6 +64,7 @@ for (iconf in  c(1:header$confs)){
        if ( abs(d[corr, t, iconf] - d1[corr, t, iconf])> 1e-10 ){
         y<- "error"
         cat("error in cor=",corr, "  time=",t, "  conf=",iconf,"\n")
+        cat(d[corr, t, iconf] , "   ", d1[corr, t, iconf],"\n")
        }
       
     }
