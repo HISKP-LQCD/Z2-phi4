@@ -31,7 +31,7 @@ if (header$L[1] != header1$L[1])
 
 
 if (header$confs != header1$confs)
-  print("error confs")
+  cat("error confs",header$confs, "  ",header1$confs )
 
 for (iconf in  c(1:header$confs)){
   configurations<-append(configurations, readBin(to.read, integer(),n = 1, endian = "little"))
