@@ -1,4 +1,3 @@
-library(hadron)
 if(!exists("foo", mode="function")) source("../Ranalysis/read_header.R")
 
 f<-paste("data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference")
