@@ -32,7 +32,7 @@ shinyUI(fluidPage(
         selectInput("L", label = "L",
                     choices =as.integer( c(10,16, 20,24,26,32,40)), selected = 20),
         selectInput("T", label = "T",
-                    choices =as.integer( c(24,32, 48,96,128)), selected = 128),
+                    choices =as.integer( c(24,32, 48,64,96,128)), selected = 128),
         selectInput("msq0", label = "msq0",
                     choices = c(0.1,-4.9,-4.95,-4.925,-4.98,-4.99,-5.0), selected = -4.925),
         selectInput("msq1", label = "msq1",
