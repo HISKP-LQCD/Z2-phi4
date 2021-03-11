@@ -77,6 +77,7 @@ add_plot_new<-function(file, obs, T, logscale ,gg,prefix=""){
     l<-grep(string,all_obs[,"corr"])
     n<-all_obs[l,"n"]
     d<- get_block_n(mt,n)
+    
     fit<- get_fit_n(mt,n)
     fit_range<- get_plateaux_range(mt,n)
     
