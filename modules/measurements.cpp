@@ -170,7 +170,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=31;//number of correlators
+     int ncorr=33;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
@@ -355,22 +355,28 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         
         double C410_03t16=0;
         
+        double C401_02t10=0;
+        double C401_02t12=0;
+        
         
         
         
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
             int t_8=(T/8+t1)%T;
-	        int t_2=(T/2+t1)%T;
-	        //int tx2_5=((T*2)/5+t1)%T;
+            int t_2=(T/2+t1)%T;
+            //int tx2_5=((T*2)/5+t1)%T;
             
+            int t2=(2+t1)%T;
             int t3=(3+t1)%T;
             int t4=(4+t1)%T;
             int t5=(5+t1)%T;
+            int t10=(10+t1)%T;
+            int t12=(12+t1)%T;
             int t16=(16+t1)%T;
             int t20=(20+t1)%T;
             
-	        double pp0=h_phip(0,t1) *h_phip(0 , tpt1);
+            double pp0=h_phip(0,t1) *h_phip(0 , tpt1);
             double pp1=h_phip(1,t1) *h_phip(1 , tpt1);
             std::complex<double> p0 = h_phip(0,t1) + 1i* h_phip(1,t1);
             std::complex<double> cpt = h_phip(0,tpt1) - 1i* h_phip(1,tpt1);
@@ -421,6 +427,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
             
             C410_03t16+=h_phip(1,t1)*h_phip(0,t3)* h_phip(0,tpt1)*h_phip(1,t16 );
             
+            C401_02t10+=h_phip(0,t1)*h_phip(1,t2)* h_phip(1,tpt1)*h_phip(0,t10 );
+            C401_02t12+=h_phip(0,t1)*h_phip(1,t2)* h_phip(1,tpt1)*h_phip(0,t12 );
+            
         } 
        
         G2t0/=((double) T);
@@ -462,6 +471,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         
         C410_03t16/=((double) T); 
         
+        C401_02t10/=((double) T); 
+        C401_02t12/=((double) T); 
+        
         
         fwrite(&G2t0,sizeof(double),1,f_G2t); // 0 c++  || 1 R 
         fwrite(&G2t1,sizeof(double),1,f_G2t);
@@ -500,6 +512,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         fwrite(&C401_05t20,sizeof(double),1,f_G2t); // 29 c++  || 30 R 
         
         fwrite(&C410_03t16,sizeof(double),1,f_G2t); // 30 c++  || 31 R 
+        
+        fwrite(&C401_02t10,sizeof(double),1,f_G2t); // 31 c++  || 32 R 
+        fwrite(&C401_02t12,sizeof(double),1,f_G2t); // 32 c++  || 33 R 
         
     }
 

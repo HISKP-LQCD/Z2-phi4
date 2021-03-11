@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
                     "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
                     "_rep" + std::to_string(params.data.replica) + 
                     "_conf_FT" + std::to_string(ii);
-                cout << "reading configuration : " << conf_file << endl;
+                //cout << "reading configuration : " << conf_file << endl;
                 FILE *f_conf = fopen(conf_file.c_str(), "r"); 
                 if (f_conf == NULL) {
                     printf("Error opening file %s!\n", conf_file.c_str());

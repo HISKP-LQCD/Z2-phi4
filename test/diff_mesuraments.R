@@ -1,4 +1,3 @@
-library(hadron)
 if(!exists("foo", mode="function")) source("../Ranalysis/read_header.R")
 
 f<-paste("data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference")
@@ -32,7 +31,7 @@ if (header$L[1] != header1$L[1])
 
 
 if (header$confs != header1$confs)
-  print("error confs")
+  cat("error confs",header$confs, "  ",header1$confs ,"\n")
 
 for (iconf in  c(1:header$confs)){
   configurations<-append(configurations, readBin(to.read, integer(),n = 1, endian = "little"))
@@ -65,6 +64,7 @@ for (iconf in  c(1:header$confs)){
        if ( abs(d[corr, t, iconf] - d1[corr, t, iconf])> 1e-10 ){
         y<- "error"
         cat("error in cor=",corr, "  time=",t, "  conf=",iconf,"\n")
+        cat(d[corr, t, iconf] , "   ", d1[corr, t, iconf],"\n")
        }
       
     }
