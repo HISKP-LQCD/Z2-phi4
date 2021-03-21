@@ -5,6 +5,7 @@
 #include <IO_params.hpp>
 #include <complex>
 
+void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf);
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +171,8 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=33;//number of correlators
+     int ncorr=48;//number of correlators
+     //int ncorr=33;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
      size_t size= params.data.L[0]*ncorr;  // number of double of each block
@@ -248,6 +250,8 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      }
    };
    typedef two_component<double,7>  two_component7;
+   typedef two_component<double,8>  two_component8;
+   
    typedef two_component<double,1>  two_component1;
    
 }
@@ -273,35 +277,41 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
-    sample::two_component1 pp;
+    sample::two_component8 pp;
     for(int t=0; t<T; t++) {
-        h_phip(0,t) = 0;
-        h_phip(1,t) = 0;
-        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component1 & upd ) {
+        for(int comp=0; comp<2; comp++){
+            for (int p =0 ; p< 8;p++)
+                h_phip(comp,t+p*T)=0;
+        }
+        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component8 & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
             int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
             int iz=x /(Vs/params.data.L[3]);
             
-            //double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
-            //double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
-            //double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
+            double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
+            double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
+            double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
             
             for(int comp=0; comp<2; comp++){
                 upd.the_array[comp][0]+=phi(comp,i0);
-                /*upd.the_array[comp][1]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
-                upd.the_array[comp][2]+=phi(comp,i0)*(sin(twopiLx*ix  ));
+                upd.the_array[comp][1]+=0;
                 
-                upd.the_array[comp][3]+=phi(comp,i0)*(cos(twopiLy*iy  ));//mom1 y
-                upd.the_array[comp][4]+=phi(comp,i0)*(sin(twopiLy*iy ));
+                upd.the_array[comp][2]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
+                upd.the_array[comp][3]+=phi(comp,i0)*(sin(twopiLx*ix  ));
                 
-                upd.the_array[comp][5]+=phi(comp,i0)*(cos(twopiLz*iz  ));//mom1 z
-                upd.the_array[comp][6]+=phi(comp,i0)*(sin(twopiLz*iz  ));
-        */
+                upd.the_array[comp][4]+=phi(comp,i0)*(cos(twopiLy*iy  ));//mom1 y
+                upd.the_array[comp][5]+=phi(comp,i0)*(sin(twopiLy*iy ));
+                
+                upd.the_array[comp][6]+=phi(comp,i0)*(cos(twopiLz*iz  ));//mom1 z
+                upd.the_array[comp][7]+=phi(comp,i0)*(sin(twopiLz*iz  ));
+        
             }
-        }, Kokkos::Sum<sample::two_component1>(pp)  );
-        h_phip(0,t)=pp.the_array[0][0]/((double) Vs *norm[0]);
-        h_phip(1,t)=pp.the_array[1][0]/((double) Vs *norm[1]);
+        }, Kokkos::Sum<sample::two_component8>(pp)  );
+        for(int comp=0; comp<2; comp++){
+            for (int p =0 ; p< 8;p++)
+                h_phip(comp,t+p*T)=pp.the_array[comp][p]/((double) Vs *norm[comp]);
+        }
     }
 }
  
@@ -515,13 +525,114 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         
         fwrite(&C401_02t10,sizeof(double),1,f_G2t); // 31 c++  || 32 R 
         fwrite(&C401_02t12,sizeof(double),1,f_G2t); // 32 c++  || 33 R 
-        
+        compute_contraction_p1(  t ,  h_phip,  params , f_G2t ,  iconf);
     }
 
     
 }
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
 
- 
+void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    //fwrite(&iconf,sizeof(int),1,f_G2t);        
+    
+    
+    // now we continue on the host 
+    //for(int t=0; t<T; t++) {
+        
+        double one_to_one_p[2][3]={{0,0,0},{0,0,0}};
+        double two_to_two_A1[3]={0,0,0};
+        double two_to_two_E1[3]={0,0,0};
+        double two_to_two_E2[3]={0,0,0};
+        
+        
+        for(int t1=0; t1<T; t1++) {
+            
+            
+            std::complex<double> phi[2][3*2]; //phi[comp] [ xyz, -x-y-z]
+            std::complex<double> phi_t[2][3*2];
+            std::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
+            std::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
+            std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
+            std::complex<double> E1[3],E1_t[3];
+            std::complex<double> E2[3],E2_t[3];
+            for (int comp=0; comp< 2;comp++){
+            
+                for(int i=0;i<3;i++){
+                    int t1_p=t1+(i*2+2)*T;   // 2,4 6    real part
+                    int t1_ip=t1+(i*2+3)*T;   /// 3,5 7 imag part
+                    int tpt1_p=(t+t1)%T+(i*2+2)*T;   //2,4 6    real part
+                    int tpt1_ip=(t+t1)%T+(i*2+3)*T;   /// 3,5,6 imag
+                    
+                    phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
+                    phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
+                    
+                    one_to_one_p[comp][i]+=real( phi[comp][i]* conj(phi_t[comp][i]) )+real( phi_t[comp][i]* conj(phi[comp][i]) );
+                    
+                    bb[comp][i]=phi[comp][i]*conj(phi[comp][i]);
+                    bb_t[comp][i]=phi_t[comp][i]*conj(phi_t[comp][i]);
+                    
+                }
+                
+            }
+            for(int i=0;i<3;i++){
+                bb[2][i]=(phi[0][i]*conj(phi[1][i])+phi[1][i]*conj(phi[0][i])  )/sqrt(2);
+                bb_t[2][i]=(phi[0][i]*conj(phi[1][i])+phi[1][i]*conj(phi[0][i])  )/sqrt(2);
+            }
+            for (int comp=0; comp< 3;comp++){
+                A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/sqrt(3);
+                A1_t[comp]=(bb_t[comp][0]+bb_t[comp][1]+bb_t[comp][2] )/sqrt(3);
+                E1[comp]=  (bb[comp][0]-bb[comp][1] )/sqrt(2);
+                E1_t[comp]=(bb_t[comp][0]-bb_t[comp][1] )/sqrt(2);
+                E2[comp]=  (bb[comp][0]+bb[comp][1]-2.*bb[comp][2] )/sqrt(6);
+                E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/sqrt(6);
+                
+                two_to_two_A1[comp]+=real(A1[comp]*A1_t[comp]);
+                two_to_two_E1[comp]+=real(E1[comp]*E1_t[comp]);
+                two_to_two_E2[comp]+=real(E2[comp]*E2_t[comp]);
+            }
+            
+          
+            
+            
+        } 
+        for (int comp=0; comp< 2;comp++){
+            for(int i=0;i<3;i++)
+                one_to_one_p[comp][i]/=((double) T);
+        }
+        for (int comp=0; comp< 3;comp++){
+            two_to_two_A1[comp]/=((double) T);
+            two_to_two_E1[comp]/=((double) T);
+            two_to_two_E2[comp]/=((double) T);
+        }
+        
+        fwrite(&one_to_one_p[0][0],sizeof(double),1,f_G2t); // 33 c++  || 34 R    00 x
+        fwrite(&one_to_one_p[1][0],sizeof(double),1,f_G2t); // 34 c++  || 35 R    11 x
+        fwrite(&one_to_one_p[0][1],sizeof(double),1,f_G2t); // 35 c++  || 36 R    00 y
+        fwrite(&one_to_one_p[1][1],sizeof(double),1,f_G2t); // 36 c++  || 37 R    11 y
+        fwrite(&one_to_one_p[0][2],sizeof(double),1,f_G2t); // 37 c++  || 38 R    00 z
+        fwrite(&one_to_one_p[1][2],sizeof(double),1,f_G2t); // 38 c++  || 39 R    11 z
+        
+        fwrite(&two_to_two_A1[0],sizeof(double),1,f_G2t); // 39 c++  || 40 R    A1_0 *A1_0
+        fwrite(&two_to_two_A1[1],sizeof(double),1,f_G2t); // 40 c++  || 41 R    A1_0 *A1_0
+        fwrite(&two_to_two_A1[2],sizeof(double),1,f_G2t); // 41 c++  || 42 R    A1_0 *A1_0
+        
+        fwrite(&two_to_two_E1[0],sizeof(double),1,f_G2t); // 42 c++  || 43 R    A1_0 *A1_0
+        fwrite(&two_to_two_E1[1],sizeof(double),1,f_G2t); // 43 c++  || 44 R    A1_0 *A1_0
+        fwrite(&two_to_two_E1[2],sizeof(double),1,f_G2t); // 44 c++  || 45 R    A1_0 *A1_0
+        
+        fwrite(&two_to_two_E2[0],sizeof(double),1,f_G2t); // 45 c++  || 46 R    A1_0 *A1_0
+        fwrite(&two_to_two_E2[1],sizeof(double),1,f_G2t); // 46 c++  || 47 R    A1_0 *A1_0
+        fwrite(&two_to_two_E2[2],sizeof(double),1,f_G2t); // 47 c++  || 48 R    A1_0 *A1_0
+        
+        
+    //}
+    
+    
+}
+
  
  
 ////////////////////////////////////////////////////////////////////////////////
