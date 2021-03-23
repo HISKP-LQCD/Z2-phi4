@@ -36,7 +36,7 @@ shinyUI(fluidPage(
         selectInput("msq0", label = "\\( m_0^2\\)",
                     choices = c(0.1,-4.9,-4.95,-4.925,-4.98,-4.99,-5.0), selected = -4.925),
         selectInput("msq1", label = "\\( m_1^2\\)",
-                    choices =c(0.1,-4.9,-4.89,-4.85), selected = -4.85),
+                    choices =c(0.1,-4.9,-4.89,-4.85,-4.845), selected = -4.85),
         selectInput("l0", label = "\\(\\lambda_0\\)",
                     choices =c(0.05,2.5), selected = 2.5),
         selectInput("l1", label = "\\(\\lambda_1\\)",

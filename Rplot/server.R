@@ -440,7 +440,7 @@ shinyServer(function(input, output) {
     count<-1
     for (dir in c( "Data" )){
         #for (dir in c( "Data" )){  
-        for (msq1 in c(-4.9,-4.89,-4.85)){
+        for (msq1 in c(-4.9,-4.89,-4.85,-4.845)){
             for (msq0 in c(-4.9,-4.95,-4.925,-4.98,-4.99,-5.0)){
                 for (l0 in c(2.5)){  
                     for (l1 in c(2.5)){    
