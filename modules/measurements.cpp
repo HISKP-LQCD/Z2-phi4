@@ -171,7 +171,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=48;//number of correlators
+     int ncorr=51;//number of correlators
      //int ncorr=33;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
@@ -251,8 +251,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
    };
    typedef two_component<double,7>  two_component7;
    typedef two_component<double,8>  two_component8;
-   
-   typedef two_component<double,1>  two_component1;
+   typedef two_component<double,128>  two_component128;
    
 }
 namespace Kokkos { //reduction identity must be defined in Kokkos namespace
@@ -277,18 +276,19 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
-    sample::two_component8 pp;
+    sample::two_component128 pp;
     for(int t=0; t<T; t++) {
         for(int comp=0; comp<2; comp++){
             for (int p =0 ; p< 8;p++)
                 h_phip(comp,t+p*T)=0;
         }
-        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component8 & upd ) {
+        Kokkos::parallel_reduce( "G2t_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component128 & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
             int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
             int iz=x /(Vs/params.data.L[3]);
             
+            /*
             double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
             double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
             double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
@@ -307,10 +307,30 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 upd.the_array[comp][7]+=phi(comp,i0)*(sin(twopiLz*iz  ));
         
             }
-        }, Kokkos::Sum<sample::two_component8>(pp)  );
+            */
+            for (int px=0; px<4;px++){
+                for (int py=0; py<4;py++){
+                    for (int pz=0; pz<4;pz++){
+                        int re=(px+py*4+pz*16)*2;
+                        int im=re+1;
+                        double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+                        double wi=sin(wr);
+                        wr=cos(wr);
+                        for(int comp=0; comp<2; comp++){
+                            upd.the_array[comp][re]+= phi(comp,i0)*wr;
+                            upd.the_array[comp][im]+= phi(comp,i0)*wi;
+                        }
+                    }
+                }
+            }
+            
+            
+        }, Kokkos::Sum<sample::two_component128>(pp)  );
+        //  t +T*(reim+ p*2)
+        //p=px+py*4+pz*16
         for(int comp=0; comp<2; comp++){
-            for (int p =0 ; p< 8;p++)
-                h_phip(comp,t+p*T)=pp.the_array[comp][p]/((double) Vs *norm[comp]);
+            for (int reim_p =0 ; reim_p< 128;reim_p++) // reim_p= (reim+ p*2)= 0,..,127
+                h_phip(comp,t+reim_p*T)=pp.the_array[comp][reim_p]/((double) Vs *norm[comp]);
         }
     }
 }
@@ -546,7 +566,7 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
         double two_to_two_A1[3]={0,0,0};
         double two_to_two_E1[3]={0,0,0};
         double two_to_two_E2[3]={0,0,0};
-        
+        double two_to_two_A1E1[3]={0,0,0};
         
         for(int t1=0; t1<T; t1++) {
             
@@ -559,12 +579,12 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
             std::complex<double> E1[3],E1_t[3];
             std::complex<double> E2[3],E2_t[3];
             for (int comp=0; comp< 2;comp++){
-            
+                std::vector<int>  p1={1,4,16};
                 for(int i=0;i<3;i++){
-                    int t1_p=t1+(i*2+2)*T;   // 2,4 6    real part
-                    int t1_ip=t1+(i*2+3)*T;   /// 3,5 7 imag part
-                    int tpt1_p=(t+t1)%T+(i*2+2)*T;   //2,4 6    real part
-                    int tpt1_ip=(t+t1)%T+(i*2+3)*T;   /// 3,5,6 imag
+                    int t1_p=t1+(  2*p1[i])*T;   // 2,4 6    real part
+                    int t1_ip=t1+(1+ 2*p1[i])*T;   /// 3,5 7 imag part
+                    int tpt1_p=(t+t1)%T+(2*p1[i])*T;   //2,4 6    real part
+                    int tpt1_ip=(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
                     
                     phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
                     phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
@@ -592,6 +612,8 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
                 two_to_two_A1[comp]+=real(A1[comp]*A1_t[comp]);
                 two_to_two_E1[comp]+=real(E1[comp]*E1_t[comp]);
                 two_to_two_E2[comp]+=real(E2[comp]*E2_t[comp]);
+                two_to_two_A1E1[comp]+=real(A1[comp]*E1_t[comp]+E1[comp]*A1_t[comp]);
+                
             }
             
           
@@ -606,6 +628,7 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
             two_to_two_A1[comp]/=((double) T);
             two_to_two_E1[comp]/=((double) T);
             two_to_two_E2[comp]/=((double) T);
+            two_to_two_A1E1[comp]/=((double) T);
         }
         
         fwrite(&one_to_one_p[0][0],sizeof(double),1,f_G2t); // 33 c++  || 34 R    00 x
@@ -626,6 +649,10 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
         fwrite(&two_to_two_E2[0],sizeof(double),1,f_G2t); // 45 c++  || 46 R    A1_0 *A1_0
         fwrite(&two_to_two_E2[1],sizeof(double),1,f_G2t); // 46 c++  || 47 R    A1_0 *A1_0
         fwrite(&two_to_two_E2[2],sizeof(double),1,f_G2t); // 47 c++  || 48 R    A1_0 *A1_0
+        
+        fwrite(&two_to_two_A1E1[0],sizeof(double),1,f_G2t); // 48 c++  || 49 R    A1_0 *A1_0
+        fwrite(&two_to_two_A1E1[1],sizeof(double),1,f_G2t); // 49 c++  || 50 R    A1_0 *A1_0
+        fwrite(&two_to_two_A1E1[2],sizeof(double),1,f_G2t); // 50 c++  || 51 R    A1_0 *A1_0
         
         
     //}

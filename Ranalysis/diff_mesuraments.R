@@ -2,6 +2,7 @@ library(hadron)
 if(!exists("foo", mode="function")) source("read_header.R")
 
 f<-paste("../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference")
+f<-paste("../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_ref_mom1")
 f1<-"../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0"
 to.read = 
   file(f, "rb")

@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
             
             if(read_FT){
                 Kokkos::Timer timer3;
-                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*8);
+                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*128);
                 h_phip=construct_h_phip;
                 
                 std::string conf_file = params.data.outpath + 
@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
                 }
                 read_viewer(f_conf, layout_value, params , ii , phi ); 
                 
-                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*8);
+                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*128);
                 h_phip=construct_h_phip;
                 compute_FT(phi, params ,   ii, h_phip);
                 

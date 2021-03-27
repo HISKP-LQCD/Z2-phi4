@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
         bool write_FT=     (measure &&   params.data.save_config_FT == "yes");
         bool write=        (measure &&   params.data.save_config == "yes");
 
-        Viewphi::HostMirror h_phip("h_phip",2,params.data.L[0]*8);
+        Viewphi::HostMirror h_phip("h_phip",2,params.data.L[0]*128);
         if( contractions || write_FT ){
             Kokkos::Timer timer_FT;
             //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
