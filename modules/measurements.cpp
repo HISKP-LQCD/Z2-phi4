@@ -252,6 +252,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
    typedef two_component<double,7>  two_component7;
    typedef two_component<double,8>  two_component8;
    typedef two_component<double,128>  two_component128;
+   typedef two_component<double,Vp>  two_componentVp;
    
 }
 namespace Kokkos { //reduction identity must be defined in Kokkos namespace
@@ -276,10 +277,10 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
-    sample::two_component128 pp;
+    sample::two_componentVp pp;
     for(int t=0; t<T; t++) {
         for(int comp=0; comp<2; comp++){
-            for (int p =0 ; p< 8;p++)
+            for (int p =0 ; p< Vp;p++)
                 h_phip(comp,t+p*T)=0;
         }
         Kokkos::parallel_reduce( "FT_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component128 & upd ) {
@@ -308,11 +309,10 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         
             }
             */
-	    
-            for (int px=0; px<4;px++){
-                for (int py=0; py<4;py++){
-                    for (int pz=0; pz<4;pz++){
-                        int re=(px+py*4+pz*16)*2;
+            for (int pz=0; pz<Lp;pz++){
+                for (int py=0; py<Lp;py++){
+                    for (int px=0; px<Lp;px++){
+                        int re=(px+py*Lp+pz*Lp*Lp)*2;
                         int im=re+1;
                         double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
                         double wi=sin(wr);
@@ -326,12 +326,11 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
             }
             
             
-        }, Kokkos::Sum<sample::two_component128>(pp)  );
-	
+        }, Kokkos::Sum<sample::two_componentVp>(pp)  );
         //  t +T*(reim+ p*2)
         //p=px+py*4+pz*16
         for(int comp=0; comp<2; comp++){
-            for (int reim_p =0 ; reim_p< 128;reim_p++) // reim_p= (reim+ p*2)= 0,..,127
+            for (int reim_p =0 ; reim_p< Vp;reim_p++) // reim_p= (reim+ p*2)= 0,..,127
                 h_phip(comp,t+reim_p*T)=pp.the_array[comp][reim_p]/((double) Vs *norm[comp]);
         }
 	
@@ -607,7 +606,7 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
             for (int comp=0; comp< 3;comp++){
                 A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/sqrt(3);
                 A1_t[comp]=(bb_t[comp][0]+bb_t[comp][1]+bb_t[comp][2] )/sqrt(3);
-                E1[comp]=  (bb[comp][0]-bb[comp][1] )/sqrt(2);
+                E1[comp]=  (bb[comp][0]  -bb[comp][1] )/sqrt(2);
                 E1_t[comp]=(bb_t[comp][0]-bb_t[comp][1] )/sqrt(2);
                 E2[comp]=  (bb[comp][0]+bb[comp][1]-2.*bb[comp][2] )/sqrt(6);
                 E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/sqrt(6);

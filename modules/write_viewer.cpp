@@ -252,7 +252,7 @@ void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int
     double time=timer.seconds();
     printf("time to write the header %f\n",time);
     #endif
-    size_t V=params.data.L[0]*128; 
+    size_t V=params.data.L[0]*Vp; 
     
     if(endian==BIG_ENDIAN){
         for(size_t x=0; x<V;x++) 
@@ -308,7 +308,7 @@ void read_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int 
     double time=timer.seconds();
     printf("time to check header %f\n",time);
     #endif
-    size_t V=params.data.L[0]*128; 
+    size_t V=params.data.L[0]*Vp; 
     
     
     fread(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
