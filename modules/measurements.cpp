@@ -272,7 +272,7 @@ namespace Kokkos { //reduction identity must be defined in Kokkos namespace
 }
 
 
-void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+void compute_FT_old(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
@@ -289,26 +289,6 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
             int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
             int iz=x /(Vs/params.data.L[3]);
             
-            /*
-            double twopiLx=6.28318530718/(double (params.data.L[1]));//2.*3.1415926535;
-            double twopiLy=6.28318530718/(double (params.data.L[2]));//2.*3.1415926535;
-            double twopiLz=6.28318530718/(double (params.data.L[3]));//2.*3.1415926535;
-            
-            for(int comp=0; comp<2; comp++){
-                upd.the_array[comp][0]+=phi(comp,i0);
-                upd.the_array[comp][1]+=0;
-                
-                upd.the_array[comp][2]+=phi(comp,i0)*(cos(twopiLx*ix ) );//mom1 x
-                upd.the_array[comp][3]+=phi(comp,i0)*(sin(twopiLx*ix  ));
-                
-                upd.the_array[comp][4]+=phi(comp,i0)*(cos(twopiLy*iy  ));//mom1 y
-                upd.the_array[comp][5]+=phi(comp,i0)*(sin(twopiLy*iy ));
-                
-                upd.the_array[comp][6]+=phi(comp,i0)*(cos(twopiLz*iz  ));//mom1 z
-                upd.the_array[comp][7]+=phi(comp,i0)*(sin(twopiLz*iz  ));
-        
-            }
-            */
             for (int pz=0; pz<Lp;pz++){
                 for (int py=0; py<Lp;py++){
                     for (int px=0; px<Lp;px++){
@@ -334,6 +314,135 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 h_phip(comp,t+reim_p*T)=pp.the_array[comp][reim_p]/((double) Vs *norm[comp]);
         }	
     }
+}
+
+void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    
+    Viewphi phip("phip",2,params.data.L[0]*Vp);
+
+//    typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+//    typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    //for(int t=0; t<T; t++) {
+    Kokkos::parallel_for( "FT_loop",T*Vp*2,  KOKKOS_LAMBDA ( const size_t ii ) {
+        //ii = comp+ 2*myt  
+        //myt=  t +T*(reim+ p*2)
+        //p=px+py*4+pz*16
+    	double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};// need to be inside the loop for cuda<10
+	const int p=ii/(4*T);
+        int res=ii-p*4*T;
+        const int reim=res/(2*T);
+	res-=reim*2*T;
+	const int t=res/2;
+	const int comp=res-2*t;
+
+        const int px=p%Lp;
+        const int py=(p- px)%(Lp*Lp);
+        const int pz=p /(Lp*Lp);
+	const int xp=t+T*(reim+p*2);
+	phip(comp,xp)=0;
+	if (reim==0){
+		for (size_t  x=0; x< Vs;x++){
+		    size_t i0= x+t*Vs;
+		    int ix=x%params.data.L[1];
+		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+		    int iz=x /(Vs/params.data.L[3]);
+		    
+		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+		    wr=cos(wr);
+		    
+		    phip(comp,xp)+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+		}
+	}
+	else if(reim==1){
+		for (size_t  x=0; x< Vs;x++){
+		    size_t i0= x+t*Vs;
+		    int ix=x%params.data.L[1];
+		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+		    int iz=x /(Vs/params.data.L[3]);
+		    
+		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+		    wr=sin(wr);
+		    
+		    phip(comp,xp)+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+		} 
+	    
+	}
+            
+                  
+        phip(comp,xp)=phip(comp,xp)/((double) Vs *norm[comp]);
+        	
+    });
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip, phip ); 
+    
+
+}
+
+void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    
+    Viewphi phip("phip",2,params.data.L[0]*Vp);
+
+    typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+    typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    //for(int t=0; t<T; t++) {
+    //Kokkos::parallel_for( "FT_loop",T*Vp*2,  KOKKOS_LAMBDA ( const size_t ii ) {
+    Kokkos::parallel_for( "FT_loop", team_policy( T*Vp*2, Kokkos::AUTO), KOKKOS_LAMBDA ( const member_type &teamMember ) {
+        const int ii = teamMember.league_rank();
+        //ii = comp+ 2*myt  
+        //myt=  t +T*(reim+ p*2)
+        //p=px+py*4+pz*16
+    	double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};// need to be inside the loop for cuda<10
+	const int p=ii/(4*T);
+        int res=ii-p*4*T;
+        const int reim=res/(2*T);
+	res-=reim*2*T;
+	const int t=res/2;
+	const int comp=res-2*t;
+
+        const int px=p%Lp;
+        const int py=(p- px)%(Lp*Lp);
+        const int pz=p /(Lp*Lp);
+	const int xp=t+T*(reim+p*2);
+	phip(comp,xp)=0;
+	if (reim==0){
+        	Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
+		    size_t i0= x+t*Vs;
+		    int ix=x%params.data.L[1];
+		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+		    int iz=x /(Vs/params.data.L[3]);
+		    
+		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+		    wr=cos(wr);
+		    
+		    inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+		}, phip(comp,xp) );
+	}
+	else if(reim==1){
+        	Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
+		    size_t i0= x+t*Vs;
+		    int ix=x%params.data.L[1];
+		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+		    int iz=x /(Vs/params.data.L[3]);
+		    
+		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+		    wr=sin(wr);
+		    
+		    inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+		}, phip(comp,xp) );
+	    
+	}
+                      
+        phip(comp,xp)=phip(comp,xp)/((double) Vs *norm[comp]);
+        	
+    });
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip, phip ); 
+    
+
 }
  
 void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
