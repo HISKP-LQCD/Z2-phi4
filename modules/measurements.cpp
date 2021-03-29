@@ -277,13 +277,13 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
-    sample::two_componentVp pp;
     for(int t=0; t<T; t++) {
-        for(int comp=0; comp<2; comp++){
-            for (int p =0 ; p< Vp;p++)
-                h_phip(comp,t+p*T)=0;
-        }
-        Kokkos::parallel_reduce( "FT_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_component128 & upd ) {
+        //for(int comp=0; comp<2; comp++){
+        //    for (int p =0 ; p< Vp;p++)
+        //        h_phip(comp,t+p*T)=0;
+        //}
+        sample::two_componentVp pp;
+        Kokkos::parallel_reduce( "FT_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_componentVp & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
             int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
@@ -332,11 +332,60 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         for(int comp=0; comp<2; comp++){
             for (int reim_p =0 ; reim_p< Vp;reim_p++) // reim_p= (reim+ p*2)= 0,..,127
                 h_phip(comp,t+reim_p*T)=pp.the_array[comp][reim_p]/((double) Vs *norm[comp]);
-        }
-	
+        }	
     }
 }
  
+void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
+    
+    Viewphi phip("phip",2,params.data.L[0]*Vp);
+
+    typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+    typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    //for(int t=0; t<T; t++) {
+    Kokkos::parallel_for( "FT_loop", team_policy( T, Kokkos::AUTO, 32 ), KOKKOS_LAMBDA ( const member_type &teamMember ) {
+        const int t = teamMember.league_rank();
+	    
+        sample::two_componentVp pp;
+        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, sample::two_componentVp & upd ) {
+            size_t i0= x+t*Vs;
+            int ix=x%params.data.L[1];
+            int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+            int iz=x /(Vs/params.data.L[3]);
+            
+            for (int pz=0; pz<Lp;pz++){
+                for (int py=0; py<Lp;py++){
+                    for (int px=0; px<Lp;px++){
+                        int re=(px+py*Lp+pz*Lp*Lp)*2;
+                        int im=re+1;
+                        double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+                        double wi=sin(wr);
+                        wr=cos(wr);
+                        for(int comp=0; comp<2; comp++){
+                            upd.the_array[comp][re]+= phi(comp,i0)*wr;
+                            upd.the_array[comp][im]+= phi(comp,i0)*wi;
+                        }
+                    }
+                }
+            }
+            
+            
+        }, Kokkos::Sum<sample::two_componentVp>(pp)  );
+        //  t +T*(reim+ p*2)
+        //p=px+py*4+pz*16
+        for(int comp=0; comp<2; comp++){
+            for (int reim_p =0 ; reim_p< Vp;reim_p++) // reim_p= (reim+ p*2)= 0,..,127
+                phip(comp,t+reim_p*T)=pp.the_array[comp][reim_p]/((double) Vs *norm[comp]);
+        }	
+    });
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip, phip ); 
+    
+
+}
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
