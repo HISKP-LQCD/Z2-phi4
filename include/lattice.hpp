@@ -8,7 +8,8 @@
 
 /* Dimension of the lattice */
 #define dim_spacetime 4
-#define mom_threshold 1
+#define Lp 4
+#define Vp Lp*Lp*Lp*2
 /* spatial extend of the lattice */
 //#define L 4
 // #define L 4LU
