@@ -403,16 +403,20 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         const int comp=res-2*t;
 
         const int px=p%Lp;
-        const int py=(p- px)%(Lp*Lp);
+        
         const int pz=p /(Lp*Lp);
+        const int py= (p- pz*Lp*Lp)/Lp;
+       // if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);exit(1);}
+        
         const int xp=t+T*(reim+p*2);
         phip(comp,xp)=0;
         if (reim==0){
         	Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
-                int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-                int iz=x /(Vs/params.data.L[3]);
+                //int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);!!!! wrong!!!!!
+                int iz=x /(params.data.L[1]*params.data.L[2]);
+                int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
                 
                 double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
                 wr=cos(wr);
@@ -703,6 +707,7 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
         
         fwrite(&C401_02t10,sizeof(double),1,f_G2t); // 31 c++  || 32 R 
         fwrite(&C401_02t12,sizeof(double),1,f_G2t); // 32 c++  || 33 R 
+
         compute_contraction_p1(  t ,  h_phip,  params , f_G2t ,  iconf);
     }
 
@@ -737,9 +742,9 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
             std::complex<double> E1[3],E1_t[3];
             std::complex<double> E2[3],E2_t[3];
             for (int comp=0; comp< 2;comp++){
-                std::vector<int>  p1={1,4,16};
+                std::vector<int>  p1={1,Lp,Lp*Lp};
                 for(int i=0;i<3;i++){
-                    int t1_p=t1+(  2*p1[i])*T;   // 2,4 6    real part
+                    int t1_p =t1+(  2*p1[i])*T;   // 2,4 6    real part
                     int t1_ip=t1+(1+ 2*p1[i])*T;   /// 3,5 7 imag part
                     int tpt1_p=(t+t1)%T+(2*p1[i])*T;   //2,4 6    real part
                     int tpt1_ip=(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
@@ -773,8 +778,6 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
                 two_to_two_A1E1[comp]+=real(A1[comp]*E1_t[comp]+E1[comp]*A1_t[comp]);
                 
             }
-            
-          
             
             
         } 
