@@ -450,7 +450,6 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
 void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
-    double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
     
     Viewphi phip("phip",2,params.data.L[0]*Vp);
 
@@ -459,6 +458,7 @@ void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, V
     //for(int t=0; t<T; t++) {
     Kokkos::parallel_for( "FT_loop", team_policy( T, Kokkos::AUTO, 32 ), KOKKOS_LAMBDA ( const member_type &teamMember ) {
         const int t = teamMember.league_rank();
+    	double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)}; // with cuda 10 you can move it outside
 	    
         sample::two_componentVp pp;
         Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, sample::two_componentVp & upd ) {
