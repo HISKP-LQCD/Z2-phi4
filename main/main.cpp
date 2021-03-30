@@ -170,6 +170,7 @@ int main(int argc, char** argv) {
             Kokkos::Timer timer_FT;
             //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
             //h_phip=construct_h_phip;
+            
             compute_FT(phi, params ,   ii, h_phip);
            
             time = timer_FT.seconds();

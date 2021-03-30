@@ -66,6 +66,16 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
         xp=x+(- xp+  (xp+1)%params.data.L[2]) *params.data.L[3] ;
         neighbourSum += phi(comp, xp ) + phi(comp,xm );
 
+        #ifdef DEBUG
+            double neighbourSum1=0;
+            for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
+                    neighbourSum1 += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
+            if(fabs(neighbourSum1 - neighbourSum)>1e-12) {
+                printf("error in computing the neighbourSum:\n");
+                printf("with hop:   %.12g   manually: %.12g\n",neighbourSum,neighbourSum1);
+                exit(1);
+            }
+        #endif
         //for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
         //    neighbourSum += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
         // doing the multihit

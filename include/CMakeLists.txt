@@ -67,7 +67,7 @@ add_library(
     geometry STATIC
     geometry.hpp
     ../modules/geometry/hopping.cpp
-    ../modules/geometry/lex2c.cpp
+    #../modules/geometry/lex2c.cpp
 ) 
 target_link_libraries(geometry PUBLIC Kokkos::kokkos)
 #target_include_directories(geometry PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

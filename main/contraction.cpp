@@ -87,7 +87,34 @@ int main(int argc, char** argv) {
     cout << "hopping initialised"<< endl; 
         
     Viewphi  phi("phi",2,V);
-
+    #ifdef DEBUG
+        Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+            phi(0,x)= sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
+            phi(1,x)= sqrt(2.*params.data.kappa1);
+        });  
+        Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
+        compute_FT(phi, params ,   0, h_phip_test);
+        int T=params.data.L[0];
+        for (size_t t=0; t< T; t++) {
+            for (size_t x=1; x< Vp; x++) { 
+                size_t id=t+x*T;
+                if (fabs(h_phip_test(0,id)) >1e-11 ||  fabs(h_phip_test(1,id)) >1e-11  ){
+                    printf("error FT of a constant field do not gives delta_{p,0}: \n");
+                    printf("h_phip_test(0,%d)=%.12g \n",x,h_phip_test(0,id));
+                    printf("h_phip_test(1,%d)=%.12g \n",x,h_phip_test(1,id));
+                    printf("id=t+T*p    id=%d   t=%d  p=%d\n ",id,t,x);
+                    exit(1);
+                }
+            }
+            if (fabs(h_phip_test(0,t)-1) >1e-11 ||  fabs(h_phip_test(1,t)-1) >1e-11  ){
+                printf("error FT of a constant field do not gives delta_{p,0}: \n");
+                printf("h_phip_test(0,%d)=%.12g \n",t,h_phip_test(0,t));
+                printf("h_phip_test(1,%d)=%.12g \n",t,h_phip_test(1,t));
+                printf("id=t+T*p    id=%d   t=%d  p=%d\n ",t,t,0);
+                exit(1);
+            }
+        }
+    #endif
    
     // Initialize phi on the device
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
@@ -126,6 +153,8 @@ int main(int argc, char** argv) {
     
     double time_update=0,time_mes=0,time_writing=0;
     double ave_acc=0;
+    
+    
     // The update ----------------------------------------------------------------
     for(int ii = 0; ii < params.data.start_measure+params.data.total_measure; ii++) {
         double time; 
