@@ -420,7 +420,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
                 #ifdef DEBUG
                     if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
-                        printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                        printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
                         exit(1);
                     }
                 #endif
