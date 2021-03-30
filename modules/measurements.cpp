@@ -329,30 +329,30 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
         //ii = comp+ 2*myt  
         //myt=  t +T*(reim+ p*2)
         //p=px+py*4+pz*16
-    	double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};// need to be inside the loop for cuda<10
-	const int p=ii/(4*T);
+        double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};// need to be inside the loop for cuda<10
+        const int p=ii/(4*T);
         int res=ii-p*4*T;
         const int reim=res/(2*T);
-	res-=reim*2*T;
-	const int t=res/2;
-	const int comp=res-2*t;
+        res-=reim*2*T;
+        const int t=res/2;
+        const int comp=res-2*t;
 
         const int px=p%Lp;
         const int py=(p- px)%(Lp*Lp);
         const int pz=p /(Lp*Lp);
-	const int xp=t+T*(reim+p*2);
-	phip(comp,xp)=0;
-	if (reim==0){
+        const int xp=t+T*(reim+p*2);
+        phip(comp,xp)=0;
+        if (reim==0){
 		for (size_t  x=0; x< Vs;x++){
-		    size_t i0= x+t*Vs;
-		    int ix=x%params.data.L[1];
-		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-		    int iz=x /(Vs/params.data.L[3]);
+            size_t i0= x+t*Vs;
+            int ix=x%params.data.L[1];
+            int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+            int iz=x /(Vs/params.data.L[3]);
+            
+            double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+            wr=cos(wr);
 		    
-		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
-		    wr=cos(wr);
-		    
-		    phip(comp,xp)+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+            phip(comp,xp)+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
 		}
 	}
 	else if(reim==1){
@@ -388,53 +388,51 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
 
     typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
-    //for(int t=0; t<T; t++) {
-    //Kokkos::parallel_for( "FT_loop",T*Vp*2,  KOKKOS_LAMBDA ( const size_t ii ) {
+    
     Kokkos::parallel_for( "FT_loop", team_policy( T*Vp*2, Kokkos::AUTO), KOKKOS_LAMBDA ( const member_type &teamMember ) {
         const int ii = teamMember.league_rank();
         //ii = comp+ 2*myt  
         //myt=  t +T*(reim+ p*2)
         //p=px+py*4+pz*16
-    	double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};// need to be inside the loop for cuda<10
-	const int p=ii/(4*T);
+        double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};// need to be inside the loop for cuda<10
+        const int p=ii/(4*T);
         int res=ii-p*4*T;
         const int reim=res/(2*T);
-	res-=reim*2*T;
-	const int t=res/2;
-	const int comp=res-2*t;
+        res-=reim*2*T;
+        const int t=res/2;
+        const int comp=res-2*t;
 
         const int px=p%Lp;
         const int py=(p- px)%(Lp*Lp);
         const int pz=p /(Lp*Lp);
-	const int xp=t+T*(reim+p*2);
-	phip(comp,xp)=0;
-	if (reim==0){
+        const int xp=t+T*(reim+p*2);
+        phip(comp,xp)=0;
+        if (reim==0){
         	Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
-		    size_t i0= x+t*Vs;
-		    int ix=x%params.data.L[1];
-		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-		    int iz=x /(Vs/params.data.L[3]);
-		    
-		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
-		    wr=cos(wr);
-		    
-		    inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
-		}, phip(comp,xp) );
-	}
-	else if(reim==1){
-        	Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
-		    size_t i0= x+t*Vs;
-		    int ix=x%params.data.L[1];
-		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-		    int iz=x /(Vs/params.data.L[3]);
-		    
-		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
-		    wr=sin(wr);
-		    
-		    inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
-		}, phip(comp,xp) );
-	    
-	}
+                size_t i0= x+t*Vs;
+                int ix=x%params.data.L[1];
+                int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+                int iz=x /(Vs/params.data.L[3]);
+                
+                double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+                wr=cos(wr);
+                
+                inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+            }, phip(comp,xp) );
+        }
+        else if(reim==1){
+            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
+                size_t i0= x+t*Vs;
+                int ix=x%params.data.L[1];
+                int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
+                int iz=x /(Vs/params.data.L[3]);
+                
+                double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
+                wr=sin(wr);
+                
+                inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+            }, phip(comp,xp) );
+        }
                       
         phip(comp,xp)=phip(comp,xp)/((double) Vs *norm[comp]);
         	
