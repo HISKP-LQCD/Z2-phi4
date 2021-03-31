@@ -246,7 +246,7 @@ int main(int argc, char** argv) {
     printf("  time mesuring = %f s (%f per single operation)\n", time_mes   , time_mes/(params.data.total_measure/ params.data.measure_every_X_updates ));
     printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.measure_every_X_updates) );
     
-    printf("sum time = %f s\n",time_writing+ time_mes+ time_update );
+    printf("sum time = %f s\n",time_writing+ time_mes+ time_update+time_FT );
 
 
     fclose(f_G2t);

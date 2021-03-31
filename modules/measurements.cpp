@@ -286,9 +286,14 @@ void compute_FT_old(const Viewphi phi, cluster::IO_params params ,  int iconf, V
         Kokkos::parallel_reduce( "FT_Vs_loop", Vs , KOKKOS_LAMBDA ( const size_t x, sample::two_componentVp & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
-            int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-            int iz=x /(Vs/params.data.L[3]);
-            
+            int iz=x /(params.data.L[1]*params.data.L[2]);
+            int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
+            #ifdef DEBUG
+            if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
+                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                exit(1);
+            }
+            #endif
             for (int pz=0; pz<Lp;pz++){
                 for (int py=0; py<Lp;py++){
                     for (int px=0; px<Lp;px++){
@@ -338,17 +343,25 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
         const int comp=res-2*t;
 
         const int px=p%Lp;
-        const int py=(p- px)%(Lp*Lp);
         const int pz=p /(Lp*Lp);
+        const int py= (p- pz*Lp*Lp)/Lp;
         const int xp=t+T*(reim+p*2);
+        #ifdef DEBUG
+            if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);exit(1);}
+        #endif
         phip(comp,xp)=0;
         if (reim==0){
 		for (size_t  x=0; x< Vs;x++){
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
-            int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-            int iz=x /(Vs/params.data.L[3]);
-            
+            int iz=x /(params.data.L[1]*params.data.L[2]);
+            int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
+            #ifdef DEBUG
+            if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
+                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                exit(1);
+            }
+            #endif
             double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
             wr=cos(wr);
 		    
@@ -358,10 +371,15 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
 	else if(reim==1){
 		for (size_t  x=0; x< Vs;x++){
 		    size_t i0= x+t*Vs;
-		    int ix=x%params.data.L[1];
-		    int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-		    int iz=x /(Vs/params.data.L[3]);
-		    
+            int ix=x%params.data.L[1];
+            int iz=x /(params.data.L[1]*params.data.L[2]);
+            int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
+            #ifdef DEBUG
+            if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
+                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                exit(1);
+            }
+            #endif
 		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
 		    wr=sin(wr);
 		    
@@ -403,7 +421,6 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         const int comp=res-2*t;
 
         const int px=p%Lp;
-        
         const int pz=p /(Lp*Lp);
         const int py= (p- pz*Lp*Lp)/Lp;
         #ifdef DEBUG
@@ -436,10 +453,10 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 int iz=x /(params.data.L[1]*params.data.L[2]);
                 int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
                 #ifdef DEBUG
-                if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
-                    printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                    exit(1);
-                }
+                    if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
+                        printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                        exit(1);
+                    }
                 #endif
                 double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
                 wr=sin(wr);
@@ -474,9 +491,14 @@ void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, V
         Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, sample::two_componentVp & upd ) {
             size_t i0= x+t*Vs;
             int ix=x%params.data.L[1];
-            int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-            int iz=x /(Vs/params.data.L[3]);
-            
+            int iz=x /(params.data.L[1]*params.data.L[2]);
+            int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
+            #ifdef DEBUG
+            if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
+                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                exit(1);
+            }
+            #endif
             for (int pz=0; pz<Lp;pz++){
                 for (int py=0; py<Lp;py++){
                     for (int px=0; px<Lp;px++){
@@ -729,11 +751,7 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
 void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
-    //fwrite(&iconf,sizeof(int),1,f_G2t);        
     
-    
-    // now we continue on the host 
-    //for(int t=0; t<T; t++) {
         
         double one_to_one_p[2][3]={{0,0,0},{0,0,0}};
         double two_to_two_A1[3]={0,0,0};
@@ -826,7 +844,6 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
         fwrite(&two_to_two_A1E1[2],sizeof(double),1,f_G2t); // 50 c++  || 51 R    A1_0 *A1_0
         
         
-    //}
     
     
 }
