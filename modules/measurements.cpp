@@ -415,7 +415,6 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         	Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
-                //int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);!!!! wrong!!!!!
                 int iz=x /(params.data.L[1]*params.data.L[2]);
                 int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
                 #ifdef DEBUG
@@ -434,9 +433,14 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
             Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
-                int iy=(x- ix)%(params.data.L[1]*params.data.L[2]);
-                int iz=x /(Vs/params.data.L[3]);
-                
+                int iz=x /(params.data.L[1]*params.data.L[2]);
+                int iy=(x- iz*params.data.L[1]*params.data.L[2])/params.data.L[1];
+                #ifdef DEBUG
+                if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
+                    printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
+                    exit(1);
+                }
+                #endif
                 double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
                 wr=sin(wr);
                 
