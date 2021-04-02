@@ -425,6 +425,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         const int py= (p- pz*Lp*Lp)/Lp;
         #ifdef DEBUG
             if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);exit(1);}
+            if (ii!= comp+2*(t+T*(reim+p*2))){ printf("error   in the ");exit(1);}
         #endif
         const int xp=t+T*(reim+p*2);
         phip(comp,xp)=0;
