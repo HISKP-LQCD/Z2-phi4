@@ -4,7 +4,9 @@
 #include "lattice.hpp"
 #include <IO_params.hpp>
 #include <complex>
-
+#ifdef FFTW
+#include <fftw3.hpp>
+#endif
 
 void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
@@ -82,3 +84,75 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     
     
 }
+
+
+#ifdef DEBUG
+void test_FT(cluster::IO_params params){
+    Viewphi  phi("phi",2,V);
+    size_t V=params.data.V;
+    size_t Vs=V/params.data.L[0];
+    
+    Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+        phi(0,x)= sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
+        phi(1,x)= sqrt(2.*params.data.kappa1);
+    });  
+    Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
+    compute_FT(phi, params ,   0, h_phip_test);
+    int T=params.data.L[0];
+    for (size_t t=0; t< T; t++) {
+        for (size_t x=1; x< Vp; x++) { 
+            size_t id=t+x*T;
+            if (fabs(h_phip_test(0,id)) >1e-11 ||  fabs(h_phip_test(1,id)) >1e-11  ){
+                printf("error FT of a constant field do not gives delta_{p,0}: \n");
+                printf("h_phip_test(0,%ld)=%.12g \n",x,h_phip_test(0,id));
+                printf("h_phip_test(1,%ld)=%.12g \n",x,h_phip_test(1,id));
+                printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ",id,t,x);
+                exit(1);
+            }
+        }
+        if (fabs(h_phip_test(0,t)-1) >1e-11 ||  fabs(h_phip_test(1,t)-1) >1e-11  ){
+            printf("error FT of a constant field do not gives delta_{p,0}: \n");
+            printf("h_phip_test(0,%ld)=%.12g \n",t,h_phip_test(0,t));
+            printf("h_phip_test(1,%ld)=%.12g \n",t,h_phip_test(1,t));
+            printf("id=t+T*p    id=%ld   t=%ld  p=0\n ",t,t);
+            exit(1);
+        }
+    }
+    printf("checking delta_x,0 field\n");
+    Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+        if(x==0){
+            phi(0,x)=Vs* sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
+            phi(1,x)=Vs* sqrt(2.*params.data.kappa1);
+        }
+        else{
+            phi(0,x)= 0;// the FT routines convert in to phisical phi 
+            phi(1,x)= 0;
+        }
+    });  
+    compute_FT(phi, params ,   0, h_phip_test);
+    for (size_t t=0; t< 1; t++) {
+        for (size_t x=0; x< Vp; x++) { 
+            size_t id=t+x*T;
+            if (x%2 ==0){//real part
+                if(fabs(h_phip_test(0,id)-1) >1e-11 ||  fabs(h_phip_test(1,id)-1) >1e-11  ){
+                    printf("error FT of a delta_{x,0} field do not gives const: \n");
+                    printf("h_phip_test(0,%ld)=%.12g \n",x,h_phip_test(0,id));
+                    printf("h_phip_test(1,%ld)=%.12g \n",x,h_phip_test(1,id));
+                    printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ",id,t,x);
+                    exit(1);
+                }
+            }
+            if (x%2 ==1){//imag part
+                if(fabs(h_phip_test(0,id)) >1e-11 ||  fabs(h_phip_test(1,id)) >1e-11  ){
+                    printf("error FT of a delta_{x,0} field do not gives const: \n");
+                    printf("h_phip_test(0,%ld)=%.12g \n",x,h_phip_test(0,id));
+                    printf("h_phip_test(1,%ld)=%.12g \n",x,h_phip_test(1,id));
+                    printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ",id,t,x);
+                    exit(1);
+                }
+            }
+        }
+    } 
+    
+}
+#endif

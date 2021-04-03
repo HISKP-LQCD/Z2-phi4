@@ -26,7 +26,10 @@ project(Z2-phi4 CXX)
 #INCLUDE_DIRECTORIES ( "${EIGEN3_INCLUDE_DIR}" )
 
 
-
+IF( FFTW)
+  set(CMAKE_CXX_FLAGS  " ${CMAKE_CXX_FLAGS} ${CXXFLAGS} -DFFTW -g  -lfftw3")
+  MESSAGE( "flags:  " ${CMAKE_CXX_FLAGS})
+ENDIF()
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/kokkos" "external/kokkos")
 
@@ -54,6 +57,7 @@ macro(add_target_with_lib TARGETNAME)
   target_link_libraries(${TARGETNAME} PUBLIC write_viewer)
   target_link_libraries(${TARGETNAME} PUBLIC measurements)
   target_link_libraries(${TARGETNAME} PUBLIC DFT)
+
 #  target_link_libraries(${TARGETNAME} PUBLIC HighFive)
   target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
   target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_BINARY_DIR}/include")
