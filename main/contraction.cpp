@@ -21,6 +21,7 @@
 #include "utils.hpp" 
 #include "write_viewer.hpp"
 #include "measurements.hpp"
+#include "DFT.hpp"
 
 //#include <highfive/H5File.hpp>
 

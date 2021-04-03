@@ -26,6 +26,15 @@ add_library(
     ../modules/measurements.cpp
 ) 
 target_link_libraries_kokkos(measurements )
+
+
+
+add_library(
+    DFT STATIC
+    DFT.hpp
+    ../modules/DFT.cpp
+) 
+target_link_libraries_kokkos(DFT )
 #add_library(
 #    lattice STATIC
 #    lattice.hpp
