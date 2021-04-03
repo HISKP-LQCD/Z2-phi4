@@ -763,8 +763,8 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
         for(int t1=0; t1<T; t1++) {
             
             
-            std::complex<double> phi[2][3*2]; //phi[comp] [ xyz, -x-y-z]
-            std::complex<double> phi_t[2][3*2];
+            std::complex<double> phi[2][3]; //phi[comp] [ xyz, -x-y-z]
+            std::complex<double> phi_t[2][3];
             std::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
             std::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
             std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
@@ -779,13 +779,15 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
                     int tpt1_ip=(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
                     
                     phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
-                    phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
                     
+                    phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
+                   
                     one_to_one_p[comp][i]+=real( phi[comp][i]* conj(phi_t[comp][i]) )+real( phi_t[comp][i]* conj(phi[comp][i]) );
+                    
                     
                     bb[comp][i]=phi[comp][i]*conj(phi[comp][i]);
                     bb_t[comp][i]=phi_t[comp][i]*conj(phi_t[comp][i]);
-                    
+                   
                 }
                 
             }
@@ -802,6 +804,7 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
                 E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/sqrt(6);
                 
                 two_to_two_A1[comp]+=real(A1[comp]*A1_t[comp]);
+                //two_to_two_A1[comp]+=real(  phi[comp][0]*conj(phi[comp][0])    *   phi_t[comp][0]*conj(phi_t[comp][0])   );
                 two_to_two_E1[comp]+=real(E1[comp]*E1_t[comp]);
                 two_to_two_E2[comp]+=real(E2[comp]*E2_t[comp]);
                 two_to_two_A1E1[comp]+=real(A1[comp]*E1_t[comp]+E1[comp]*A1_t[comp]);

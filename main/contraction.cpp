@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
                 exit(1);
             }
         }
-        //delta field
+        printf("checking delta_x,0 field\n");
         Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
             if(x==0){
                 phi(0,x)=Vs* sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
