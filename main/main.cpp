@@ -38,7 +38,6 @@ int main(int argc, char** argv) {
     endian=endianness();
     #ifdef DEBUG
         printf("DEBUG mode ON\n");
-        test_FT(params);
     #endif
     #ifdef FFTW
         cout << "FFTW: ON "<< endl;
