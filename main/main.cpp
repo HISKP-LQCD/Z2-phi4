@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     cout << "   execution space:"<< typeid(Kokkos::DefaultExecutionSpace).name() << endl; 
     cout << "   host  execution    space:"<<  &Kokkos::HostSpace::name << endl; 
     
-    int layout_value=check_layout();
+     int layout_value=check_layout();
     // Create a random number generator pool (64-bit states or 1024-bit state)
     // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
     // which is used to fill the generators of the pool.
@@ -87,6 +87,10 @@ int main(int argc, char** argv) {
     // we need a random generator on the host for the cluster
     // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
     std::mt19937_64 host_rand( params.data.seed );
+    
+    #ifdef DEBUG
+        test_FT(params);
+    #endif
     
   
     

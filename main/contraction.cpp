@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
     endian=endianness();
     #ifdef DEBUG
         printf("DEBUG mode ON\n");
-        test_FT(params);
     #endif
     
     printf("endianness=%d  (0 unknown , 1 little , 2 big)\n",endian);
@@ -92,7 +91,9 @@ int main(int argc, char** argv) {
     cout << "hopping initialised"<< endl; 
         
     Viewphi  phi("phi",2,V);
-    
+    #ifdef DEBUG
+        test_FT(params);
+    #endif
    
     // Initialize phi on the device
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
