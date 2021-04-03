@@ -4,8 +4,9 @@
 #include "lattice.hpp"
 #include <IO_params.hpp>
 #include <complex>
+
 #ifdef FFTW
-#include <fftw3.hpp>
+#include <fftw3.h>
 #endif
 
 void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
@@ -88,9 +89,10 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
 
 #ifdef DEBUG
 void test_FT(cluster::IO_params params){
-    Viewphi  phi("phi",2,V);
     size_t V=params.data.V;
     size_t Vs=V/params.data.L[0];
+    Viewphi  phi("phi",2,V);
+    printf("checking FT of constant field:\n");
     
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
         phi(0,x)= sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
@@ -118,7 +120,8 @@ void test_FT(cluster::IO_params params){
             exit(1);
         }
     }
-    printf("checking delta_x,0 field\n");
+    printf("\tpassed\n");
+    printf("checking FT of delta_x,0 field:\n");
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
         if(x==0){
             phi(0,x)=Vs* sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
@@ -153,6 +156,70 @@ void test_FT(cluster::IO_params params){
             }
         }
     } 
+    printf("\tpassed\n");
+}
+
+#ifdef FFTW
+void test_FT_vs_FFTW(cluster::IO_params params){
+    
+    size_t V=params.data.V;
+    size_t Vs=V/params.data.L[0];
+    int T=params.data.L[0];
+    Viewphi  phi("phi",2,V);
+    printf("checking FT vs FFTW\n");
+    //kokkos
+    Viewphi::HostMirror  h_phi = Kokkos::create_mirror_view( phi );
+    Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+        phi(0,x)=x* sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
+        phi(1,x)=x* sqrt(2.*params.data.kappa1);
+    });  
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phi, phi );
+    Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
+    compute_FT(phi, params ,   0, h_phip_test);
+    //FFTW
+    fftw_plan p;
+    fftw_complex *in;
+    fftw_complex *out;
+    int n[3];
+    
+    n[0]=params.data.L[1];
+    n[1]=params.data.L[2];
+    n[2]=params.data.L[3];
+    
+    in=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*Vs);
+    out=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*Vs);
+    
+    //FFTW_FORWARD=e^{-ipx}   FFTW_BACKWARD=e^{+ipx}
+    p=fftw_plan_dft(3,n,in,out,FFTW_BACKWARD,FFTW_ESTIMATE);
+    for (int x=0; x< Vs; x++){
+        in[x][0]=h_phi(0,x);// h_phi should be avaluated at x+0*L^3 but it is the same
+    }
+    fftw_execute(p);
+    for (int x=0; x< Vs; x++){
+        out[x][0]/=Vs*sqrt(2.*params.data.kappa0);// h_phi should be avaluated at x+0*L^3 but it is the same
+    }
+    for (int px=0; px< Lp; px++){
+        for (int py=0; py< Lp; py++){
+            for (int pz=0; pz< Lp; pz++){
+                int p=px +py*params.data.L[1]+pz*params.data.L[1]*params.data.L[2];
+                int lp=px +py*Lp+pz*Lp*Lp;
+                if (fabs(out[p][0]-h_phip_test(0,T*( 0+lp*2) ) )>1e-10 ){
+                    printf("error: FT does not produce the same result of FFTW:");
+                    printf(" px=%d  py=%d  pz=%d\t",px,py,pz);
+                    printf("FFTW=%.12g    FT=%.12g \n",out[p][0],h_phip_test(0,T*( 0+lp*2) ) );
+                }
+            }
+        }
+    }
+    
+    
+    fftw_destroy_plan(p);
+    fftw_free(out);
+    fftw_free(in); 
+    printf("\tpassed\n");
     
 }
+#endif  //FFTW
 #endif
+

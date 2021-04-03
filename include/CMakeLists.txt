@@ -34,7 +34,10 @@ add_library(
     DFT.hpp
     ../modules/DFT.cpp
 ) 
-target_link_libraries_kokkos(DFT )
+IF( FFTW)
+    target_link_libraries(DFT  PUBLIC fftw3)
+ENDIF()
+target_link_libraries_kokkos(DFT)
 #add_library(
 #    lattice STATIC
 #    lattice.hpp

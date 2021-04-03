@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(Z2-phi4 CXX)
+project(Z2-phi4  CXX)
 
 
 # full path of g++  otherwise it does not work
@@ -25,9 +25,13 @@ project(Z2-phi4 CXX)
 #ENDIF()
 #INCLUDE_DIRECTORIES ( "${EIGEN3_INCLUDE_DIR}" )
 
+IF(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+  set(CMAKE_CXX_FLAGS  " ${CMAKE_CXX_FLAGS} ${CXXFLAGS} -DDEBUG  -g   -lm  ")
+  MESSAGE( "DEBUG mode ON")
+ENDIF()
 
 IF( FFTW)
-  set(CMAKE_CXX_FLAGS  " ${CMAKE_CXX_FLAGS} ${CXXFLAGS} -DFFTW -g  -lfftw3")
+  set(CMAKE_CXX_FLAGS  " ${CMAKE_CXX_FLAGS} ${CXXFLAGS} -DFFTW   ")
   MESSAGE( "flags:  " ${CMAKE_CXX_FLAGS})
 ENDIF()
 

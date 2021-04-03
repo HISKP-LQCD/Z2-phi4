@@ -87,9 +87,6 @@ int main(int argc, char** argv) {
     // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
     std::mt19937_64 host_rand( params.data.seed );
     
-    #ifdef DEBUG
-        test_FT(params);
-    #endif
     
   
     
@@ -103,6 +100,9 @@ int main(int argc, char** argv) {
     Viewphi  phi("phi",2,V);
     #ifdef DEBUG
     test_FT(params);
+    #ifdef FFTW
+    test_FT_vs_FFTW(params);
+    #endif
     #endif
     
     
