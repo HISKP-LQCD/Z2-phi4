@@ -5,7 +5,7 @@
 #include <IO_params.hpp>
 #include <complex>
 
-void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf);
+inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf);
  
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,7 +147,7 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
 ////////////////////////////////////////////////////////////////////////////////
 
 
-void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
+void write_header_measuraments(FILE *f_conf, cluster::IO_params params , int ncorr=51){
 
      fwrite(&params.data.L, sizeof(int), 4, f_conf); 
 
@@ -171,7 +171,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
      
-     int ncorr=51;//number of correlators
+     //number of correlators
      //int ncorr=33;//number of correlators
      fwrite(&ncorr, sizeof(int), 1, f_conf); 
      
@@ -673,9 +673,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
+inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
     int T=params.data.L[0];
-    size_t Vs=params.data.V/T;
+    //size_t Vs=params.data.V/T;
     
         
         double one_to_one_p[2][3]={{0,0,0},{0,0,0}};
@@ -705,12 +705,13 @@ void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_pa
                     phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
                     
                     phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
-                   
                     one_to_one_p[comp][i]+=real( phi[comp][i]* conj(phi_t[comp][i]) )+real( phi_t[comp][i]* conj(phi[comp][i]) );
                     
                     
                     bb[comp][i]=phi[comp][i]*conj(phi[comp][i]);
                     bb_t[comp][i]=phi_t[comp][i]*conj(phi_t[comp][i]);
+                    //cout<< "p-p    " << t <<phi[comp][i] *conj(phi[comp][i])*phi_t[comp][i] *conj(phi_t[comp][i])   <<endl;
+                    //cout<< "p p    " << t <<phi[comp][i] *(phi[comp][i])*conj(phi_t[comp][i] * phi_t[comp][i])   <<endl;
                    
                 }
                 
@@ -846,5 +847,73 @@ void  compute_G2t_ASCI(const Viewphi &phi, cluster::IO_params params , FILE *f_G
         fprintf(f_G2t,"%d \t %.12g \t %.12g  \t %.12g \t %.12g \n",t,G2t0,G2t1,C2t,C3t);
     }
 
+    
+}
+
+void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    fwrite(&iconf,sizeof(int),1,f);        
+    for(int t=0; t<T; t++) {
+        
+        double two0_to_two0[3]={0,0,0};
+         
+        for(int t1=0; t1<T; t1++) {
+            
+            
+            std::complex<double> phi[2][3]; //phi[comp] [ xyz, -x-y-z]
+            std::complex<double> phi_t[2][3];
+            std::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
+            std::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
+            std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
+            std::complex<double> E1[3],E1_t[3];
+            std::complex<double> E2[3],E2_t[3];
+            for (int comp=0; comp< 2;comp++){
+                std::vector<int>  p1={1,Lp,Lp*Lp};
+                for(int i=0;i<3;i++){
+                    int t1_p =t1+(  2*p1[i])*T;   // 2,4 6    real part
+                    int t1_ip=t1+(1+ 2*p1[i])*T;   /// 3,5 7 imag part
+                    int tpt1_p=(t+t1)%T+(2*p1[i])*T;   //2,4 6    real part
+                    int tpt1_ip=(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
+                    
+                    phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
+                    
+                    phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
+                     
+                    
+                    bb[comp][i]=phi[comp][i]*conj(phi[comp][i]);
+                    bb_t[comp][i]=phi_t[comp][i]*conj(phi_t[comp][i]);
+                    //cout<< "p-p    " << t <<phi[comp][i] *conj(phi[comp][i])*phi_t[comp][i] *conj(phi_t[comp][i])   <<endl;
+                    //cout<< "p p    " << t <<phi[comp][i] *(phi[comp][i])*conj(phi_t[comp][i] * phi_t[comp][i])   <<endl;
+                    
+                }
+                
+            }
+            for(int i=0;i<3;i++){
+                bb[2][i]=(phi[0][i]*conj(phi[1][i])+phi[1][i]*conj(phi[0][i])  )/sqrt(2);
+                bb_t[2][i]=(phi_t[0][i]*conj(phi_t[1][i])+phi_t[1][i]*conj(phi_t[0][i])  )/sqrt(2);
+            }
+            for (int i=0; i< 3;i++){
+                  
+                two0_to_two0[i]+=real(bb[0][i]*bb_t[0][i]);
+                
+            }
+            
+            
+        } 
+        
+        for (int comp=0; comp< 3;comp++){
+            two0_to_two0[comp]/=((double) T);
+            
+        }
+        
+        fwrite(&two0_to_two0[0],sizeof(double),1,f); // 0 c++  || 1 R    00 x
+        fwrite(&two0_to_two0[1],sizeof(double),1,f); // 1 c++  || 2 R    11 x
+        fwrite(&two0_to_two0[2],sizeof(double),1,f); // 2 c++  || 3 R    00 y
+        
+        
+        
+    }
+    
     
 }

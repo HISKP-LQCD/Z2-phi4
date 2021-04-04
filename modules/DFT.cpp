@@ -193,22 +193,31 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     //FFTW_FORWARD=e^{-ipx}   FFTW_BACKWARD=e^{+ipx}
     p=fftw_plan_dft(3,n,in,out,FFTW_BACKWARD,FFTW_ESTIMATE);
     for (int x=0; x< Vs; x++){
-        in[x][0]=h_phi(0,x);// h_phi should be avaluated at x+0*L^3 but it is the same
+        in[x][0]=h_phi(0,x+1*Vs);// h_phi should be avaluated at x+0*L^3 but it is the same
+        in[x][1]=0;
     }
     fftw_execute(p);
     for (int x=0; x< Vs; x++){
         out[x][0]/=Vs*sqrt(2.*params.data.kappa0);// h_phi should be avaluated at x+0*L^3 but it is the same
+        out[x][1]/=Vs*sqrt(2.*params.data.kappa0);
     }
     for (int px=0; px< Lp; px++){
         for (int py=0; py< Lp; py++){
             for (int pz=0; pz< Lp; pz++){
                 int p=px +py*params.data.L[1]+pz*params.data.L[1]*params.data.L[2];
                 int lp=px +py*Lp+pz*Lp*Lp;
-                if (fabs(out[p][0]-h_phip_test(0,T*( 0+lp*2) ) )>1e-10 ){
-                    printf("error: FT does not produce the same result of FFTW:");
+                if (fabs(out[p][0]-h_phip_test(0,1+T*( 0+lp*2) ) )>1e-9 ){
+                    printf("error: FT does not produce the same result of FFTW (real part):");
                     printf(" px=%d  py=%d  pz=%d\t",px,py,pz);
-                    printf("FFTW=%.12g    FT=%.12g \n",out[p][0],h_phip_test(0,T*( 0+lp*2) ) );
+                    printf("FFTW=%.15g    FT=%.15g \n",out[p][0],h_phip_test(0,1+T*( 0+lp*2) ) );
                 }
+                if (fabs(out[p][1]-h_phip_test(0,1+T*( 1+lp*2) ) )>1e-9 ){
+                    printf("error: FT does not produce the same result of FFTW (imag part):");
+                    printf(" px=%d  py=%d  pz=%d\t",px,py,pz);
+                    printf("FFTW=%.15g    FT=%.15g \n",out[p][1],h_phip_test(0,1+T*( 1+lp*2) ) );
+                }
+                
+                
             }
         }
     }

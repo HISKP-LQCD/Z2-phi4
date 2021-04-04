@@ -52,6 +52,8 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   std::string compute_contractions;
   int save_config_every_X_updates;
   std::string outpath;
+  std::string checks;
+  
   
 };
 // -----------------------------------------------------------------------------
@@ -198,8 +200,8 @@ private:
         exit(0);
     }
     // unused
-    reader += fscanf(infile, "save_config_every_X_updates = %d\n", 
-                             &data.save_config_every_X_updates);
+    reader += fscanf(infile, "checks =  %255s\n", readin);
+    data.checks.assign(readin);
     reader += fscanf(infile, "outpath = %255s\n", readin);
     data.outpath.assign(readin);
 

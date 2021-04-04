@@ -26,6 +26,6 @@ measure_every_X_updates = 10
 save_config = no
 save_config_FT = yes
 compute_contractions = yes
-save_config_every_X_updates = 10000
+checks = yes
 
 outpath = ./data

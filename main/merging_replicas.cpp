@@ -411,7 +411,7 @@ int main(int argc, char **argv){
       infiles[r]=NULL;
       infiles[r]=fopen(argv[1+r],"r+");
       printf("considering file:  %s\n",argv[1+r] );
-      if (infiles[r]==NULL) {printf("can not open contraction file: \n %s\n"); exit(1);}
+      if (infiles[r]==NULL) {printf("can not open contraction file: \n\n"); exit(1);}
       check_header(infiles[r],params  )  ;
       confs.emplace_back( read_nconfs( infiles[r],  params)  );    
    }

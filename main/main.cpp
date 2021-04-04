@@ -115,22 +115,23 @@ int main(int argc, char** argv) {
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     });   
+    std::string suffix ="_T" + std::to_string(params.data.L[0]) +
+                        "_L" + std::to_string(params.data.L[1]) +
+                        "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                        "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                        "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   +
+                        "_rep" + std::to_string(params.data.replica) ;
     
-     std::string mes_file = params.data.outpath + 
-                              "/mes_T" + std::to_string(params.data.L[0]) +
-                              "_L" + std::to_string(params.data.L[1]) +
-                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
-                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   +
-                              "_rep" + std::to_string(params.data.replica) ;
-    std::string G2t_file = params.data.outpath + 
-                              "/G2t_T" + std::to_string(params.data.L[0]) +
-                              "_L" + std::to_string(params.data.L[1]) +
-                              "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
-                              "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                              "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)   +
-                              "_rep" + std::to_string(params.data.replica) ; 
+    std::string mes_file = params.data.outpath + "/mes"+ suffix;
                               
+    std::string G2t_file = params.data.outpath + "/G2t"+ suffix;
+    FILE *f_checks;
+    if( params.data.checks == "yes") {
+        std::string checks_file = params.data.outpath + "/checks"+ suffix;
+        f_checks = fopen(checks_file.c_str(), "w+"); 
+        write_header_measuraments(f_checks, params ,3); 
+    }
+    
     cout << "Writing magnetization to: " << mes_file << endl;
     cout << "Writing G2t       to: " << G2t_file << endl;
     FILE *f_mes = fopen(mes_file.c_str(), "w+"); 
@@ -204,7 +205,9 @@ int main(int argc, char** argv) {
             free(m);
             
             compute_G2t( h_phip,   params,f_G2t, ii);
-            
+            if (params.data.checks== "yes"){
+                compute_checks( h_phip,   params,f_checks, ii);
+            }
             time = timer_2.seconds();
             time_mes+=time;
         }
@@ -263,6 +266,7 @@ int main(int argc, char** argv) {
 
     fclose(f_G2t);
     fclose(f_mes);
+    if (params.data.checks== "yes")  fclose(f_checks);
     printf("total kokkos time = %f s\n", timer.seconds());
     }
     Kokkos::finalize();
