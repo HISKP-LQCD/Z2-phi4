@@ -401,7 +401,7 @@ int main(int argc, char **argv){
    infiles=(FILE**) malloc(sizeof(FILE*)*(argc-1));
    infiles[0]=NULL;
    infiles[0]=fopen(namefile,"r+");
-   if (infiles[0]==NULL) {printf("can not open contraction file \n"); exit(1);}
+   if (infiles[0]==NULL) {printf("can not open contraction file: \n %s\n",namefile); exit(1);}
    read_header(infiles[0],params); 
    confs.emplace_back( read_nconfs( infiles[0],  params)  ); 
     printf("argc=%d\n",argc);
@@ -411,14 +411,14 @@ int main(int argc, char **argv){
       infiles[r]=NULL;
       infiles[r]=fopen(argv[1+r],"r+");
       printf("considering file:  %s\n",argv[1+r] );
-      if (infiles[r]==NULL) {printf("can not open contraction file \n"); exit(1);}
+      if (infiles[r]==NULL) {printf("can not open contraction file: \n %s\n"); exit(1);}
       check_header(infiles[r],params  )  ;
       confs.emplace_back( read_nconfs( infiles[r],  params)  );    
    }
    
    sprintf(namefile,"%s_merged",argv[1]);
    FILE *outfile = fopen(namefile, "w+"); 
-   if (outfile==NULL) {printf("can not open output file \n"); exit(1);}  
+   if (outfile==NULL) {printf("can not open output file:  \n %s\n",namefile); exit(1);}  
    
    write_header_measuraments(outfile,params);
    double *data=(double*) malloc(sizeof(double)*(params.data.size));
