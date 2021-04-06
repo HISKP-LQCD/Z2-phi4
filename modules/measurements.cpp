@@ -857,7 +857,8 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
     for(int t=0; t<T; t++) {
         
         double two0_to_two0[3]={0,0,0};
-         
+        double two0pmp_to_two0[3]={0,0,0}; 
+        
         for(int t1=0; t1<T; t1++) {
             
             
@@ -877,7 +878,6 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
                     int tpt1_ip=(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
                     
                     phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
-                    
                     phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
                      
                     
@@ -896,6 +896,7 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
             for (int i=0; i< 3;i++){
                   
                 two0_to_two0[i]+=real(bb[0][i]*bb_t[0][i]);
+                two0pmp_to_two0[i]+=real(bb[0][i]*h_phip(0,(t+t1)%T)  );
                 
             }
             
@@ -904,6 +905,7 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
         
         for (int comp=0; comp< 3;comp++){
             two0_to_two0[comp]/=((double) T);
+            two0pmp_to_two0[comp]/=((double) T);
             
         }
         
@@ -911,6 +913,9 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
         fwrite(&two0_to_two0[1],sizeof(double),1,f); // 1 c++  || 2 R    11 x
         fwrite(&two0_to_two0[2],sizeof(double),1,f); // 2 c++  || 3 R    00 y
         
+        fwrite(&two0pmp_to_two0[0],sizeof(double),1,f); // 3 c++  || 1 R    00 x
+        fwrite(&two0pmp_to_two0[1],sizeof(double),1,f); // 4 c++  || 2 R    11 x
+        fwrite(&two0pmp_to_two0[2],sizeof(double),1,f); // 5 c++  || 3 R    00 y
         
         
     }

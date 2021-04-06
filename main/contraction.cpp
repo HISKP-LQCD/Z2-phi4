@@ -119,7 +119,11 @@ int main(int argc, char** argv) {
     if( params.data.checks == "yes") {
         std::string checks_file = params.data.outpath + "/checks"+ suffix;
         f_checks = fopen(checks_file.c_str(), "w+"); 
-        write_header_measuraments(f_checks, params ,3); 
+        if (f_checks == NULL    ) {
+            printf("Error opening file %s  \n", checks_file.c_str());
+            exit(1);
+        }    
+        write_header_measuraments(f_checks, params ,6); 
     }
                               
     cout << "Writing magnetization to: " << mes_file << endl;
