@@ -40,14 +40,18 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         const int pz=p /(Lp*Lp);
         const int py= (p- pz*Lp*Lp)/Lp;
         #ifdef DEBUG
-        if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);exit(1);}
-        if (ii!= comp+2*(t+T*(reim+p*2))){ printf("error   in the ");exit(1);}
+        if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);
+	//exit(1);
+	}
+        if (ii!= comp+2*(t+T*(reim+p*2))){ printf("error   in the FT\n");
+	//exit(1);
+	}
         #endif
         const int xp=t+T*(reim+p*2);
         phip(comp,xp)=0;
         if (reim==0){
 	//	for (size_t x=0;x<Vs;x++){	
-            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [=] ( const size_t x, double &inner) {
+            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
 	   
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
@@ -56,7 +60,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 #ifdef DEBUG
                 if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
                     printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                    exit(1);
+                //    exit(1);
                 }
                 #endif
                 double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
@@ -68,7 +72,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
 
         }
         else if(reim==1){
-            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [=] ( const size_t x, double &inner) {
+            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
                 int iz=x /(params.data.L[1]*params.data.L[2]);
@@ -76,7 +80,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 #ifdef DEBUG
                 if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
                     printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                    exit(1);
+                //    exit(1);
                 }
                 #endif
                 double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
@@ -103,10 +107,10 @@ void test_FT(cluster::IO_params params){
     Viewphi  phi("phi",2,V);
     printf("checking FT of constant field:\n");
     
-    Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+    Kokkos::parallel_for( "init_const_phi", V, KOKKOS_LAMBDA( size_t x) { 
         phi(0,x)= sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
         phi(1,x)= sqrt(2.*params.data.kappa1);
-    });  
+    }); 
     Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
     compute_FT(phi, params ,   0, h_phip_test);
     int T=params.data.L[0];
@@ -118,7 +122,7 @@ void test_FT(cluster::IO_params params){
                 printf("h_phip_test(0,%ld)=%.12g \n",x,h_phip_test(0,id));
                 printf("h_phip_test(1,%ld)=%.12g \n",x,h_phip_test(1,id));
                 printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ",id,t,x);
-                exit(1);
+               // exit(1);
             }
         }
         if (fabs(h_phip_test(0,t)-1) >1e-11 ||  fabs(h_phip_test(1,t)-1) >1e-11  ){
@@ -126,7 +130,7 @@ void test_FT(cluster::IO_params params){
             printf("h_phip_test(0,%ld)=%.12g \n",t,h_phip_test(0,t));
             printf("h_phip_test(1,%ld)=%.12g \n",t,h_phip_test(1,t));
             printf("id=t+T*p    id=%ld   t=%ld  p=0\n ",t,t);
-            exit(1);
+           // exit(1);
         }
     }
     printf("\tpassed\n");
@@ -151,7 +155,7 @@ void test_FT(cluster::IO_params params){
                     printf("h_phip_test(0,%ld)=%.12g \n",x,h_phip_test(0,id));
                     printf("h_phip_test(1,%ld)=%.12g \n",x,h_phip_test(1,id));
                     printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ",id,t,x);
-                    exit(1);
+             //       exit(1);
                 }
             }
             if (x%2 ==1){//imag part
@@ -160,7 +164,7 @@ void test_FT(cluster::IO_params params){
                     printf("h_phip_test(0,%ld)=%.12g \n",x,h_phip_test(0,id));
                     printf("h_phip_test(1,%ld)=%.12g \n",x,h_phip_test(1,id));
                     printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ",id,t,x);
-                    exit(1);
+               //     exit(1);
                 }
             }
         }
@@ -255,54 +259,79 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 
     cudaMalloc((void**)&idata, sizeof(cufftReal)*Vs);
     cudaMalloc((void**)&odata, sizeof(cufftComplex)*Vs);
-  
-    // lets hope I can initialise cuda things inside kokkos
-    Kokkos::parallel_for( "Kokkos_to_cuFFT", Vs, KOKKOS_LAMBDA( size_t x) {
-	idata[x]=phi(0, x+0*Vs);
-	//printf("in: %g   %g\n",idata[x],phi(0,x));
-    });
+    int n[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
+    cufftPlanMany(&plan, 3, n,
+				  NULL, 1, Vs    , // *inembed, istride, idist
+				  NULL, 1, Vs, // *onembed, ostride, odist
+				  CUFFT_R2C, T);
+				  
+    for (int t=0;t< T;t++){
+	    // lets hope I can initialise cuda things inside kokkos
+	    Kokkos::parallel_for( "Kokkos_to_cuFFT", Vs, KOKKOS_LAMBDA( size_t x) {
+		idata[x]=phi(0, x+t*Vs);
+		//printf("in: %g   %g\n",idata[x],phi(0,x));
+	    });
 
-    /* Create a 3D FFT plan. */
-    cufftPlan3d(&plan, params.data.L[1], params.data.L[2],params.data.L[3], CUFFT_R2C);
+	    /* Create a 3D FFT plan. */
+	    //cufftPlan3d(&plan, params.data.L[1], params.data.L[2],params.data.L[3], CUFFT_R2C);
 
-    /* Use the CUFFT plan to transform the signal out of place. */
-    cufftExecR2C(plan, idata, odata);
+	    /* Use the CUFFT plan to transform the signal out of place. */
+	    if (cufftExecR2C(plan, idata, odata)!= CUFFT_SUCCESS){
+		fprintf(stderr, "CUFFT error: ExecC2C Forward failed");
+	    }
 
-    Kokkos::parallel_for( "cuFFT_to_Kokkos", Vp*2, KOKKOS_LAMBDA( size_t pp) {
-	int reim=pp%2;
-	int p=(pp-reim)/2;
-	const int px=p%Lp;
-	const int pz=p /(Lp*Lp);
-	const int py= (p- pz*Lp*Lp)/Lp;
-	int pcuff=(px+py*params.data.L[1]+pz* params.data.L[1]*params.data.L[2]);
-	if(reim==0)
-		Kphi(0,pp)=odata[pcuff].x/(Vs*sqrt(2*params.data.kappa0));
-	else if(reim==1)
-		Kphi(0,pp)=odata[pcuff].y/(Vs*sqrt(2*params.data.kappa0));
-
-
-    });
-    #ifdef DEBUG
-        compute_FT(phi,params, iconf, h_phip);
-    	Viewphi phip("phip",2,params.data.L[0]*Vp);
-    	// Deep copy host views to device views.
-    	Kokkos::deep_copy( phip, h_phip );
-    	Kokkos::parallel_for( "check_phi_cuFFT", Vp*2, KOKKOS_LAMBDA( size_t pp) {
+	    if (cudaThreadSynchronize() != cudaSuccess){
+		fprintf(stderr, "Cuda error: Failed to synchronize\n");
+	    }
+	    
+	    Kokkos::parallel_for( "cuFFT_to_Kokkos", Vp, KOKKOS_LAMBDA( size_t pp) {
 		int reim=pp%2;
-                int p=(pp-reim)/2;
+		int p=(pp-reim)/2;
 		const int px=p%Lp;
 		const int pz=p /(Lp*Lp);
 		const int py= (p- pz*Lp*Lp)/Lp;
-		int pcuff=(px+py*params.data.L[1]+pz* params.data.L[1]*params.data.L[2]);
-		printf("p=%d= (%d,%d,%d)  reim=%d  pcuff=%d=    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pcuff,Kphi(0,pp) ,phip(0,pp));
+		int pcuff=(px+py*(params.data.L[1]/2 +1)+pz* (params.data.L[1]/2+1)*(params.data.L[2]));
+		int ip=t+pp*T;
+		if(reim==0)
+			Kphi(0,ip)=odata[pcuff].x/(Vs*sqrt(2*params.data.kappa0));
+		else if(reim==1)
+			Kphi(0,ip)=-odata[pcuff].y/(Vs*sqrt(2*params.data.kappa0));
+	    	#ifdef DEBUG
+			if(p!= px+py*Lp+pz*Lp*Lp)
+				printf( "index problem if cuFFT  p=%d  !=  (%d,%d,%d)\n",p,px,py,pz);
+			if(pp!= reim+p*2)
+				printf( "index problem if cuFFT  pp=%d  !=  %d+%d*2\n",pp,reim,p);
+		#endif
+	    });
 
-	});
-    #endif
 
+	    #ifdef DEBUG
+		compute_FT(phi,params, iconf, h_phip);
+		Viewphi phip("phip",2,params.data.L[0]*Vp);
+		// Deep copy host views to device views.
+		Kokkos::deep_copy( phip, h_phip );
+		Kokkos::parallel_for( "check_phi_cuFFT", Vp, KOKKOS_LAMBDA( size_t pp) {
+			int reim=pp%2;
+			int p=(pp-reim)/2;
+			const int px=p%Lp;
+			const int pz=p /(Lp*Lp);
+			const int py= (p- pz*Lp*Lp)/Lp;
+			int pcuff=(px+py*(params.data.L[1]/2 +1)+pz* (params.data.L[1]/2+1)*(params.data.L[2]));
+			int ip=t+pp*T;
+			if (fabs(Kphi(0,ip)-phip(0,ip))>1e-6 )
+				printf("p=%d= (%d,%d,%d)  reim=%d pp=%ld ip=%d  t=%d pcuff=%d    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pp, ip,t,pcuff,Kphi(0,ip) ,phip(0,ip));
+
+		});
+	    #endif
+    }
+    if (cudaThreadSynchronize() != cudaSuccess){
+		fprintf(stderr, "Cuda error: Failed to synchronize\n");
+    }
     /* Destroy the CUFFT plan. */
     cufftDestroy(plan);
     cudaFree(idata); cudaFree(odata);
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip, Kphi );
 }
 #endif
 #endif
-

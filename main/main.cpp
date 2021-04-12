@@ -196,12 +196,12 @@ int main(int argc, char** argv) {
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
             #endif
-
             time = timer_FT.seconds();
             time_FT+=time;
             nFT++;
         }
         
+printf("HERE1\n");
 
         //Measure every 
         if( contractions ){
