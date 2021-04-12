@@ -9,6 +9,11 @@
 #include <fftw3.h>
 #endif
 
+#ifdef cuFFT
+#include <cufft.h>
+#endif
+
+//#ifndef cuFFT
 void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
@@ -41,7 +46,9 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         const int xp=t+T*(reim+p*2);
         phip(comp,xp)=0;
         if (reim==0){
-            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
+	//	for (size_t x=0;x<Vs;x++){	
+            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [=] ( const size_t x, double &inner) {
+	   
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
                 int iz=x /(params.data.L[1]*params.data.L[2]);
@@ -54,12 +61,14 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 #endif
                 double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
                 wr=cos(wr);
-                
+
+            //  phip(comp,xp)+=phi(comp,i0)*wr;		}	
                 inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
             }, phip(comp,xp) );
+
         }
         else if(reim==1){
-            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
+            Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [=] ( const size_t x, double &inner) {
                 size_t i0= x+t*Vs;
                 int ix=x%params.data.L[1];
                 int iz=x /(params.data.L[1]*params.data.L[2]);
@@ -85,7 +94,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     
     
 }
-
+//#endif
 
 #ifdef DEBUG
 void test_FT(cluster::IO_params params){
@@ -230,5 +239,70 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     
 }
 #endif  //FFTW
+#endif
+
+
+#ifdef KOKKOS_ENABLE_CUDA
+#ifdef cuFFT
+void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    Viewphi Kphi("Kphip",2,params.data.L[0]*Vp);
+    cufftHandle plan;
+    cufftReal *idata;
+    cufftComplex *odata;
+   
+
+    cudaMalloc((void**)&idata, sizeof(cufftReal)*Vs);
+    cudaMalloc((void**)&odata, sizeof(cufftComplex)*Vs);
+  
+    // lets hope I can initialise cuda things inside kokkos
+    Kokkos::parallel_for( "Kokkos_to_cuFFT", Vs, KOKKOS_LAMBDA( size_t x) {
+	idata[x]=phi(0, x+0*Vs);
+	//printf("in: %g   %g\n",idata[x],phi(0,x));
+    });
+
+    /* Create a 3D FFT plan. */
+    cufftPlan3d(&plan, params.data.L[1], params.data.L[2],params.data.L[3], CUFFT_R2C);
+
+    /* Use the CUFFT plan to transform the signal out of place. */
+    cufftExecR2C(plan, idata, odata);
+
+    Kokkos::parallel_for( "cuFFT_to_Kokkos", Vp*2, KOKKOS_LAMBDA( size_t pp) {
+	int reim=pp%2;
+	int p=(pp-reim)/2;
+	const int px=p%Lp;
+	const int pz=p /(Lp*Lp);
+	const int py= (p- pz*Lp*Lp)/Lp;
+	int pcuff=(px+py*params.data.L[1]+pz* params.data.L[1]*params.data.L[2]);
+	if(reim==0)
+		Kphi(0,pp)=odata[pcuff].x/(Vs*sqrt(2*params.data.kappa0));
+	else if(reim==1)
+		Kphi(0,pp)=odata[pcuff].y/(Vs*sqrt(2*params.data.kappa0));
+
+
+    });
+    #ifdef DEBUG
+        compute_FT(phi,params, iconf, h_phip);
+    	Viewphi phip("phip",2,params.data.L[0]*Vp);
+    	// Deep copy host views to device views.
+    	Kokkos::deep_copy( phip, h_phip );
+    	Kokkos::parallel_for( "check_phi_cuFFT", Vp*2, KOKKOS_LAMBDA( size_t pp) {
+		int reim=pp%2;
+                int p=(pp-reim)/2;
+		const int px=p%Lp;
+		const int pz=p /(Lp*Lp);
+		const int py= (p- pz*Lp*Lp)/Lp;
+		int pcuff=(px+py*params.data.L[1]+pz* params.data.L[1]*params.data.L[2]);
+		printf("p=%d= (%d,%d,%d)  reim=%d  pcuff=%d=    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pcuff,Kphi(0,pp) ,phip(0,pp));
+
+	});
+    #endif
+
+    /* Destroy the CUFFT plan. */
+    cufftDestroy(plan);
+    cudaFree(idata); cudaFree(odata);
+}
+#endif
 #endif
 

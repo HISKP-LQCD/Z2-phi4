@@ -36,6 +36,8 @@ add_library(
 ) 
 IF( FFTW)
     target_link_libraries(DFT  PUBLIC fftw3)
+elseif(CUFFT)
+    target_link_libraries(DFT  PUBLIC cufft)
 ENDIF()
 target_link_libraries_kokkos(DFT)
 #add_library(
