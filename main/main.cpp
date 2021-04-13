@@ -201,7 +201,6 @@ int main(int argc, char** argv) {
             nFT++;
         }
         
-printf("HERE1\n");
 
         //Measure every 
         if( contractions ){
