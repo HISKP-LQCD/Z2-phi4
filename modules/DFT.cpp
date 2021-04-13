@@ -263,12 +263,13 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
     cufftPlanMany(&plan, 3, n,
 				  NULL, 1, Vs    , // *inembed, istride, idist
 				  NULL, 1, Vs, // *onembed, ostride, odist
-				  CUFFT_R2C, T);
+				  CUFFT_R2C, 2*T);
 				  
+    for(int comp=0;comp< 2;comp++){
     for (int t=0;t< T;t++){
 	    // lets hope I can initialise cuda things inside kokkos
 	    Kokkos::parallel_for( "Kokkos_to_cuFFT", Vs, KOKKOS_LAMBDA( size_t x) {
-		idata[x]=phi(0, x+t*Vs);
+		idata[x]=phi(comp, x+t*Vs);
 		//printf("in: %g   %g\n",idata[x],phi(0,x));
 	    });
 
@@ -293,9 +294,9 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 		int pcuff=(px+py*(params.data.L[1]/2 +1)+pz* (params.data.L[1]/2+1)*(params.data.L[2]));
 		int ip=t+pp*T;
 		if(reim==0)
-			Kphi(0,ip)=odata[pcuff].x/(Vs*sqrt(2*params.data.kappa0));
+			Kphi(comp,ip)=odata[pcuff].x/(Vs*sqrt(2*params.data.kappa0));
 		else if(reim==1)
-			Kphi(0,ip)=-odata[pcuff].y/(Vs*sqrt(2*params.data.kappa0));
+			Kphi(comp,ip)=-odata[pcuff].y/(Vs*sqrt(2*params.data.kappa0));
 	    	#ifdef DEBUG
 			if(p!= px+py*Lp+pz*Lp*Lp)
 				printf( "index problem if cuFFT  p=%d  !=  (%d,%d,%d)\n",p,px,py,pz);
@@ -319,14 +320,11 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 			int pcuff=(px+py*(params.data.L[1]/2 +1)+pz* (params.data.L[1]/2+1)*(params.data.L[2]));
 			int ip=t+pp*T;
 			if (fabs(Kphi(0,ip)-phip(0,ip))>1e-6 )
-				printf("p=%d= (%d,%d,%d)  reim=%d pp=%ld ip=%d  t=%d pcuff=%d    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pp, ip,t,pcuff,Kphi(0,ip) ,phip(0,ip));
+				printf("p=%d= (%d,%d,%d)  reim=%d pp=%ld ip=%d  t=%d pcuff=%d    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pp, ip,t,pcuff,Kphi(comp,ip) ,phip(comp,ip));
 
 		});
 	    #endif
-    }
-    if (cudaThreadSynchronize() != cudaSuccess){
-		fprintf(stderr, "Cuda error: Failed to synchronize\n");
-    }
+    }}
     /* Destroy the CUFFT plan. */
     cufftDestroy(plan);
     cudaFree(idata); cudaFree(odata);
