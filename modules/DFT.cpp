@@ -82,9 +82,9 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 int iz=x /(L1*L2);
                 int iy=(x- iz*L1*L2)/L1;
                 #ifdef DEBUG
-                if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
-                    printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                //    exit(1);
+                if (x!= ix+ iy*L1+iz*L1*L2){ 
+                    printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,L1,iz,L1,L2);
+                    //    exit(1);
                 }
                 #endif
                 double wr=6.28318530718 *( px*ix/(double (L1)) +    py*iy/(double (L2))   +pz*iz/(double (L3))   );
@@ -110,10 +110,12 @@ void test_FT(cluster::IO_params params){
     size_t Vs=V/params.data.L[0];
     Viewphi  phi("phi",2,V);
     printf("checking FT of constant field:\n");
+    double kappa0=params.data.kappa0;
+    double kappa1=params.data.kappa1;
     
     Kokkos::parallel_for( "init_const_phi", V, KOKKOS_LAMBDA( size_t x) { 
-        phi(0,x)= sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
-        phi(1,x)= sqrt(2.*params.data.kappa1);
+        phi(0,x)= sqrt(2.*kappa0);// the FT routines convert in to phisical phi 
+        phi(1,x)= sqrt(2.*kappa1);
     }); 
     Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
     compute_FT(phi, params ,   0, h_phip_test);
@@ -141,8 +143,8 @@ void test_FT(cluster::IO_params params){
     printf("checking FT of delta_x,0 field:\n");
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
         if(x==0){
-            phi(0,x)=Vs* sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
-            phi(1,x)=Vs* sqrt(2.*params.data.kappa1);
+            phi(0,x)=Vs* sqrt(2.*kappa0);// the FT routines convert in to phisical phi 
+            phi(1,x)=Vs* sqrt(2.*kappa1);
         }
         else{
             phi(0,x)= 0;// the FT routines convert in to phisical phi 
@@ -182,13 +184,16 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     size_t V=params.data.V;
     size_t Vs=V/params.data.L[0];
     int T=params.data.L[0];
+    double kappa0=params.data.kappa0;
+    double kappa1=params.data.kappa1;
+    
     Viewphi  phi("phi",2,V);
     printf("checking FT vs FFTW\n");
     //kokkos
     Viewphi::HostMirror  h_phi = Kokkos::create_mirror_view( phi );
     Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
-        phi(0,x)=x* sqrt(2.*params.data.kappa0);// the FT routines convert in to phisical phi 
-        phi(1,x)=x* sqrt(2.*params.data.kappa1);
+        phi(0,x)=x* sqrt(2.*kappa0);// the FT routines convert in to phisical phi 
+        phi(1,x)=x* sqrt(2.*kappa1);
     });  
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phi, phi );
@@ -255,6 +260,10 @@ void test_FT_vs_FFTW(cluster::IO_params params){
 void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
+    double kappa0=params.data.kappa0;
+    double kappa1=params.data.kappa1;
+    
+    
     Viewphi Kphi("Kphip",2,params.data.L[0]*Vp);
     cufftHandle plan;
     cufftReal *idata;
@@ -290,23 +299,24 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 	    }
 	    
 	    Kokkos::parallel_for( "cuFFT_to_Kokkos", Vp, KOKKOS_LAMBDA( size_t pp) {
-		int reim=pp%2;
-		int p=(pp-reim)/2;
-		const int px=p%Lp;
-		const int pz=p /(Lp*Lp);
-		const int py= (p- pz*Lp*Lp)/Lp;
-		int pcuff=(px+py*(L[1]/2 +1)+pz* (L[1]/2+1)*(L[2]));
-		int ip=t+pp*T;
-		if(reim==0)
-			Kphi(comp,ip)=odata[pcuff].x/(Vs*sqrt(2*params.data.kappa0));
-		else if(reim==1)
-			Kphi(comp,ip)=-odata[pcuff].y/(Vs*sqrt(2*params.data.kappa0));
-	    	#ifdef DEBUG
-			if(p!= px+py*Lp+pz*Lp*Lp)
-				printf( "index problem if cuFFT  p=%d  !=  (%d,%d,%d)\n",p,px,py,pz);
-			if(pp!= reim+p*2)
-				printf( "index problem if cuFFT  pp=%d  !=  %d+%d*2\n",pp,reim,p);
-		#endif
+            int reim=pp%2;
+            int p=(pp-reim)/2;
+            const int px=p%Lp;
+            const int pz=p /(Lp*Lp);
+            const int py= (p- pz*Lp*Lp)/Lp;
+            int pcuff=(px+py*(L[1]/2 +1)+pz* (L[1]/2+1)*(L[2]));
+            int ip=t+pp*T;
+            double normFT[2]={Vs*sqrt(2*kappa0),Vs*sqrt(2*kappa1)}; 
+            if(reim==0)
+                Kphi(comp,ip)=odata[pcuff].x/normFT[comp];
+            else if(reim==1)
+                Kphi(comp,ip)=-odata[pcuff].y/normFT[comp];
+                #ifdef DEBUG
+                if(p!= px+py*Lp+pz*Lp*Lp)
+                    printf( "index problem if cuFFT  p=%d  !=  (%d,%d,%d)\n",p,px,py,pz);
+                if(pp!= reim+p*2)
+                    printf( "index problem if cuFFT  pp=%d  !=  %d+%d*2\n",pp,reim,p);
+            #endif
 	    });
 
 
