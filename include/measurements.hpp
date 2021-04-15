@@ -2,7 +2,7 @@
 #define mesuraments_H
  
  
- void write_header_measuraments(FILE *f_conf, cluster::IO_params params, int ncorr=51 );
+ void write_header_measuraments(FILE *f_conf, cluster::IO_params params, int ncorr=66 );
  
  
 double  *compute_magnetisations_serial( Viewphi::HostMirror phi,  cluster::IO_params params);
