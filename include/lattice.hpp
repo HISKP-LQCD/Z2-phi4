@@ -5,6 +5,9 @@
 #include <Kokkos_Random.hpp>
 #include <random>
 
+#ifndef GIT_COMMIT_HASH
+#define GIT_COMMIT_HASH "?"
+#endif
 
 /* Dimension of the lattice */
 #define dim_spacetime 4
