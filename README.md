@@ -29,6 +29,9 @@ you can add option
 
 ```
 -DCMAKE_CXX_FLAGS=-DTIMER
+-DCMAKE_CXX_FLAGS=-DDEBUG
+-DFFTW=ON
+-DCUFFT=ON
 ```
 in the building scritp to have more extra info on the timer
 

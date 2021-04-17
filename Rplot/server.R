@@ -108,10 +108,26 @@ shinyServer(function(input, output) {
         g <- as.double(input$g)
         rep<-as.integer(input$rep)
         #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
-        dir <- "Data" 
+        dir <- input$Directory 
         
         file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",                         dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
         return(file)
+    })
+    file_checks<-reactive({
+      T<-as.integer(input$T)
+      L<-as.integer(input$L)
+      msq0<-as.double(input$msq0)
+      msq1<-as.double(input$msq1)
+      l0<-as.double(input$l0)
+      l1<-as.double(input$l1)
+      mu<-as.double(input$mu)
+      g <- as.double(input$g)
+      rep<-as.integer(input$rep)
+      #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
+      dir <- input$Directory
+      
+      file=sprintf("%s/checks_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_output",                         dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
+      return(file)
     })
     file_meff<-reactive({
         T<-as.integer(input$T)
@@ -124,7 +140,7 @@ shinyServer(function(input, output) {
         g <- as.double(input$g)
         rep<-as.integer(input$rep)
         #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
-        dir <- "Data" 
+        dir <- input$Directory 
         
         file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_meff_correlators",                         dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
         return(file)
@@ -140,7 +156,7 @@ shinyServer(function(input, output) {
         g <- as.double(input$g)
         rep<-as.integer(input$rep)
         #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
-        dir <- "Data" 
+        dir <- input$Directory 
         
         file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_raw_correlators"
                      ,  dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
@@ -157,7 +173,7 @@ shinyServer(function(input, output) {
       g <- as.double(input$g)
       rep<-as.integer(input$rep)
       #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
-      dir <- "Data" 
+      dir <- input$Directory 
       
       file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_shifted_correlators"
                    ,  dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
@@ -174,7 +190,7 @@ shinyServer(function(input, output) {
       g <- as.double(input$g)
       rep<-as.integer(input$rep)
       #dir <- "/home/marco/analysis/phi4/tuning_masses/out" 
-      dir <- "Data" 
+      dir <- input$Directory 
       
       file=sprintf("%s/G2t_T%d_L%d_msq0%.6f_msq1%.6f_l0%.6f_l1%.6f_mu%.6f_g%.6f_rep%d_log_meff_shifted"
                    ,  dir, T, L,  msq0,  msq1,  l0,  l1,  mu,  g,  rep)
@@ -193,13 +209,27 @@ shinyServer(function(input, output) {
         multiple = TRUE
       )
     })
-    
+    output$obs_checks <- renderUI({
+      file<-file_checks()
+      mt<-read_df(file)
+      obs<-get_all_corr(mt)
+      pickerInput(
+        inputId = "manyChecks",
+        label = "Obs_checks",
+        choices =obs[,"corr"],
+        options = list( `actions-box` = TRUE,  size = 10     ,`selected-text-format` = "count > 3"  ),
+        multiple = TRUE
+      )
+    })
 
     gg_many<-reactive({  
         gg<- ggplot()
         #print(input$manyObs)
         #gg<-add_plot(file(), input$manyObs, input$T, input$logscale,gg,1 )
         gg<-add_plot_new(file(), input$manyObs, input$T, input$logscale,gg )
+        if (file.exists(file_checks())){
+            gg<-add_plot_new(file_checks(), input$manyChecks, input$T, input$logscale,gg )
+        }
         gg<-add_plot(file_meff(), input$log_meff_corr, input$T, input$logscale,gg,3,prefix="log_meff" )
         gg<-add_plot(file_raw(), input$raw_corr, input$T, input$logscale,gg ,3,prefix="raw")
         gg<-add_plot(file_shift(), input$shifted_corr, input$T, input$logscale,gg,3,prefix="shift" )

@@ -42,7 +42,8 @@ int main(int argc, char** argv) {
     #ifdef FFTW
         cout << "FFTW: ON "<< endl;
     #endif
-   
+    printf("git commit %s\n",GIT_COMMIT_HASH);
+        
     printf("endianness=%d  (0 unknown , 1 little , 2 big)\n",endian);
     if (endian==UNKNOWN_ENDIAN) {printf("UNKNOWN_ENDIAN abort\n"); exit(0);}
 

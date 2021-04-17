@@ -2,13 +2,17 @@ if(!exists("foo", mode="function")) source("../Ranalysis/read_header.R")
 
 f<-paste("data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference")
 f1<-"data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0"
-to.read = 
-  file(f, "rb")
-to.read1 = 
-  file(f1, "rb")
+files<-c("data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0",
+         "data/checks_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0")
+for (file in files){
+cat("considering file ",file,"\n")
+f=sprintf("%s_reference",file)
+f1=sprintf("%s",file)
+to.read =   file(f, "rb")
+to.read1 =  file(f1, "rb")
 
-header<-read_header(to.read)
-header1<-read_header(to.read1)
+suppressWarnings(header<-read_header(to.read))
+suppressWarnings(header1<-read_header(to.read1))
 
 ###############################################################
 #read the data and store in d[ correlator, time,  conf_number  ]
@@ -74,4 +78,4 @@ print(y)
 if (y=="error"){
   stop("Something erroneous has occurred!")
 }
-
+}

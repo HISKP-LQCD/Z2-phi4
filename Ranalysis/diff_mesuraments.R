@@ -4,11 +4,20 @@ if(!exists("foo", mode="function")) source("read_header.R")
 f<-paste("../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference")
 #f<-paste("../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_ref_mom1")
 f1<-"../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0"
+
+files<-c("../build/main/data/G2t_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0",
+         "../build/main/data/checks_T20_L10_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0")
+for (file in files){
+  cat("considering file ",file,"\n")
+  f=sprintf("%s_reference",file)
+  f1=sprintf("%s",file)
+  
+
 to.read =   file(f, "rb")
 to.read1 =   file(f1, "rb")
 
-header<-read_header(to.read)
-header1<-read_header(to.read1)
+suppressWarnings(header<-read_header(to.read))
+suppressWarnings(header1<-read_header(to.read1))
 
 ###############################################################
 #read the data and store in d[ correlator, time,  conf_number  ]
@@ -72,5 +81,6 @@ for (iconf in  c(1:header$confs)){
 print(y)
 if (y=="error"){
   stop("Something erroneous has occurred!")
+}
 }
 
