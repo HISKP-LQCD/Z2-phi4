@@ -24,7 +24,8 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
   
   for (int parity = 0; parity <2 ;parity ++){
   //for(int x=0; x< V; x++) {  
-  Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx , double &update) {    
+  //Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx , double &update) {    
+  Kokkos::parallel_for( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx ) {    
       size_t x=even_odd(parity,xx);
       double kappa[2] ={params.data.kappa0, params.data.kappa1};
       double lambda[2]={params.data.lambda0, params.data.lambda1};
@@ -103,14 +104,16 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
             if(r[1] < exp(-dS)) {
               phi(comp,x) += deltaPhi;
               phiSqr = phi(comp,x)*phi(comp,x);
-              update++; 
+             // update++; 
             }
         } // multi hit ends here
       } // loop components  ends here
 
     // Give the state back, which will allow another thread to aquire it
     rand_pool.free_state(rgen);
-  },acc);  // end lattice_even loop in parallel
+  //},acc);  // end lattice_even loop in parallel
+  });  // end lattice_even loop in parallel
+
   }//end loop parity
   
   return acc/(2*nb_of_hits); // the 2 accounts for updating the component indiv.
