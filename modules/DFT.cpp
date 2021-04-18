@@ -25,9 +25,11 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
     
     typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    typedef Kokkos::View< double*,    Kokkos::DefaultExecutionSpace::scratch_memory_space,    Kokkos::MemoryTraits<Kokkos::Unmanaged> >    ScratchViewType;
+    int scratch_size = ScratchViewType::shmem_size( Vs );
     
-
-    Kokkos::parallel_for( "FT_loop", team_policy( T*Vp*2, Kokkos::AUTO), KOKKOS_LAMBDA ( const member_type &teamMember ) {
+    Kokkos::parallel_for( "FT_loop", team_policy( T*Vp*2, Kokkos::AUTO).set_scratch_size( 0, Kokkos::PerTeam( scratch_size ))
+        , KOKKOS_LAMBDA ( const member_type &teamMember ) {
         const int ii = teamMember.league_rank();
         //ii = comp+ 2*myt  
         //myt=  t +T*(reim+ p*2)
@@ -45,19 +47,29 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         const int py= (p- pz*Lp*Lp)/Lp;
         #ifdef DEBUG
         if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);
-	//exit(1);
-	}
+        //exit(1);
+        }
         if (ii!= comp+2*(t+T*(reim+p*2))){ printf("error   in the FT\n");
-	//exit(1);
-	}
+        //exit(1);
+        }
         #endif
         const int xp=t+T*(reim+p*2);
+        ScratchViewType s_x( teamMember.team_scratch( 0 ), Vs );
+        
+        if ( teamMember.team_rank() == 0 ) {
+            Kokkos::parallel_for( Kokkos::ThreadVectorRange( teamMember, Vs ), [&] ( const int i ) {
+                size_t i0= i+t*Vs;
+                s_x( i ) = phi(comp,i0);
+            });
+        }
+        
+        
         phip(comp,xp)=0;
         if (reim==0){
-	//	for (size_t x=0;x<Vs;x++){	
+        //	for (size_t x=0;x<Vs;x++){	
             Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
 	   
-                size_t i0= x+t*Vs;
+                //size_t i0= x+t*Vs;
                 int ix=x%L1;
                 int iz=x /(L1*L2);
                 int iy=(x- iz*L1*L2)/L1;
@@ -71,13 +83,13 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 wr=cos(wr);
 
             //  phip(comp,xp)+=phi(comp,i0)*wr;		}	
-                inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+                inner+=s_x(x)*wr;// /((double) Vs *norm[comp]);
             }, phip(comp,xp) );
 
         }
         else if(reim==1){
             Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, double &inner) {
-                size_t i0= x+t*Vs;
+                //size_t i0= x+t*Vs;
                 int ix=x%L1;
                 int iz=x /(L1*L2);
                 int iy=(x- iz*L1*L2)/L1;
@@ -90,7 +102,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
                 double wr=6.28318530718 *( px*ix/(double (L1)) +    py*iy/(double (L2))   +pz*iz/(double (L3))   );
                 wr=sin(wr);
                 
-                inner+=phi(comp,i0)*wr;// /((double) Vs *norm[comp]);
+                inner+=s_x(x)*wr;// /((double) Vs *norm[comp]);
             }, phip(comp,xp) );
         }
         
