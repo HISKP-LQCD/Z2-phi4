@@ -901,7 +901,7 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
         
         double two0_to_two0[3]={0,0,0};
         double two0pmp_to_two0[3]={0,0,0}; 
-        
+        double twopmpx_to_twopmpy[3]={0,0,0};
         for(int t1=0; t1<T; t1++) {
             
             
@@ -939,8 +939,8 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
             for (int i=0; i< 3;i++){
                   
                 two0_to_two0[i]+=real(bb[0][i]*bb_t[0][i]);
-                two0pmp_to_two0[i]+=real(bb[0][i]*h_phip(0,(t+t1)%T)  );
-                
+                two0pmp_to_two0[i]+=real(bb[0][i]*h_phip(0,(t+t1)%T) *h_phip(0,(t+t1)%T) );
+                twopmpx_to_twopmpy[i]+=real(bb[0][i]*bb_t[0][(i+1)%3]);
             }
             
             
@@ -949,17 +949,21 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
         for (int comp=0; comp< 3;comp++){
             two0_to_two0[comp]/=((double) T);
             two0pmp_to_two0[comp]/=((double) T);
+            twopmpx_to_twopmpy[comp]/=((double) T);
             
         }
         
         fwrite(&two0_to_two0[0],sizeof(double),1,f); // 0 c++  || 1 R    00 x
-        fwrite(&two0_to_two0[1],sizeof(double),1,f); // 1 c++  || 2 R    11 x
-        fwrite(&two0_to_two0[2],sizeof(double),1,f); // 2 c++  || 3 R    00 y
+        fwrite(&two0_to_two0[1],sizeof(double),1,f); // 1 c++  || 2 R    00 y
+        fwrite(&two0_to_two0[2],sizeof(double),1,f); // 2 c++  || 3 R    00 z
         
-        fwrite(&two0pmp_to_two0[0],sizeof(double),1,f); // 3 c++  || 1 R    00 x
-        fwrite(&two0pmp_to_two0[1],sizeof(double),1,f); // 4 c++  || 2 R    11 x
-        fwrite(&two0pmp_to_two0[2],sizeof(double),1,f); // 5 c++  || 3 R    00 y
+        fwrite(&two0pmp_to_two0[0],sizeof(double),1,f); // 3 c++  || 4 R    00 x0
+        fwrite(&two0pmp_to_two0[1],sizeof(double),1,f); // 4 c++  || 5 R    00 y0
+        fwrite(&two0pmp_to_two0[2],sizeof(double),1,f); // 5 c++  || 6 R    00 z0
         
+        fwrite(&twopmpx_to_twopmpy[0],sizeof(double),1,f); // 6 c++  || 7 R   00 (px -px)(py -py)
+        fwrite(&twopmpx_to_twopmpy[1],sizeof(double),1,f); // 7 c++  || 8 R   00 (py -py)(pz -pz)
+        fwrite(&twopmpx_to_twopmpy[2],sizeof(double),1,f); // 8 c++  || 9 R   00 (pz -pz)(px -px)
         
     }
     

@@ -76,6 +76,6 @@ for (iconf in  c(1:header$confs)){
 }
 print(y)
 if (y=="error"){
-  stop("Something erroneous has occurred!")
+  stop("Something erroneous has occurred!",file)
 }
 }
