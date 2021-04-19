@@ -701,6 +701,7 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
             std::complex<double> E1[3],E1_t[3];
             std::complex<double> E2[3],E2_t[3];
+            
             for (int comp=0; comp< 2;comp++){
                 std::vector<int>  p1={1,Lp,Lp*Lp};
                 for(int i=0;i<3;i++){
@@ -745,9 +746,14 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                 
                 two_to_two_A1E2[comp]+=real(A1[comp]*E2_t[comp]);
                 two_to_two_E2A1[comp]+=real(E2[comp]*A1_t[comp]);
-                
-                two_to_two_A1o20[comp]+=real(A1[comp]*h_phip(comp,t) *h_phip(comp,t));
-                two_to_two_o20A1[comp]+=real(h_phip(comp,0) *h_phip(comp,0)*A1_t[comp]);
+                if( comp <2 ){
+                    two_to_two_A1o20[comp]+=real(A1[comp]*h_phip(comp,t) *h_phip(comp,t));
+                    two_to_two_o20A1[comp]+=real(h_phip(comp,0) *h_phip(comp,0)*A1_t[comp]);
+                }
+                else if (comp==2){
+                    two_to_two_A1o20[comp]+=real(A1[comp]*h_phip(0,t) *h_phip(1,t));
+                    two_to_two_o20A1[comp]+=real(h_phip(0,0) *h_phip(1,0)*A1_t[comp]);
+                }
                 
             }
             
