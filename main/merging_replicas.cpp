@@ -271,8 +271,21 @@ void read_header(FILE *stream, cluster::IO_params &params ){
      fread(&params.data.cluster_min_size, sizeof(double), 1, stream); 
 
      fread(&params.data.seed, sizeof(int), 1, stream); 
+     for (int &s : seeds){
+         //printf("seed=%d\n",s);
+         if(s==params.data.seed) {
+             printf("error two replicas have the same seed\n"); exit(1);
+         }
+     }
      seeds.emplace_back(params.data.seed);
+     
      fread(&params.data.replica, sizeof(int), 1, stream); 
+     for (int &s : replicas){
+         //printf("replica=%d\n",s);
+         if(s==params.data.replica) {
+             printf("error you select two identical replicas\n"); exit(1);
+         }
+     }
      replicas.emplace_back(params.data.replica);
      
     
@@ -315,6 +328,11 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      fwrite(&params.data.ncorr, sizeof(int), 1, f_conf); 
      
      fwrite(&params.data.size, sizeof(size_t), 1, f_conf); 
+     if (params.data.size != params.data.ncorr*params.data.L[0]){
+         printf("params.data.size = %ld  !=  params.data.ncorr*params.data.L[0]= %d  *  %d",params.data.size,params.data.ncorr,params.data.L[0] );
+         exit(2);
+     }
+         
 }
 
 
@@ -364,7 +382,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ){
              printf("error two replicas have the same seed\n"); exit(1);
         }
      }
-     seeds.emplace_back(tmp);
+    seeds.emplace_back(tmp);
      
      fread(&tmp, sizeof(int), 1, f_conf);
      for (int &s : replicas){
@@ -378,12 +396,73 @@ void check_header(FILE *f_conf, cluster::IO_params &params ){
      //error_header(f_conf,params.data.replica,"replica" ); 
      
      //error_header(f_conf,iconf,"iconf" ); 
-     error_header(f_conf,params.data.ncorr,"ncorr" ); 
+     //error_header(f_conf,params.data.ncorr,"ncorr" ); 
+     int ncorr;
+     fread(&ncorr, sizeof(int), 1, f_conf);
+     if (ncorr > params.data.ncorr){
+         cout <<"more correlators found, ignoring the extra:   read=" << ncorr << "  expected="<< params.data.ncorr << endl; 
+     }
+     else if (ncorr < params.data.ncorr){
+         cout <<"less  correlators found aborting   read=" << ncorr << "  expected="<< params.data.ncorr << endl; 
+         exit(2);
+     }
      error_header(f_conf,params.data.size,"size" );
      
     
 }
 
+template <typename T>
+void compare_2(T compare, T expected, const char *message){
+    
+    if (compare != expected){
+        cout <<"error:" << message << "   read=" << compare << "  expected="<< expected << endl; 
+        //         printf("error: %s read=%d   expected %d \n",message,rconf,iconf);
+        exit(2);
+    }
+}
+
+void compare_headers( cluster::IO_params &params,  cluster::IO_params &reference ){
+    
+    compare_2(params.data.L[0],reference.data.L[0],"L0" ); 
+    compare_2(params.data.L[1],reference.data.L[1],"L1" ); 
+    compare_2(params.data.L[2],reference.data.L[2],"L2" ); 
+    compare_2(params.data.L[3],reference.data.L[3],"L3" ); 
+    
+    if (strcmp(params.data.formulation.c_str() ,reference.data.formulation.c_str() ) ){
+        printf("error: formulation read=%s   expected %s \n",params.data.formulation.c_str(),reference.data.formulation.c_str());
+        exit(2);
+    }
+    
+    compare_2(params.data.msq0,reference.data.msq0,"msq0" ); 
+    compare_2(params.data.msq1,reference.data.msq1,"msq1" ); 
+    compare_2(params.data.lambdaC0,reference.data.lambdaC0,"lambdaC0" ); 
+    compare_2(params.data.lambdaC1,reference.data.lambdaC1,"lambdaC1" ); 
+    compare_2(params.data.muC,reference.data.muC,"muC" ); 
+    compare_2(params.data.gC,reference.data.gC,"gC" ); 
+    
+    compare_2(params.data.metropolis_local_hits,reference.data.metropolis_local_hits,"metropolis_local_hits" ); 
+    compare_2(params.data.metropolis_global_hits,reference.data.metropolis_global_hits,"metropolis_global_hits" ); 
+    compare_2(params.data.metropolis_delta,reference.data.metropolis_delta,"metropolis_delta" ); 
+    compare_2(params.data.cluster_hits,reference.data.cluster_hits,"cluster_hits" ); 
+    compare_2(params.data.cluster_min_size,reference.data.cluster_min_size,"cluster_min_size" ); 
+    
+    
+    //error_header(f_conf,iconf,"iconf" ); 
+    //error_header(f_conf,params.data.ncorr,"ncorr" ); 
+    int ncorr=params.data.ncorr;
+    if (ncorr > reference.data.ncorr){
+        cout <<"more correlators found, ignoring the extra:   read=" << ncorr << "  expected="<< reference.data.ncorr << endl; 
+    }
+    else if (ncorr < reference.data.ncorr){
+        cout <<"less  correlators found aborting   read=" << ncorr << "  expected="<< reference.data.ncorr << endl; 
+        exit(2);
+    }
+    //compare_2(params.data.size,reference.data.size,"size" ); 
+    
+    
+    
+    
+}
 
 int main(int argc, char **argv){
    
@@ -393,7 +472,7 @@ int main(int argc, char **argv){
     }
       
    char namefile[10000];
-   cluster::IO_params params;
+   vector<cluster::IO_params> params(argc-1);
   
    
    sprintf(namefile,"%s",argv[1]);
@@ -402,8 +481,8 @@ int main(int argc, char **argv){
    infiles[0]=NULL;
    infiles[0]=fopen(namefile,"r+");
    if (infiles[0]==NULL) {printf("can not open contraction file: \n %s\n",namefile); exit(1);}
-   read_header(infiles[0],params); 
-   confs.emplace_back( read_nconfs( infiles[0],  params)  ); 
+   read_header(infiles[0],params[0]); 
+   confs.emplace_back( read_nconfs( infiles[0],  params[0])  ); 
     printf("argc=%d\n",argc);
 
    
@@ -412,30 +491,45 @@ int main(int argc, char **argv){
       infiles[r]=fopen(argv[1+r],"r+");
       printf("considering file:  %s\n",argv[1+r] );
       if (infiles[r]==NULL) {printf("can not open contraction file: \n\n"); exit(1);}
-      check_header(infiles[r],params  )  ;
-      confs.emplace_back( read_nconfs( infiles[r],  params)  );    
+      read_header(infiles[r],params[r]); 
+      compare_headers(params[r],params[0]);
+      confs.emplace_back( read_nconfs( infiles[r],  params[r])  ); 
+      
+      //check_header(infiles[r],params  )  ;
+      //confs.emplace_back( read_nconfs( infiles[r],  params)  );    
    }
    
    sprintf(namefile,"%s_merged",argv[1]);
    FILE *outfile = fopen(namefile, "w+"); 
    if (outfile==NULL) {printf("can not open output file:  \n %s\n",namefile); exit(1);}  
    
-   write_header_measuraments(outfile,params);
-   double *data=(double*) malloc(sizeof(double)*(params.data.size));
+   write_header_measuraments(outfile,params[0]);
+   
    int iii;
    for (int r=0 ;r < (argc-1);r++){
+       double *data=(double*) malloc(sizeof(double)*(params[r].data.size));
        for(int iconf=0; iconf < confs[r];iconf++){
            fread(&iii,sizeof(int),1,infiles[r]);
-           fread(data,sizeof(double),params.data.size, infiles[r]);
+           fread(data,sizeof(double),params[r].data.size, infiles[r]);
            fwrite(&iii,sizeof(int),1,outfile);
-           fwrite(data,sizeof(double),params.data.size,outfile);
+           if ( params[r].data.size == params[0].data.size ){
+               fwrite(data,sizeof(double),params[0].data.size,outfile);
+           }
+           else{
+               for(int t=0;t<params[0].data.L[0];t++){
+                   for(int c=0;c<params[0].data.ncorr;c++){
+                       fwrite(&data[c+t*params[r].data.ncorr],sizeof(double),1,outfile);
+                   }
+               }
+               
+           }
             
        }
-        fclose(infiles[r]);
+       free(data);
+       fclose(infiles[r]);
    }
    fclose(outfile);
   
-   free(data);
    
        
 }
