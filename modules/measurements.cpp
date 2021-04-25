@@ -147,7 +147,7 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
 ////////////////////////////////////////////////////////////////////////////////
 
 
-void write_header_measuraments(FILE *f_conf, cluster::IO_params params , int ncorr=66){
+void write_header_measuraments(FILE *f_conf, cluster::IO_params params , int ncorr=75){
 
      fwrite(&params.data.L, sizeof(int), 4, f_conf); 
 
@@ -690,6 +690,7 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
         
         double two_to_two_A1o20[3]={0,0,0};
         double two_to_two_o20A1[3]={0,0,0};
+        double two_to_two_o2p1o2p1[3][3]={{0,0,0},{0,0,0},{0,0,0}};
         
         for(int t1=0; t1<T; t1++) {
             
@@ -701,6 +702,7 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
             std::complex<double> E1[3],E1_t[3];
             std::complex<double> E2[3],E2_t[3];
+            std::complex<double> o2p1[3][3],o2p1_t[3][3];
             
             for (int comp=0; comp< 2;comp++){
                 std::vector<int>  p1={1,Lp,Lp*Lp};
@@ -718,6 +720,9 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                     
                     bb[comp][i]=phi[comp][i]*conj(phi[comp][i]);
                     bb_t[comp][i]=phi_t[comp][i]*conj(phi_t[comp][i]);
+                    
+                    o2p1[comp][i]=phi[comp][i]*h_phip(comp,t1);
+                    o2p1_t[comp][i]=conj(phi_t[comp][i])*h_phip(comp,(t1+t)%T);
                     //cout<< "p-p    " << t <<phi[comp][i] *conj(phi[comp][i])*phi_t[comp][i] *conj(phi_t[comp][i])   <<endl;
                     //cout<< "p p    " << t <<phi[comp][i] *(phi[comp][i])*conj(phi_t[comp][i] * phi_t[comp][i])   <<endl;
                    
@@ -727,6 +732,9 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             for(int i=0;i<3;i++){
                 bb[2][i]=(phi[0][i]*conj(phi[1][i])+phi[1][i]*conj(phi[0][i])  )/sqrt(2);
                 bb_t[2][i]=(phi_t[0][i]*conj(phi_t[1][i])+phi_t[1][i]*conj(phi_t[0][i])  )/sqrt(2);
+                o2p1[2][i]=phi[0][i]*h_phip(1,t1)  +  phi[1][i]*h_phip(0,t1) ;
+                o2p1_t[2][i]=conj(phi_t[0][i])*h_phip(1,(t1+t)%T)   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+                
             }
             for (int comp=0; comp< 3;comp++){
                 A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/sqrt(3);
@@ -754,6 +762,9 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                     two_to_two_A1o20[comp]+=real(A1[comp]*h_phip(0,t) *h_phip(1,t));
                     two_to_two_o20A1[comp]+=real(h_phip(0,0) *h_phip(1,0)*A1_t[comp]);
                 }
+                for(int i=0;i<3;i++){
+                    two_to_two_o2p1o2p1[comp][i]+=real(o2p1[comp][i]*o2p1_t[comp][i]);
+                }
                 
             }
             
@@ -776,6 +787,10 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             
             two_to_two_A1o20[comp]/=((double) T);
             two_to_two_o20A1[comp]/=((double) T);
+            
+            for(int i=0;i<3;i++){
+                two_to_two_o2p1o2p1[comp][i]/=((double) T);
+            }
         }
         
         fwrite(&one_to_one_p[0][0],sizeof(double),1,f_G2t); // 33 c++  || 34 R    00 x
@@ -821,7 +836,13 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
         fwrite(&two_to_two_o20A1[1],sizeof(double),1,f_G2t); // 64 c++  || 65 R  
         fwrite(&two_to_two_o20A1[2],sizeof(double),1,f_G2t); // 65 c++  || 66 R  
         
-        
+        for (int comp=0; comp< 3;comp++){
+            for(int i=0;i<3;i++){
+                fwrite(&two_to_two_o2p1o2p1[comp][i],sizeof(double),1,f_G2t); // 66 c++  || 67 R
+                //.... 69 c++  || 70 R
+                //... 72 c++  || 73 R
+            }
+        }//the last one is 74 c++  || 75 R
     
     
 }
