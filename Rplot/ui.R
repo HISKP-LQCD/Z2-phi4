@@ -54,7 +54,7 @@ shinyUI(fluidPage(
         selectInput("logscale", label = "logscale",
                     choices =c("no","yes"), selected = "no"),
         selectInput("Directory", label = "Directory",
-                    choices =c( "Data","/home/marco/analysis/phi4/checks/out"), selected = "Data"),
+                    choices =c( "Data","/home/marco/analysis/phi4/checks/out","/home/marco/analysis/phi4/momentum/out"), selected = "Data"),
         
         
     ),

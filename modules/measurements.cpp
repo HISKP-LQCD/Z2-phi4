@@ -732,8 +732,8 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             for(int i=0;i<3;i++){
                 bb[2][i]=(phi[0][i]*conj(phi[1][i])+phi[1][i]*conj(phi[0][i])  )/sqrt(2);
                 bb_t[2][i]=(phi_t[0][i]*conj(phi_t[1][i])+phi_t[1][i]*conj(phi_t[0][i])  )/sqrt(2);
-                o2p1[2][i]=phi[0][i]*h_phip(1,t1)  +  phi[1][i]*h_phip(0,t1) ;
-                o2p1_t[2][i]=conj(phi_t[0][i])*h_phip(1,(t1+t)%T)   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+                o2p1[2][i]=phi[0][i]*h_phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
+                o2p1_t[2][i]=conj(phi_t[0][i])*h_phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
                 
             }
             for (int comp=0; comp< 3;comp++){
