@@ -147,7 +147,7 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
 ////////////////////////////////////////////////////////////////////////////////
 
 
-void write_header_measuraments(FILE *f_conf, cluster::IO_params params , int ncorr=75){
+void write_header_measuraments(FILE *f_conf, cluster::IO_params params , int ncorr){
 
      fwrite(&params.data.L, sizeof(int), 4, f_conf); 
 
@@ -691,30 +691,51 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
         double two_to_two_A1o20[3]={0,0,0};
         double two_to_two_o20A1[3]={0,0,0};
         double two_to_two_o2p1o2p1[3][3]={{0,0,0},{0,0,0},{0,0,0}};
+        double two_to_two_o2p11o2p11[3][3]={{0,0,0},{0,0,0},{0,0,0}};
+        double two_to_two_o2p111o2p111[3]={0,0,0};
+        int p111=1+Lp+Lp*Lp;
         
         for(int t1=0; t1<T; t1++) {
             
             
-            std::complex<double> phi[2][3]; //phi[comp] [ xyz, -x-y-z]
+            std::complex<double> phi[2][3]; //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
+            std::complex<double> phi11[2][3]; //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
             std::complex<double> phi_t[2][3];
+            std::complex<double> phi11_t[2][3];
+            std::complex<double> phi111[2]; //p=(1,1,1)
+            std::complex<double> phi111_t[2];
             std::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
             std::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
             std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
             std::complex<double> E1[3],E1_t[3];
             std::complex<double> E2[3],E2_t[3];
             std::complex<double> o2p1[3][3],o2p1_t[3][3];
+            std::complex<double> o2p11[3][3],o2p11_t[3][3];
+            std::complex<double> o2p111[3],o2p111_t[3];
             
             for (int comp=0; comp< 2;comp++){
                 std::vector<int>  p1={1,Lp,Lp*Lp};
+                std::vector<int>  p11={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
                 for(int i=0;i<3;i++){
                     int t1_p =t1+(  2*p1[i])*T;   // 2,4 6    real part
                     int t1_ip=t1+(1+ 2*p1[i])*T;   /// 3,5 7 imag part
                     int tpt1_p=(t+t1)%T+(2*p1[i])*T;   //2,4 6    real part
                     int tpt1_ip=(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
                     
-                    phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
+                    int t1_p11 =t1+(  2*p11[i])*T;   //     real part
+                    int t1_ip11=t1+(1+ 2*p11[i])*T;   ///  imag part
+                    int tpt1_p11=(t+t1)%T+(2*p11[i])*T;   //    real part
+                    int tpt1_ip11=(t+t1)%T+(1+ 2*p11[i])*T;   ///  imag
                     
+                    
+                    
+                    phi[comp][i]=h_phip(comp,t1_p) + 1i* h_phip(comp,t1_ip);
                     phi_t[comp][i]=h_phip(comp,tpt1_p) + 1i* h_phip(comp,tpt1_ip);
+                    
+                    
+                    phi11[comp][i]=h_phip(comp,t1_p11) + 1i* h_phip(comp,t1_ip11);
+                    phi11_t[comp][i]=h_phip(comp,tpt1_p11) + 1i* h_phip(comp,tpt1_ip11);
+                    
                     one_to_one_p[comp][i]+=real( phi[comp][i]* conj(phi_t[comp][i]) )+real( phi_t[comp][i]* conj(phi[comp][i]) );
                     
                     
@@ -723,10 +744,28 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                     
                     o2p1[comp][i]=phi[comp][i]*h_phip(comp,t1);
                     o2p1_t[comp][i]=conj(phi_t[comp][i])*h_phip(comp,(t1+t)%T);
+                    
+                    o2p11[comp][i]=phi11[comp][i]*h_phip(comp,t1);
+                    o2p11_t[comp][i]=conj(phi11_t[comp][i])*h_phip(comp,(t1+t)%T);
+                    
+                   
+                    
                     //cout<< "p-p    " << t <<phi[comp][i] *conj(phi[comp][i])*phi_t[comp][i] *conj(phi_t[comp][i])   <<endl;
                     //cout<< "p p    " << t <<phi[comp][i] *(phi[comp][i])*conj(phi_t[comp][i] * phi_t[comp][i])   <<endl;
                    
                 }
+                int t1_p111 =t1+(  2*p111)*T;   //     real part
+                int t1_ip111=t1+(1+ 2*p111)*T;   ///  imag part
+                int tpt1_p111=(t+t1)%T+(2*p111)*T;   //    real part
+                int tpt1_ip111=(t+t1)%T+(1+ 2*p111)*T;   ///  imag
+                
+                phi111[comp]=h_phip(comp,t1_p111) + 1i* h_phip(comp,t1_ip111);
+                phi111_t[comp]=h_phip(comp,tpt1_p111) + 1i* h_phip(comp,tpt1_ip111);
+                
+                o2p111[comp]=phi111[comp] * h_phip(comp,t1);
+                o2p111_t[comp]=conj(phi111_t[comp])*h_phip(comp,(t1+t)%T);
+                
+                
                 
             }
             for(int i=0;i<3;i++){
@@ -735,7 +774,12 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                 o2p1[2][i]=phi[0][i]*h_phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
                 o2p1_t[2][i]=conj(phi_t[0][i])*h_phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
                 
+                o2p11[2][i]=phi11[0][i]*h_phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
+                o2p11_t[2][i]=conj(phi11_t[0][i])*h_phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
             }
+            o2p111[2]=phi111[0]*h_phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
+            o2p111_t[2]=conj(phi111_t[0])*h_phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+            
             for (int comp=0; comp< 3;comp++){
                 A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/sqrt(3);
                 A1_t[comp]=(bb_t[comp][0]+bb_t[comp][1]+bb_t[comp][2] )/sqrt(3);
@@ -764,7 +808,9 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                 }
                 for(int i=0;i<3;i++){
                     two_to_two_o2p1o2p1[comp][i]+=real(o2p1[comp][i]*o2p1_t[comp][i]);
+                    two_to_two_o2p11o2p11[comp][i]+=real(o2p11[comp][i]*o2p11_t[comp][i]);
                 }
+                two_to_two_o2p111o2p111[comp]+=real(o2p111[comp]*o2p111_t[comp]);
                 
             }
             
@@ -790,7 +836,9 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             
             for(int i=0;i<3;i++){
                 two_to_two_o2p1o2p1[comp][i]/=((double) T);
+                two_to_two_o2p11o2p11[comp][i]/=((double) T);
             }
+            two_to_two_o2p111o2p111[comp]/=((double) T);
         }
         
         fwrite(&one_to_one_p[0][0],sizeof(double),1,f_G2t); // 33 c++  || 34 R    00 x
@@ -843,8 +891,18 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                 //... 72 c++  || 73 R
             }
         }//the last one is 74 c++  || 75 R
-    
-    
+        
+        for (int comp=0; comp< 3;comp++){
+            for(int i=0;i<3;i++){
+                fwrite(&two_to_two_o2p11o2p11[comp][i],sizeof(double),1,f_G2t); // 75 c++  || 76 R
+                //.... 78 c++  || 70 R
+                //... 81 c++  || 73 R
+            }
+        }//the last one is 83 c++  || 75 R
+        
+        fwrite(&two_to_two_o2p111o2p111[0],sizeof(double),1,f_G2t); // 84 c++ || 85 R
+        fwrite(&two_to_two_o2p111o2p111[1],sizeof(double),1,f_G2t); // 85 c++ || 86 R
+        fwrite(&two_to_two_o2p111o2p111[2],sizeof(double),1,f_G2t); // 86 c++ || 87 R
 }
 
  
