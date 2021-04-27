@@ -12,7 +12,7 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
 double *compute_magnetisations_serial( Viewphi::HostMirror phi,  cluster::IO_params params){
 
   double *m=(double*) calloc(2,sizeof(double));
-  for(int x =0; x< params.data.V; x++){
+  for(size_t x =0; x< params.data.V; x++){
     m[0] += sqrt(phi(0,x)*phi(0,x));
     m[1] += sqrt(phi(1,x)*phi(1,x));
   }
@@ -123,7 +123,7 @@ void  compute_G2t_serial_host(Viewphi::HostMirror phi, cluster::IO_params params
         for(int t1=0; t1<L[0]; t1++) {
             double phip[2][2]={{0,0},{0,0}};
             int tpt1=(t+t1)%L[0];
-            for(int x=0; x<Vs; x++){
+            for(size_t x=0; x<Vs; x++){
                 size_t i0= x+t1*Vs;
                 phip[0][0]+=phi(0,i0);
                 phip[1][0]+=phi(1,i0);	
@@ -459,7 +459,6 @@ void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, V
 ////////////////////////////////////////////////////////////////////////////////
 void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
     int T=params.data.L[0];
-    size_t Vs=params.data.V/T;
     fwrite(&iconf,sizeof(int),1,f_G2t);        
 
     
@@ -980,7 +979,6 @@ void  compute_G2t_ASCI(const Viewphi &phi, cluster::IO_params params , FILE *f_G
 
 void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf){
     int T=params.data.L[0];
-    size_t Vs=params.data.V/T;
     fwrite(&iconf,sizeof(int),1,f);        
     for(int t=0; t<T; t++) {
         
@@ -994,10 +992,7 @@ void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FIL
             std::complex<double> phi_t[2][3];
             std::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
             std::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
-            std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
-            std::complex<double> E1[3],E1_t[3];
-            std::complex<double> E2[3],E2_t[3];
-            for (int comp=0; comp< 2;comp++){
+              for (int comp=0; comp< 2;comp++){
                 std::vector<int>  p1={1,Lp,Lp*Lp};
                 for(int i=0;i<3;i++){
                     int t1_p =t1+(  2*p1[i])*T;   // 2,4 6    real part

@@ -263,7 +263,7 @@ void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int
     if (layout_value==1){
         
         Viewphi::HostMirror w_phip("w_phi",2,V);
-        for (int x=0;x<V;x++){
+        for (size_t x=0;x<V;x++){
             //phi (c,x ) is stored in the divice with the order i=c+x*2
             // I want to save it on the disk with order i1=x+c*V
             // so we need the coordinate c1 and x1 of  i1=c1+x1*2
@@ -320,7 +320,7 @@ void read_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int 
     if (layout_value==1){
         Viewphi r_phip("r_phip",2,V);
         
-        for (int x=0;x<V;x++){
+        for (size_t x=0;x<V;x++){
             //phi (c,x ) is stored in the divice with the order i=c+x*2
             // I want to save it on the disk with order i1=x+c*V
             // so we need the coordinate c1 and x1 of  i1=c1+x1*2
@@ -331,7 +331,7 @@ void read_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int 
                 r_phip(c1,x1)=h_phip(c,x);
             }
         }
-        for (int x=0;x<V;x++)
+        for (size_t x=0;x<V;x++)
             for(size_t c=0; c<2;c++)
                 h_phip(c,x)=r_phip(c,x);
         

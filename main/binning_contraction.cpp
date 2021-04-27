@@ -335,7 +335,7 @@ int main(int argc, char **argv){
     
    int confs=read_nconfs( infile,  params);
    int bin=atoi(argv[2]);
-   int Neff=confs/bin;
+   //int Neff=confs/bin;
    
    sprintf(namefile,"%s_bin%d",argv[1],bin);
    FILE *outfile=NULL;
@@ -352,16 +352,16 @@ int main(int argc, char **argv){
    for (int i=1;i<=confs;i++){  
        fread(&iii,sizeof(int),1,infile);
        fread(in_data,sizeof(double),params.data.size, infile); 
-       for (int j=0;j<params.data.size;j++){
+       for (size_t j=0;j<params.data.size;j++){
              out_data[j]+=in_data[j];
              
        }
        if ((i%(bin))==0){
-             for (int j=0;j<params.data.size;j++)
+           for (size_t j=0;j<params.data.size;j++)
                 out_data[j]/=(double) bin;
              fwrite(&ib,sizeof(int),1,outfile);
              fwrite(out_data,sizeof(double),params.data.size,outfile);
-             for (int j=0;j<params.data.size;j++){
+             for (size_t j=0;j<params.data.size;j++){
                 out_data[j]=0;
              }
              ib++;

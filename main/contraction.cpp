@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
     }    
     write_header_measuraments(f_G2t, params ); 
     
-    double time_update=0,time_mes=0,time_writing=0;
+    double time_mes=0,time_writing=0;
     double ave_acc=0;
     
     

@@ -297,6 +297,11 @@ void read_header(FILE *stream, cluster::IO_params &params ){
      
      params.data.header_size=ftell(stream);
      printf("header size=%d\n",params.data.header_size);
+     size_t size_check=params.data.ncorr*params.data.L[0];
+     if (params.data.size != size_check){
+         printf("params.data.size = %ld  !=  params.data.ncorr*params.data.L[0]= %d  *  %d",params.data.size,params.data.ncorr,params.data.L[0] );
+         exit(2);
+     }
 }
 
 
@@ -327,11 +332,9 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
      
      fwrite(&params.data.ncorr, sizeof(int), 1, f_conf); 
      
+      
      fwrite(&params.data.size, sizeof(size_t), 1, f_conf); 
-     if (params.data.size != params.data.ncorr*params.data.L[0]){
-         printf("params.data.size = %ld  !=  params.data.ncorr*params.data.L[0]= %d  *  %d",params.data.size,params.data.ncorr,params.data.L[0] );
-         exit(2);
-     }
+     
          
 }
 
