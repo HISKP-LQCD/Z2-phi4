@@ -677,7 +677,9 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
     //size_t Vs=params.data.V/T;
     
         
-        double one_to_one_p[2][3]={{0,0,0},{0,0,0}};
+        double one_to_one_p1[2][3]={{0,0,0},{0,0,0}};
+        double one_to_one_p11[2][3]={{0,0,0},{0,0,0}};
+        double one_to_one_p111[2]={0,0};
         double two_to_two_A1[3]={0,0,0};
         double two_to_two_E1[3]={0,0,0};
         double two_to_two_E2[3]={0,0,0};
@@ -735,14 +737,17 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                     phi11[comp][i]=h_phip(comp,t1_p11) + 1i* h_phip(comp,t1_ip11);
                     phi11_t[comp][i]=h_phip(comp,tpt1_p11) + 1i* h_phip(comp,tpt1_ip11);
                     
-                    one_to_one_p[comp][i]+=real( phi[comp][i]* conj(phi_t[comp][i]) )+real( phi_t[comp][i]* conj(phi[comp][i]) );
+                    one_to_one_p1[comp][i]+=real( phi[comp][i]* conj(phi_t[comp][i]) )+real( phi_t[comp][i]* conj(phi[comp][i]) );
                     
                     
                     bb[comp][i]=phi[comp][i]*conj(phi[comp][i]);
                     bb_t[comp][i]=phi_t[comp][i]*conj(phi_t[comp][i]);
                     
+                    
                     o2p1[comp][i]=phi[comp][i]*h_phip(comp,t1);
                     o2p1_t[comp][i]=conj(phi_t[comp][i])*h_phip(comp,(t1+t)%T);
+
+                    one_to_one_p11[comp][i]+=real(phi11[comp][i]*conj(phi11_t[comp][i]) +  conj(phi11[comp][i])*phi11_t[comp][i]  );
                     
                     o2p11[comp][i]=phi11[comp][i]*h_phip(comp,t1);
                     o2p11_t[comp][i]=conj(phi11_t[comp][i])*h_phip(comp,(t1+t)%T);
@@ -761,10 +766,10 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                 phi111[comp]=h_phip(comp,t1_p111) + 1i* h_phip(comp,t1_ip111);
                 phi111_t[comp]=h_phip(comp,tpt1_p111) + 1i* h_phip(comp,tpt1_ip111);
                 
+                one_to_one_p111[comp]+=real(phi111[comp]*conj(phi111_t[comp]) +  conj(phi111[comp])*phi111_t[comp]  );
+                
                 o2p111[comp]=phi111[comp] * h_phip(comp,t1);
                 o2p111_t[comp]=conj(phi111_t[comp])*h_phip(comp,(t1+t)%T);
-                
-                
                 
             }
             for(int i=0;i<3;i++){
@@ -816,9 +821,13 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             
         } 
         for (int comp=0; comp< 2;comp++){
-            for(int i=0;i<3;i++)
-                one_to_one_p[comp][i]/=((double) T);
+            for(int i=0;i<3;i++){
+                one_to_one_p1[comp][i]/=((double) T);
+                one_to_one_p11[comp][i]/=((double) T);
+            }
+            one_to_one_p111[comp]/=((double) T);   
         }
+        
         for (int comp=0; comp< 3;comp++){
             two_to_two_A1[comp]/=((double) T);
             two_to_two_E1[comp]/=((double) T);
@@ -835,21 +844,23 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             
             for(int i=0;i<3;i++){
                 two_to_two_o2p1o2p1[comp][i]/=((double) T);
+                
                 two_to_two_o2p11o2p11[comp][i]/=((double) T);
             }
+            
             two_to_two_o2p111o2p111[comp]/=((double) T);
         }
         
-        fwrite(&one_to_one_p[0][0],sizeof(double),1,f_G2t); // 33 c++  || 34 R    00 x
-        fwrite(&one_to_one_p[1][0],sizeof(double),1,f_G2t); // 34 c++  || 35 R    11 x
-        fwrite(&one_to_one_p[0][1],sizeof(double),1,f_G2t); // 35 c++  || 36 R    00 y
-        fwrite(&one_to_one_p[1][1],sizeof(double),1,f_G2t); // 36 c++  || 37 R    11 y
-        fwrite(&one_to_one_p[0][2],sizeof(double),1,f_G2t); // 37 c++  || 38 R    00 z
-        fwrite(&one_to_one_p[1][2],sizeof(double),1,f_G2t); // 38 c++  || 39 R    11 z
+        fwrite(&one_to_one_p1[0][0],sizeof(double),1,f_G2t); // 33 c++  || 34 R    00 x
+        fwrite(&one_to_one_p1[1][0],sizeof(double),1,f_G2t); // 34 c++  || 35 R    11 x
+        fwrite(&one_to_one_p1[0][1],sizeof(double),1,f_G2t); // 35 c++  || 36 R    00 y
+        fwrite(&one_to_one_p1[1][1],sizeof(double),1,f_G2t); // 36 c++  || 37 R    11 y
+        fwrite(&one_to_one_p1[0][2],sizeof(double),1,f_G2t); // 37 c++  || 38 R    00 z
+        fwrite(&one_to_one_p1[1][2],sizeof(double),1,f_G2t); // 38 c++  || 39 R    11 z
         
         fwrite(&two_to_two_A1[0],sizeof(double),1,f_G2t); // 39 c++  || 40 R    A1_0 *A1_0
-        fwrite(&two_to_two_A1[1],sizeof(double),1,f_G2t); // 40 c++  || 41 R    A1_0 *A1_0
-        fwrite(&two_to_two_A1[2],sizeof(double),1,f_G2t); // 41 c++  || 42 R    A1_0 *A1_0
+        fwrite(&two_to_two_A1[1],sizeof(double),1,f_G2t); // 40 c++  || 41 R    A1_1 *A1_1
+        fwrite(&two_to_two_A1[2],sizeof(double),1,f_G2t); // 41 c++  || 42 R    A1_01 *A1_01
         
         fwrite(&two_to_two_E1[0],sizeof(double),1,f_G2t); // 42 c++  || 43 R    
         fwrite(&two_to_two_E1[1],sizeof(double),1,f_G2t); // 43 c++  || 44 R    
@@ -891,17 +902,29 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
             }
         }//the last one is 74 c++  || 75 R
         
+        fwrite(&one_to_one_p11[0][0],sizeof(double),1,f_G2t); // 75 c++  || 76 R    00 xy
+        fwrite(&one_to_one_p11[1][0],sizeof(double),1,f_G2t); // 76 c++  || 77 R    11 xy
+        fwrite(&one_to_one_p11[0][1],sizeof(double),1,f_G2t); // 77 c++  || 78 R    00 yz
+        fwrite(&one_to_one_p11[1][1],sizeof(double),1,f_G2t); // 78 c++  || 79 R    11 yz
+        fwrite(&one_to_one_p11[0][2],sizeof(double),1,f_G2t); // 79 c++  || 80 R    00 zx
+        fwrite(&one_to_one_p11[1][2],sizeof(double),1,f_G2t); // 80 c++  || 81 R    11 zx
+        
+        
         for (int comp=0; comp< 3;comp++){
             for(int i=0;i<3;i++){
-                fwrite(&two_to_two_o2p11o2p11[comp][i],sizeof(double),1,f_G2t); // 75 c++  || 76 R
-                //.... 78 c++  || 70 R
-                //... 81 c++  || 73 R
+                fwrite(&two_to_two_o2p11o2p11[comp][i],sizeof(double),1,f_G2t); // 81 c++  || 82 R
+                //.... 84 c++ || 85 R
+                //... 87 c++  || 88 R
             }
-        }//the last one is 83 c++  || 75 R
+        }//the last one is 89 c++  || 90 R
         
-        fwrite(&two_to_two_o2p111o2p111[0],sizeof(double),1,f_G2t); // 84 c++ || 85 R
-        fwrite(&two_to_two_o2p111o2p111[1],sizeof(double),1,f_G2t); // 85 c++ || 86 R
-        fwrite(&two_to_two_o2p111o2p111[2],sizeof(double),1,f_G2t); // 86 c++ || 87 R
+        fwrite(&one_to_one_p111[0],sizeof(double),1,f_G2t); // 90 c++  || 91 R    00 p=(1,1,1)
+        fwrite(&one_to_one_p111[1],sizeof(double),1,f_G2t); // 91 c++  || 92 R    11  p=(1,1,1)
+        
+        
+        fwrite(&two_to_two_o2p111o2p111[0],sizeof(double),1,f_G2t); // 92 c++ || 93 R
+        fwrite(&two_to_two_o2p111o2p111[1],sizeof(double),1,f_G2t); // 93 c++ || 94 R
+        fwrite(&two_to_two_o2p111o2p111[2],sizeof(double),1,f_G2t); // 94 c++ || 95 R
 }
 
  
