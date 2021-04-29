@@ -212,7 +212,8 @@ int main(int argc, char** argv) {
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);
             
-            compute_G2t( h_phip,   params,f_G2t, ii);
+            //compute_G2t( h_phip,   params,f_G2t, ii);
+            parallel_measurement(h_phip,   params,f_G2t, ii);
             if (params.data.checks== "yes"){
                 compute_checks( h_phip,   params,f_checks, ii);
             }
