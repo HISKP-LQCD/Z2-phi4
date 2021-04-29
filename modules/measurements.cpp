@@ -807,8 +807,8 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
                     two_to_two_o20A1[comp]+=real(h_phip(comp,0) *h_phip(comp,0)*A1_t[comp]);
                 }
                 else if (comp==2){
-                    two_to_two_A1o20[comp]+=real(A1[comp]*h_phip(0,t) *h_phip(1,t));
-                    two_to_two_o20A1[comp]+=real(h_phip(0,0) *h_phip(1,0)*A1_t[comp]);
+                    two_to_two_A1o20[comp]+=real(A1[comp]*h_phip(0,(t1+t)%T) *h_phip(1,(t1+t)%T));
+                    two_to_two_o20A1[comp]+=real(h_phip(0,t) *h_phip(1,t)*A1_t[comp]);
                 }
                 for(int i=0;i<3;i++){
                     two_to_two_o2p1o2p1[comp][i]+=real(o2p1[comp][i]*o2p1_t[comp][i]);
