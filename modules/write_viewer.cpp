@@ -100,39 +100,51 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
      Viewphi::HostMirror h_phi("write_host",2,V);// = Kokkos::create_mirror_view( phi ); does not create a new one if the device is a CPU
           
      if (layout_value==0){
+         Viewphi::HostMirror h_phi("write_host",2,V);
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, phi );
+         if(endian==BIG_ENDIAN){
+             for(size_t x=0; x<V;x++) 
+                 for(size_t c=0; c<2;c++)
+                     bswap_double(1,&h_phi(c,x));
+         }
+         #ifdef TIMER
+         double time1=timer.seconds()-time;
+         printf("time to copy data on the host %f\n",time1);
+         #endif
+         fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
          
      }
      else if (layout_value==1){
-                
-         Viewphi w_phi("w_phi",2,V);
+         Viewphi::HostMirror h_phi("write_host",V,2);       
+         Viewphi w_phi("w_phi",V,2);
          Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
              //phi (c,x ) is stored in the divice with the order i=c+x*2
              // I want to save it on the disk with order i1=x+c*V
              // so we need the coordinate c1 and x1 of  i1=c1+x1*2
              for(size_t c=0; c<2;c++){
-			 size_t i1=x+c*V;
-			 size_t c1=i1%2;
-			 size_t x1=i1/2;
-			 w_phi(c1,x1)=phi(c,x);
+			 //size_t i1=x+c*V;
+			 //size_t c1=i1%2;
+			 //size_t x1=i1/2;
+			 w_phi(x,c)=phi(c,x);
              }
          });
-         
+         if(endian==BIG_ENDIAN){
+             for(size_t x=0; x<V;x++) 
+                 for(size_t c=0; c<2;c++)
+                     bswap_double(1,&h_phi(c,x));
+         }
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, w_phi );
-         
-     }
-     if(endian==BIG_ENDIAN){
-         for(size_t x=0; x<V;x++) 
-             for(size_t c=0; c<2;c++)
-                 bswap_double(1,&h_phi(c,x));
-     }
-     #ifdef TIMER
+         #ifdef TIMER
          double time1=timer.seconds()-time;
          printf("time to copy data on the host %f\n",time1);
-     #endif
-     fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
+         #endif
+         fwrite(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
+         
+         
+     }
+     
      #ifdef TIMER
          double time2=timer.seconds()-time-time1;
          printf("time of fwrite %f\n",time2);
@@ -201,34 +213,38 @@ void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int i
      size_t V=params.data.V; 
      Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
  
-     fread(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
-     #ifdef TIMER
-         double time1=timer.seconds()-time;
-         printf("time to read on Host %f\n",time1);
-     #endif
+     
      if (layout_value==0){
+         fread(&h_phi(0,0), sizeof(double), 2*V, f_conf); 
          // Deep copy host views to device views.
          Kokkos::deep_copy( phi, h_phi );
-         //double time =timer.seconds();
+        //double time =timer.seconds();
          //printf(" deep_copy %f\n", time);
      }
      else if (layout_value==1){
-         Viewphi r_phi("r_phi",2,V);
+         Viewphi::HostMirror r_phi("r_phi",V,2);
+         Viewphi dr_phi("r_phi",V,2);
+         fread(&r_phi(0,0), sizeof(double), 2*V, f_conf);
          // Deep copy host views to device views.
-         Kokkos::deep_copy( r_phi, h_phi );
+         Kokkos::deep_copy( dr_phi, r_phi );
          Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {  
              
              //we have the field phi (c,x) on the disk as i=x+c*V
              // we want to load it in to the device as i1=c+x*2
              // we need the coordinate i1=x1+c1*V 
              for(size_t c=0; c<2;c++){
-			 size_t i1=c+x*2;
-			 size_t c1=i1/V;
-			 size_t x1=i1%V;
-			 phi(c1,x1)=r_phi(c,x);
+			 //size_t i1=c+x*2;
+			 //size_t c1=i1/V;
+			 //size_t x1=i1%V;
+			 phi(c,x)=dr_phi(x,c);
              }
          });
      }
+     #ifdef TIMER
+     double time1=timer.seconds()-time;
+     printf("time to read on Host %f\n",time1);
+     #endif
+     
      
      #ifdef TIMER
          double time2=timer.seconds()-time-time1;
@@ -262,16 +278,16 @@ void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int
    
     if (layout_value==1){
         
-        Viewphi::HostMirror w_phip("w_phi",2,V);
+        Viewphi::HostMirror w_phip("w_phi",V,2);
         for (size_t x=0;x<V;x++){
             //phi (c,x ) is stored in the device with the order i=c+x*2
             // I want to save it on the disk with order i1=x+c*V
             // so we need the coordinate c1 and x1 of  i1=c1+x1*2
             for(size_t c=0; c<2;c++){
-                size_t i1=x+c*V;
-                size_t c1=i1%2;
-                size_t x1=i1/2;
-                w_phip(c1,x1)=h_phip(c,x);
+                //size_t i1=x+c*V;
+                //size_t c1=i1%2;
+                //size_t x1=i1/2;
+                w_phip(x,c)=h_phip(c,x);
             }
         }
         
@@ -310,30 +326,31 @@ void read_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int 
     #endif
     size_t V=params.data.L[0]*Vp; 
     
-    
-    fread(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
-    #ifdef TIMER
-    double time1=timer.seconds()-time;
-    printf("time to read on Host %f\n",time1);
-    #endif
-    
+    if (layout_value==0){
+        fread(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
+        #ifdef TIMER
+        double time1=timer.seconds()-time;
+        printf("time to read on Host %f\n",time1);
+        #endif
+    }
     if (layout_value==1){
-        Viewphi r_phip("r_phip",2,V);
-        
+        Viewphi r_phip("r_phip",V,2);
+        fread(&r_phip(0,0), sizeof(double), 2*V, f_conf);
+        /*
         for (size_t x=0;x<V;x++){
             //phi (c,x ) is stored in the device with the order i=c+x*2
             // I want to save it on the disk with order i1=x+c*V
             // so we need the coordinate c1 and x1 of  i1=c1+x1*2
             for(size_t c=0; c<2;c++){
-                size_t i1=c+x*2;
-                size_t c1=i1/V;
-                size_t x1=i1%V;
-                r_phip(c1,x1)=h_phip(c,x);
+                //size_t i1=c+x*2;
+                //size_t c1=i1/V;
+                //size_t x1=i1%V;
+                r_phip(x,c)=h_phip(c,x);
             }
-        }
+        }*/
         for (size_t x=0;x<V;x++)
             for(size_t c=0; c<2;c++)
-                h_phip(c,x)=r_phip(c,x);
+                h_phip(c,x)=r_phip(x,c);
         
     }
     
