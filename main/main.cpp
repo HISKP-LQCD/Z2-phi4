@@ -115,7 +115,10 @@ int main(int argc, char** argv) {
         phi(1,x)=(rgen.drand()*2.-1.);
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
-    });   
+    }); 
+    Viewphi phip("phip",2,params.data.L[0]*Vp);
+    Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
+    
     std::string suffix ="_T" + std::to_string(params.data.L[0]) +
                         "_L" + std::to_string(params.data.L[1]) +
                         "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
@@ -186,13 +189,13 @@ int main(int argc, char** argv) {
         bool write_FT=     (measure &&   params.data.save_config_FT == "yes");
         bool write=        (measure &&   params.data.save_config == "yes");
 
-        Viewphi::HostMirror h_phip("h_phip",2,params.data.L[0]*Vp);
+        //Viewphi::HostMirror h_phip("h_phip",2,params.data.L[0]*Vp);
         if( contractions || write_FT ){
             Kokkos::Timer timer_FT;
             //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
             //h_phip=construct_h_phip;
             #ifndef cuFFT   
-            	compute_FT(phi, params ,   ii, h_phip);
+            	compute_FT(phi, params ,   ii, phip);
             #endif
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
@@ -211,9 +214,11 @@ int main(int argc, char** argv) {
             double *m=compute_magnetisations( phi,   params);
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);
+            // Deep copy device views to host views.
+            Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
-            parallel_measurement(h_phip,   params,f_G2t, ii);
+            parallel_measurement(phip,   params,f_G2t, ii);
             if (params.data.checks== "yes"){
                 compute_checks( h_phip,   params,f_checks, ii);
             }
@@ -232,6 +237,8 @@ int main(int argc, char** argv) {
                 "_conf_FT" + std::to_string(ii);
             FILE *f_conf = fopen(conf_file.c_str(), "w+"); 
             if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     exit(1);   }
+            // Deep copy device views to host views.
+            Kokkos::deep_copy( h_phip, phip );
             write_conf_FT(f_conf, layout_value,params , ii , h_phip );
             time = timer3.seconds();
             fclose(f_conf);

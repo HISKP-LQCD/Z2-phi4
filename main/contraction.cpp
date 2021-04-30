@@ -82,7 +82,9 @@ int main(int argc, char** argv) {
     // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
     std::mt19937_64 host_rand( params.data.seed );
     
-  
+    Viewphi phip("phip",2,params.data.L[0]*Vp);
+    Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
+    
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -151,12 +153,10 @@ int main(int argc, char** argv) {
         //bool read=        (measure &&   params.data.save_config == "yes");
         
         if(measure){
-            Viewphi::HostMirror h_phip;
             
             if(read_FT){
                 Kokkos::Timer timer3;
-                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*Vp);
-                h_phip=construct_h_phip;
+
                 
                 std::string conf_file = params.data.outpath + 
                     "/T" + std::to_string(params.data.L[0]) +
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
                 
                 Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*Vp);
                 h_phip=construct_h_phip;
-                compute_FT(phi, params ,   ii, h_phip);
+                compute_FT(phi, params ,   ii, phip);
                 
                 fclose(f_conf);
                 time = timer3.seconds();
@@ -210,9 +210,11 @@ int main(int argc, char** argv) {
             double *m=compute_magnetisations( phi,   params);
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);//free(G2);
+            // Deep copy device views to host views.
+            Kokkos::deep_copy( h_phip, phip );// deep_copy with two arguments is a fence 
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
-            parallel_measurement(h_phip,   params,f_G2t, ii);
+            parallel_measurement(phip,   params,f_G2t, ii);
             if (params.data.checks== "yes"){
                 compute_checks( h_phip,   params,f_checks, ii);
             }

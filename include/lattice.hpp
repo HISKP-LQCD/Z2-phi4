@@ -29,9 +29,9 @@
 
 using namespace std;
 // kokkos viever for the field 
-typedef Kokkos::View<double** >  Viewphi;
+typedef Kokkos::View<double **>  Viewphi;
 //typedef Kokkos::View<double**, Kokkos::LayoutLeft>  writingphi;
-typedef Kokkos::View<size_t**>  ViewLatt;
+typedef Kokkos::View<size_t **>  ViewLatt;
 
 
 

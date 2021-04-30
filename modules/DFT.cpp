@@ -14,14 +14,14 @@
 #endif
 
 //#ifndef cuFFT
-void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi &phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     double norm0=sqrt(2*params.data.kappa0);
     double norm1=sqrt(2*params.data.kappa1);
     int  L1=params.data.L[1], L2=params.data.L[2], L3=params.data.L[3];
 
-    Viewphi phip("phip",2,params.data.L[0]*Vp);
+    //Viewphi phip("phip",2,params.data.L[0]*Vp);
     
     typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
@@ -98,7 +98,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
         
     });
     // Deep copy device views to host views.
-    Kokkos::deep_copy( h_phip, phip ); 
+    //Kokkos::deep_copy( h_phip, phip ); 
     /*
     for(int t=0;t<T;t++){
     for (int px=0; px< Lp; px++){
@@ -132,8 +132,13 @@ void test_FT(cluster::IO_params params){
         phi(0,x)= sqrt(2.*kappa0);// the FT routines convert in to phisical phi 
         phi(1,x)= sqrt(2.*kappa1);
     }); 
+    Viewphi  phip_test("phip_test",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
-    compute_FT(phi, params ,   0, h_phip_test);
+    
+    compute_FT(phi, params ,   0, phip_test);
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip_test, phip_test ); 
+    
     int T=params.data.L[0];
     for (size_t t=0; t< T; t++) {
         for (size_t x=1; x< Vp; x++) { 
@@ -166,7 +171,9 @@ void test_FT(cluster::IO_params params){
             phi(1,x)= 0;
         }
     });  
-    compute_FT(phi, params ,   0, h_phip_test);
+    compute_FT(phi, params ,   0, phip_test);
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip_test, phip_test ); 
     for (size_t t=0; t< 1; t++) {
         for (size_t x=0; x< Vp; x++) { 
             size_t id=t+x*T;

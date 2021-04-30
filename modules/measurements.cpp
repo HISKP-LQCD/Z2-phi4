@@ -973,16 +973,16 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
+void  parallel_measurement(Viewphi phip, cluster::IO_params params , FILE *f_G2t , int iconf){
     int T=params.data.L[0];
     fwrite(&iconf,sizeof(int),1,f_G2t);        
-    Viewphi phip("phip",2,params.data.L[0]*Vp);
+    //Viewphi phip("phip",2,params.data.L[0]*Vp);
     // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
     Kokkos::View<double**,Kokkos::LayoutLeft > to_write("to_write",  Ncorr,T );
     Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write );   
     
     // Deep copy host views to device views.
-    Kokkos::deep_copy( phip, h_phip );
+    //Kokkos::deep_copy( phip, h_phip );
     
     
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
