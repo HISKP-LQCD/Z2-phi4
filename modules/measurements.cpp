@@ -988,23 +988,23 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) { 
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)=0;
-        std::vector<int>  p1={1,Lp,Lp*Lp};
-        std::vector<int>  p11={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
+        int  p1[3]={1,Lp,Lp*Lp};
+        int  p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
         int p111=1+Lp+Lp*Lp;
-        std::complex<double> phi1[2][3]; //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
-        std::complex<double> phi11[2][3]; //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
-        std::complex<double> phi1_t[2][3];
-        std::complex<double> phi11_t[2][3];
-        std::complex<double> phi111[2]; //p=(1,1,1)
-        std::complex<double> phi111_t[2];
-        std::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
-        std::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
-        std::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
-        std::complex<double> E1[3],E1_t[3];
-        std::complex<double> E2[3],E2_t[3];
-        std::complex<double> o2p1[3][3],o2p1_t[3][3];
-        std::complex<double> o2p11[3][3],o2p11_t[3][3];
-        std::complex<double> o2p111[3],o2p111_t[3];
+        Kokkos::complex<double> phi1[2][3]; //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
+        Kokkos::complex<double> phi11[2][3]; //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
+        Kokkos::complex<double> phi1_t[2][3];
+        Kokkos::complex<double> phi11_t[2][3];
+        Kokkos::complex<double> phi111[2]; //p=(1,1,1)
+        Kokkos::complex<double> phi111_t[2];
+        Kokkos::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
+        Kokkos::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
+        Kokkos::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
+        Kokkos::complex<double> E1[3],E1_t[3];
+        Kokkos::complex<double> E2[3],E2_t[3];
+        Kokkos::complex<double> o2p1[3][3],o2p1_t[3][3];
+        Kokkos::complex<double> o2p11[3][3],o2p11_t[3][3];
+        Kokkos::complex<double> o2p111[3],o2p111_t[3];
     
         
         for(int t1=0; t1<T; t1++) {
@@ -1024,8 +1024,8 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
             
             double pp0=phip(0,t1) *phip(0 , tpt1);
             double pp1=phip(1,t1) *phip(1 , tpt1);
-            std::complex<double> p0 = phip(0,t1) + 1i* phip(1,t1);
-            std::complex<double> cpt = phip(0,tpt1) - 1i* phip(1,tpt1);
+            Kokkos::complex<double> p0 = phip(0,t1) + 1i* phip(1,t1);
+            Kokkos::complex<double> cpt = phip(0,tpt1) - 1i* phip(1,tpt1);
             
             to_write(0,t)+=pp0;
             to_write(1,t)+=pp1; 
@@ -1223,6 +1223,267 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
     Kokkos::deep_copy( h_write, to_write ); 
     fwrite(&h_write(0,0),sizeof(double),Ncorr*T,f_G2t);
 }
+    
+    
+    
+    /*
+     * 
+     * void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf){
+     *    int T=params.data.L[0];
+     *    fwrite(&iconf,sizeof(int),1,f_G2t);        
+     *    Viewphi phip("phip",2,params.data.L[0]*Vp);
+     *    // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
+     *    Kokkos::View<double**,Kokkos::LayoutLeft > to_write("to_write",  Ncorr,T );
+     *    Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write );   
+     *    
+     *    // Deep copy host views to device views.
+     *    Kokkos::deep_copy( phip, h_phip );
+     *    Kokkos::View<Kokkos::complex<double> [2][3]> phi1("title"); //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
+     *    Kokkos::View<Kokkos::complex<double> [2][3]> phi11("title"); //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
+     *    Kokkos::View<Kokkos::complex<double> [2][3]> phi1_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [2][3]> phi11_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [2]> phi111("title"); //p=(1,1,1)
+     *    Kokkos::View<Kokkos::complex<double> [2]> phi111_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [3][3]> bb("title"); //back to back [00,11,01][x,y,z]
+     *    Kokkos::View<Kokkos::complex<double> [3][3]> bb_t("title"); //back to back [00,11,01][x,y,z]
+     *    Kokkos::View<Kokkos::complex<double> [3]> A1("title"),A1_t("title");  // phi0, phi1, phi01
+     *    Kokkos::View<Kokkos::complex<double> [3]> E1("title"),E1_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [3]> E2("title"),E2_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [3][3]> o2p1("title"),o2p1_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [3][3]> o2p11("title"),o2p11_t("title");
+     *    Kokkos::View<Kokkos::complex<double> [3]> o2p111("title"),o2p111_t("title");
+     *    
+     *    Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) { 
+     *        for(int c=0; c<Ncorr; c++) 
+     *            to_write(c,t)=0;
+     *        int p1[3]={1,Lp,Lp*Lp};
+     *        int p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};
+     *        int p111=1+Lp+Lp*Lp;
+     *        
+     *        
+     *        for(int t1=0; t1<T; t1++) {
+     *            int tpt1=(t+t1)%T;
+     *            int t_8=(T/8+t1)%T;
+     *            int t_2=(T/2+t1)%T;
+     *            //int tx2_5=((T*2)/5+t1)%T;
+     *            
+     *            int t2=(2+t1)%T;
+     *            int t3=(3+t1)%T;
+     *            int t4=(4+t1)%T;
+     *            int t5=(5+t1)%T;
+     *            int t10=(10+t1)%T;
+     *            int t12=(12+t1)%T;
+     *            int t16=(16+t1)%T;
+     *            int t20=(20+t1)%T;
+     *            
+     *            double pp0=phip(0,t1) *phip(0 , tpt1);
+     *            double pp1=phip(1,t1) *phip(1 , tpt1);
+     *            Kokkos::complex<double> p0;
+     *            p0.real()=phip(0,t1);
+     *            p0.imag()= phip(1,t1);
+     *            Kokkos::complex<double> cpt;
+     *            cpt.real()= phip(0,tpt1) ;
+     *            cpt.imag()= -phip(1,tpt1);
+     *            
+     *            to_write(0,t)+=pp0;
+     *            to_write(1,t)+=pp1; 
+     *            to_write(2,t)+=pp0*pp0;
+     *            to_write(3,t)+=pp1*pp1;
+     *            to_write(4,t)+= pp0*pp0 + pp1*pp1 + 4*pp0*pp1
+     *            - phip(0,t1) *phip(0 , t1)* phip(1,tpt1) *phip(1 , tpt1)
+     *            - phip(1,t1) *phip(1 , t1)* phip(0,tpt1) *phip(0 , tpt1);
+     *            
+     *            to_write(5,t)+=pp0*pp0*pp0;
+     *            to_write(6,t)+=pp1*pp1*pp1;
+     *            to_write(7,t)+=  real(p0*cpt* p0*cpt *p0*cpt);
+     *            
+     *            to_write(8,t) +=phip(0,t1)*phip(0,t_8)* phip(0,tpt1)*phip(0,t_2 );
+     *            to_write(9,t) +=phip(1,t1)*phip(1,t_8)* phip(1,tpt1)*phip(1,t_2 );
+     *            to_write(10,t)+=phip(0,t1)*phip(1,t_8)* phip(1,tpt1)*phip(0,t_2 );
+     *            
+     *            to_write(11,t)+=phip(0,t1)*phip(1,t1)  *  phip(0,tpt1)*phip(1,tpt1); 
+     *            to_write(12,t)+= phip(0,t1)*phip(0,t1)    *     phip(1,tpt1)*phip(1,tpt1);
+     *            to_write(13,t)+= phip(0,t1)*phip(0,t1)*phip(0,t1)*phip(0,t1) *     phip(1,tpt1)*phip(1,tpt1)   ;
+     *            to_write(14,t)+= phip(0,t1)*phip(0,t1)*phip(0,t1)*phip(0,t1) *     phip(0,tpt1)*phip(0,tpt1)   ;
+     *            
+     *            
+     *            
+     *            to_write(15,t) +=phip(0,t1)*phip(0,t3)* phip(0,tpt1)*phip(0,t16 );
+     *            to_write(16,t) +=phip(1,t1)*phip(1,t3)* phip(1,tpt1)*phip(1,t16 );
+     *            to_write(17,t)+=phip(0,t1)*phip(1,t3)* phip(1,tpt1)*phip(0,t16 );
+     *            
+     *            to_write(18,t) +=phip(0,t1)*phip(0,t4)* phip(0,tpt1)*phip(0,t16 );
+     *            to_write(19,t) +=phip(1,t1)*phip(1,t4)* phip(1,tpt1)*phip(1,t16 );
+     *            to_write(20,t)+=phip(0,t1)*phip(1,t4)* phip(1,tpt1)*phip(0,t16 );
+     *            
+     *            to_write(21,t) +=phip(0,t1)*phip(0,t3)* phip(0,tpt1)*phip(0,t20 );
+     *            to_write(22,t) +=phip(1,t1)*phip(1,t3)* phip(1,tpt1)*phip(1,t20 );
+     *            to_write(23,t)+=phip(0,t1)*phip(1,t3)* phip(1,tpt1)*phip(0,t20 );
+     *            
+     *            to_write(24,t) +=phip(0,t1)*phip(0,t4)* phip(0,tpt1)*phip(0,t20 );
+     *            to_write(25,t) +=phip(1,t1)*phip(1,t4)* phip(1,tpt1)*phip(1,t20 );
+     *            to_write(26,t) +=phip(0,t1)*phip(1,t4)* phip(1,tpt1)*phip(0,t20 );
+     *            
+     *            to_write(27,t) +=phip(0,t1)*phip(0,t5)* phip(0,tpt1)*phip(0,t20 );
+     *            to_write(28,t)+=phip(1,t1)*phip(1,t5)* phip(1,tpt1)*phip(1,t20 );
+     *            to_write(29,t)+=phip(0,t1)*phip(1,t5)* phip(1,tpt1)*phip(0,t20 );
+     *            
+     *            
+     *            to_write(30,t)+=phip(1,t1)*phip(0,t3)* phip(0,tpt1)*phip(1,t16 );
+     *            
+     *            to_write(31,t)+=phip(0,t1)*phip(1,t2)* phip(1,tpt1)*phip(0,t10 );
+     *            to_write(32,t)+=phip(0,t1)*phip(1,t2)* phip(1,tpt1)*phip(0,t12 );
+     *            
+     *            for (int comp=0; comp< 2;comp++){
+     *                
+     *                for(int i=0;i<3;i++){
+     *                    int t1_p =t1+(  2*p1[i])*T;   // 2,4 6    real part
+     *                    int t1_ip=t1_p+T;//t1+(1+ 2*p1[i])*T;   /// 3,5 7 imag part
+     *                    int tpt1_p=tpt1+(2*p1[i])*T;   //2,4 6    real part
+     *                    int tpt1_ip= tpt1_p+T; //(t+t1)%T+(1+ 2*p1[i])*T;   /// 3,5,6 imag
+     *                    
+     *                    int t1_p11 =t1+(  2*p11[i])*T;   //     real part
+     *                    int t1_ip11=t1_p11+T;//t1+(1+ 2*p11[i])*T;   ///  imag part
+     *                    int tpt1_p11=tpt1+(2*p11[i])*T;   //    real part
+     *                    int tpt1_ip11=tpt1_p11+T;//(t+t1)%T+(1+ 2*p11[i])*T;   ///  imag
+     *                    
+     *                    
+     *                    
+     *                    phi1(comp,i).real()=phip(comp,t1_p) ;    phi1(comp,i).imag()=phip(comp,t1_ip);
+     *                    phi1_t(comp,i).real()=phip(comp,tpt1_p); phi1_t(comp,i).imag()=   phip(comp,tpt1_ip);
+     *                    
+     *                    
+     *                    phi11(comp,i).real()=phip(comp,t1_p11) ;  phi11(comp,i).imag()= phip(comp,t1_ip11);
+     *                    phi11_t(comp,i).real()=phip(comp,tpt1_p11) ; phi11_t(comp,i).imag()= phip(comp,tpt1_ip11);
+     *                    
+     *                    
+     *                    
+     *                    bb(comp,i)=phi1(comp,i)*conj(phi1(comp,i));
+     *                    bb_t(comp,i)=phi1_t(comp,i)*conj(phi1_t(comp,i));
+     *                    
+     *                    
+     *                    o2p1(comp,i)=phi1(comp,i)*phip(comp,t1);
+     *                    o2p1_t(comp,i)=conj(phi1_t(comp,i))*phip(comp,(t1+t)%T);
+     *                    
+     *                    
+     *                    o2p11(comp,i)=phi11(comp,i)*phip(comp,t1);
+     *                    o2p11_t(comp,i)=conj(phi11_t(comp,i))*phip(comp,(t1+t)%T);
+     *                    
+     *                    
+     *                }
+     *                int t1_p111 =t1+(  2*p111)*T;   //     real part
+     *                int t1_ip111=t1_p111+T;//  ;t1+(1+ 2*p111)*T;   ///  imag part
+     *                int tpt1_p111=tpt1+(2*p111)*T;   //    real part
+     *                int tpt1_ip111= tpt1_p111+T  ;//(t+t1)%T+(1+ 2*p111)*T;   ///  imag
+     *                
+     *                phi111(comp).real()=phip(comp,t1_p111);      phi111(comp).imag()=phip(comp,t1_ip111);
+     *                phi111_t(comp).real()=phip(comp,tpt1_p111); phi111_t(comp).imag()=phip(comp,tpt1_ip111);
+     *                
+     *                
+     *                o2p111(comp)=phi111(comp) * phip(comp,t1);
+     *                o2p111_t(comp)=conj(phi111_t(comp))*phip(comp,(t1+t)%T);
+     *                
+     *            }
+     *            for(int i=0;i<3;i++){
+     *                bb(2,i)=(phi1(0,i)*conj(phi1(1,i))+phi1(1,i)*conj(phi1(0,i))  )/sqrt(2);
+     *                bb_t(2,i)=(phi1_t(0,i)*conj(phi1_t(1,i))+phi1_t(1,i)*conj(phi1_t(0,i))  )/sqrt(2);
+     *                o2p1(2,i)=phi1(0,i)*phip(1,t1);//  +  phi(1,i)*h_phip(0,t1) ;
+     *                o2p1_t(2,i)=conj(phi1_t(0,i))*phip(1,(t1+t)%T);//   +   conj(phi_t(1,i))*h_phip(0,(t1+t)%T)   ;
+     *                
+     *                o2p11(2,i)=phi11(0,i)*phip(1,t1);//  +  phi(1,i)*h_phip(0,t1) ;
+     *                o2p11_t(2,i)=conj(phi11_t(0,i))*phip(1,(t1+t)%T);//   +   conj(phi_t(1,i))*h_phip(0,(t1+t)%T)   ;
+     *            }
+     *            o2p111(2)=phi111(0)*phip(1,t1);//  +  phi(1,i)*h_phip(0,t1) ;
+     *            o2p111_t(2)=conj(phi111_t(0))*phip(1,(t1+t)%T);//   +   conj(phi_t(1,i))*h_phip(0,(t1+t)%T)   ;
+     *            
+     *            for (int comp=0; comp< 3;comp++){
+     *                A1(comp)=  (bb(comp,0)+bb(comp,1)+bb(comp,2))/sqrt(3);
+     *                A1_t(comp)=(bb_t(comp,0)+bb_t(comp,1)+bb_t(comp,2) )/sqrt(3);
+     *                E1(comp)=  (bb(comp,0)  -bb(comp,1) )/sqrt(2);
+     *                E1_t(comp)=(bb_t(comp,0)-bb_t(comp,1) )/sqrt(2);
+     *                E2(comp)=  (bb(comp,0)+bb(comp,1)-2.*bb(comp,2) )/sqrt(6);
+     *                E2_t(comp)=(bb_t(comp,0)+bb_t(comp,1)-2.*bb_t(comp,2) )/sqrt(6);
+     *            }
+     *            
+     *            to_write(33,t)+=real( phi1(0,0)* conj(phi1_t(0,0)) + phi1_t(0,0)* conj(phi1(0,0)) );//one_to_one_p1
+     *            to_write(34,t)+=real( phi1(1,0)* conj(phi1_t(1,0)) + phi1_t(1,0)* conj(phi1(1,0)) );//one_to_one_p1
+     *            to_write(35,t)+=real( phi1(0,1)* conj(phi1_t(0,1)) + phi1_t(0,1)* conj(phi1(0,1)) );//one_to_one_p1
+     *            to_write(36,t)+=real( phi1(1,1)* conj(phi1_t(1,1)) + phi1_t(1,1)* conj(phi1(1,1)) );//one_to_one_p1
+     *            to_write(37,t)+=real( phi1(0,2)* conj(phi1_t(0,2)) + phi1_t(0,2)* conj(phi1(0,2)) );//one_to_one_p1
+     *            to_write(38,t)+=real( phi1(1,2)* conj(phi1_t(1,2)) + phi1_t(1,2)* conj(phi1(1,2)) );//one_to_one_p1
+     *            
+     *            
+     *            to_write(39,t)+=real(A1(0)*A1_t(0));
+     *            to_write(40,t)+=real(A1(1)*A1_t(1));
+     *            to_write(41,t)+=real(A1(2)*A1_t(2));
+     *            
+     *            to_write(42,t)+=real(E1(0)*E1_t(0));
+     *            to_write(43,t)+=real(E1(1)*E1_t(1));
+     *            to_write(44,t)+=real(E1(2)*E1_t(2));
+     *            
+     *            to_write(45,t)+=real(E2(0)*E2_t(0));
+     *            to_write(46,t)+=real(E2(1)*E2_t(1));
+     *            to_write(47,t)+=real(E2(2)*E2_t(2));
+     *            
+     *            to_write(48,t)+=real(A1(0)*E1_t(0));
+     *            to_write(49,t)+=real(A1(1)*E1_t(1));
+     *            to_write(50,t)+=real(A1(2)*E1_t(2));
+     *            
+     *            to_write(51,t)+=real(E1(0)*A1_t(0));
+     *            to_write(52,t)+=real(E1(1)*A1_t(1));
+     *            to_write(53,t)+=real(E1(2)*A1_t(2));
+     *            
+     *            to_write(54,t)+=real(A1(0)*E2_t(0));
+     *            to_write(55,t)+=real(A1(1)*E2_t(1));
+     *            to_write(56,t)+=real(A1(2)*E2_t(2));
+     *            
+     *            to_write(57,t)+=real(E2(0)*A1_t(0));
+     *            to_write(58,t)+=real(E2(1)*A1_t(1));
+     *            to_write(59,t)+=real(E2(2)*A1_t(2));
+     *            
+     *            to_write(60,t)+=real(A1(0)*phip(0,tpt1) *phip(0,tpt1)); // A1 o20 before was h_phip(comp,  !!!t!!!)
+     *    to_write(61,t)+=real(A1(1)*phip(1,tpt1) *phip(1,tpt1));
+     *    to_write(62,t)+=real(A1(2)*phip(0,tpt1) *phip(1,tpt1));
+     *    
+     *    to_write(63,t)+=real(phip(0,t) *phip(0,t) *A1_t(0));// o20 A1 // two_to_two_o20A1
+     *    to_write(64,t)+=real(phip(1,t) *phip(1,t) *A1_t(1));
+     *    to_write(65,t)+=real(phip(0,t) *phip(1,t)* A1_t(2));                   
+     *    
+     *    for (int comp=0; comp< 3;comp++)
+     *        for(int i=0;i<3;i++)
+     *            to_write(66+i+comp*3,t)+=real(o2p1(comp,i)*o2p1_t(comp,i));  //two_to_two_o2p1o2p1 
+     *            
+     *            for (int comp=0; comp< 2;comp++)
+     *                for(int i=0;i<3;i++)
+     *                    to_write(75+comp+i*2,t)+=real(phi11(comp,i)*conj(phi11_t(comp,i)) +  conj(phi11(comp,i))*phi11_t(comp,i)  );//one_to_one_p11
+     *                    
+     *                    for (int comp=0; comp< 3;comp++)
+     *                        for(int i=0;i<3;i++)
+     *                            to_write(81+i+comp*3,t)+=real(o2p11(comp,i)*o2p11_t(comp,i));//two_to_two_o2p11o2p11
+     *                            
+     *                            
+     *                            to_write(90,t)+=real(phi111(0)*conj(phi111_t(0)) +  conj(phi111(0))*phi111_t(0)  );//one_to_one_p111
+     *                            to_write(91,t)+=real(phi111(1)*conj(phi111_t(1)) +  conj(phi111(1))*phi111_t(1)  );
+     *                        
+     *                        to_write(92,t)+=real(o2p111(0)*o2p111_t(0));//two_to_two_o2p111o2p111
+     *                        to_write(93,t)+=real(o2p111(1)*o2p111_t(1));
+     *                    to_write(94,t)+=real(o2p111(2)*o2p111_t(2));
+     *                    
+     *                    
+     *                    
+     *        }
+     *        for(int c=0; c<Ncorr; c++) 
+     *            to_write(c,t)/=((double) T);
+     *        
+     *    });
+     *    
+     *    // Deep copy device views to host views.
+     *    Kokkos::deep_copy( h_write, to_write ); 
+     *    fwrite(&h_write(0,0),sizeof(double),Ncorr*T,f_G2t);
+     * }
+     * 
+     * 
+     */ 
     
  
 ////////////////////////////////////////////////////////////////////////////////
