@@ -985,12 +985,12 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
     Kokkos::deep_copy( phip, h_phip );
     
     
-    Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) { 
+    Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)=0;
-        int  p1[3]={1,Lp,Lp*Lp};
-        int  p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
-        int p111=1+Lp+Lp*Lp;
+        const int  p1[3]={1,Lp,Lp*Lp};
+        const int  p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
+        const int p111=1+Lp+Lp*Lp;
         Kokkos::complex<double> phi1[2][3]; //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
         Kokkos::complex<double> phi11[2][3]; //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
         Kokkos::complex<double> phi1_t[2][3];
@@ -1005,7 +1005,6 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
         Kokkos::complex<double> o2p1[3][3],o2p1_t[3][3];
         Kokkos::complex<double> o2p11[3][3],o2p11_t[3][3];
         Kokkos::complex<double> o2p111[3],o2p111_t[3];
-    
         
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
@@ -1024,10 +1023,13 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
             
             double pp0=phip(0,t1) *phip(0 , tpt1);
             double pp1=phip(1,t1) *phip(1 , tpt1);
-            Kokkos::complex<double> p0 = phip(0,t1) + 1i* phip(1,t1);
-            Kokkos::complex<double> cpt = phip(0,tpt1) - 1i* phip(1,tpt1);
+
+            Kokkos::complex<double> p0;
+	    p0.real()=phip(0,t1);   p0.imag()=phip(1,t1); 
+            Kokkos::complex<double> cpt ; 
+	    cpt.real()=phip(0,tpt1);   cpt.imag()= -phip(1,tpt1); 
             
-            to_write(0,t)+=pp0;
+	    to_write(0,t)+=pp0;
             to_write(1,t)+=pp1; 
             to_write(2,t)+=pp0*pp0;
             to_write(3,t)+=pp1*pp1;
@@ -1091,12 +1093,12 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
                     
                     
                     
-                    phi1[comp][i]=phip(comp,t1_p) + 1i* phip(comp,t1_ip);
-                    phi1_t[comp][i]=phip(comp,tpt1_p) + 1i* phip(comp,tpt1_ip);
+                    phi1[comp][i].real()=phip(comp,t1_p);       phi1[comp][i].imag()=phip(comp,t1_ip);
+                    phi1_t[comp][i].real()==phip(comp,tpt1_p);  phi1_t[comp][i].imag()=phip(comp,tpt1_ip);
                     
                     
-                    phi11[comp][i]=phip(comp,t1_p11) + 1i* phip(comp,t1_ip11);
-                    phi11_t[comp][i]=phip(comp,tpt1_p11) + 1i* phip(comp,tpt1_ip11);
+                    phi11[comp][i].real()=phip(comp,t1_p11);      phi11[comp][i].imag()=phip(comp,t1_ip11);
+                    phi11_t[comp][i].real()=phip(comp,tpt1_p11);  phi11_t[comp][i].imag()=phip(comp,tpt1_ip11);
                     
                     
                     
@@ -1118,17 +1120,16 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
                 int tpt1_p111=tpt1+(2*p111)*T;   //    real part
                 int tpt1_ip111= tpt1_p111+T  ;//(t+t1)%T+(1+ 2*p111)*T;   ///  imag
                 
-                phi111[comp]=phip(comp,t1_p111) + 1i* phip(comp,t1_ip111);
-                phi111_t[comp]=phip(comp,tpt1_p111) + 1i* phip(comp,tpt1_ip111);
-                
-                
+                phi111[comp].real()=phip(comp,t1_p111);     phi111[comp].imag()=phip(comp,t1_ip111);
+                phi111_t[comp].real()=phip(comp,tpt1_p111); phi111_t[comp].imag()=phip(comp,tpt1_ip111);
+                 
                 o2p111[comp]=phi111[comp] * phip(comp,t1);
                 o2p111_t[comp]=conj(phi111_t[comp])*phip(comp,(t1+t)%T);
                 
             }
             for(int i=0;i<3;i++){
-                bb[2][i]=(phi1[0][i]*conj(phi1[1][i])+phi1[1][i]*conj(phi1[0][i])  )/sqrt(2);
-                bb_t[2][i]=(phi1_t[0][i]*conj(phi1_t[1][i])+phi1_t[1][i]*conj(phi1_t[0][i])  )/sqrt(2);
+                bb[2][i]=(phi1[0][i]*conj(phi1[1][i])+phi1[1][i]*conj(phi1[0][i])  )/1.41421356237;//sqrt(2);
+                bb_t[2][i]=(phi1_t[0][i]*conj(phi1_t[1][i])+phi1_t[1][i]*conj(phi1_t[0][i])  )/1.41421356237;//sqrt(2);
                 o2p1[2][i]=phi1[0][i]*phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
                 o2p1_t[2][i]=conj(phi1_t[0][i])*phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
                 
@@ -1139,12 +1140,12 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
             o2p111_t[2]=conj(phi111_t[0])*phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
             
             for (int comp=0; comp< 3;comp++){
-                A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/sqrt(3);
-                A1_t[comp]=(bb_t[comp][0]+bb_t[comp][1]+bb_t[comp][2] )/sqrt(3);
-                E1[comp]=  (bb[comp][0]  -bb[comp][1] )/sqrt(2);
-                E1_t[comp]=(bb_t[comp][0]-bb_t[comp][1] )/sqrt(2);
-                E2[comp]=  (bb[comp][0]+bb[comp][1]-2.*bb[comp][2] )/sqrt(6);
-                E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/sqrt(6);
+                A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/1.73205080757;//sqrt(3);
+                A1_t[comp]=(bb_t[comp][0]+bb_t[comp][1]+bb_t[comp][2] )/1.73205080757;//sqrt(3);
+                E1[comp]=  (bb[comp][0]  -bb[comp][1] )/1.41421356237;//sqrt(2);
+                E1_t[comp]=(bb_t[comp][0]-bb_t[comp][1] )/1.41421356237;//sqrt(2);
+                E2[comp]=  (bb[comp][0]+bb[comp][1]-2.*bb[comp][2] )/1.73205080757;// sqrt(6);
+                E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/1.73205080757;//sqrt(6);
             }
             
             to_write(33,t)+=real( phi1[0][0]* conj(phi1_t[0][0]) + phi1_t[0][0]* conj(phi1[0][0]) );//one_to_one_p1
@@ -1216,7 +1217,6 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
         }
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)/=((double) T);
-        
     });
     
     // Deep copy device views to host views.
