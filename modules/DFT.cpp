@@ -221,7 +221,7 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     Kokkos::deep_copy( h_phi, phi );
     
     Viewphi phip_test("phip",2,params.data.L[0]*Vp);
-    Viewphi::HostMirror h_phip_test= Kokkos::create_mirror_view( phip );
+    Viewphi::HostMirror h_phip_test= Kokkos::create_mirror_view( phip_test );
     compute_FT(phi, params ,   0, phip_test);
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip_test, phip_test );
