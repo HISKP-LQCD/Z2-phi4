@@ -1025,11 +1025,11 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
             double pp1=phip(1,t1) *phip(1 , tpt1);
 
             Kokkos::complex<double> p0;
-	    p0.real()=phip(0,t1);   p0.imag()=phip(1,t1); 
+            p0.real()=phip(0,t1);   p0.imag()=phip(1,t1); 
             Kokkos::complex<double> cpt ; 
-	    cpt.real()=phip(0,tpt1);   cpt.imag()= -phip(1,tpt1); 
+            cpt.real()=phip(0,tpt1);   cpt.imag()= -phip(1,tpt1); 
             
-	    to_write(0,t)+=pp0;
+            to_write(0,t)+=pp0;
             to_write(1,t)+=pp1; 
             to_write(2,t)+=pp0*pp0;
             to_write(3,t)+=pp1*pp1;
@@ -1094,7 +1094,7 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
                     
                     
                     phi1[comp][i].real()=phip(comp,t1_p);       phi1[comp][i].imag()=phip(comp,t1_ip);
-                    phi1_t[comp][i].real()==phip(comp,tpt1_p);  phi1_t[comp][i].imag()=phip(comp,tpt1_ip);
+                    phi1_t[comp][i].real()=phip(comp,tpt1_p);  phi1_t[comp][i].imag()=phip(comp,tpt1_ip);
                     
                     
                     phi11[comp][i].real()=phip(comp,t1_p11);      phi11[comp][i].imag()=phip(comp,t1_ip11);
@@ -1144,8 +1144,8 @@ void  parallel_measurement(Viewphi::HostMirror h_phip, cluster::IO_params params
                 A1_t[comp]=(bb_t[comp][0]+bb_t[comp][1]+bb_t[comp][2] )/1.73205080757;//sqrt(3);
                 E1[comp]=  (bb[comp][0]  -bb[comp][1] )/1.41421356237;//sqrt(2);
                 E1_t[comp]=(bb_t[comp][0]-bb_t[comp][1] )/1.41421356237;//sqrt(2);
-                E2[comp]=  (bb[comp][0]+bb[comp][1]-2.*bb[comp][2] )/1.73205080757;// sqrt(6);
-                E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/1.73205080757;//sqrt(6);
+                E2[comp]=  (bb[comp][0]+bb[comp][1]-2.*bb[comp][2] )/2.44948974278;// sqrt(6);
+                E2_t[comp]=(bb_t[comp][0]+bb_t[comp][1]-2.*bb_t[comp][2] )/2.44948974278;//sqrt(6);
             }
             
             to_write(33,t)+=real( phi1[0][0]* conj(phi1_t[0][0]) + phi1_t[0][0]* conj(phi1[0][0]) );//one_to_one_p1
