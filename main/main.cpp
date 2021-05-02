@@ -214,14 +214,11 @@ int main(int argc, char** argv) {
             double *m=compute_magnetisations( phi,   params);
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);
-            // Deep copy device views to host views.
-            Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
             
+            // Deep copy device views to host views.
+    	    //Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
             //compute_G2t( h_phip,   params,f_G2t, ii);
-            parallel_measurement(phip,   params,f_G2t, ii);
-            if (params.data.checks== "yes"){
-                compute_checks( h_phip,   params,f_checks, ii);
-            }
+            parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;
         }
