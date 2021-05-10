@@ -3,6 +3,7 @@
 #include <Kokkos_Core.hpp>
 #include "lattice.hpp"
 #include <IO_params.hpp>
+#include "measurements.hpp"
 #include <complex>
 
 inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t , int iconf);
@@ -973,7 +974,7 @@ inline void  compute_contraction_p1( int t , Viewphi::HostMirror h_phip, cluster
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  parallel_measurement(Viewphi phip, cluster::IO_params params , FILE *f_G2t , int iconf){
+void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::IO_params params , FILE *f_G2t , FILE *f_checks, int iconf){
     int T=params.data.L[0];
     fwrite(&iconf,sizeof(int),1,f_G2t);        
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
@@ -984,6 +985,10 @@ void  parallel_measurement(Viewphi phip, cluster::IO_params params , FILE *f_G2t
     // Deep copy host views to device views.
     //Kokkos::deep_copy( phip, h_phip );
     
+    if (params.data.checks== "yes"){
+    	// Deep copy device views to host views.
+    	Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
+    }
     
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
@@ -1220,6 +1225,9 @@ void  parallel_measurement(Viewphi phip, cluster::IO_params params , FILE *f_G2t
             to_write(c,t)/=((double) T);
     });
     
+    if (params.data.checks== "yes"){
+        compute_checks( h_phip,   params,f_checks, iconf);
+    }
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_write, to_write ); 
     fwrite(&h_write(0,0),sizeof(double),Ncorr*T,f_G2t);
