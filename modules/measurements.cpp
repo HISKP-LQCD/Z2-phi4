@@ -1198,15 +1198,16 @@ void  parallel_measurement(Viewphi phip, cluster::IO_params params , FILE *f_G2t
                     
             for (int comp=0; comp< 2;comp++)
                 for(int i=0;i<3;i++)
-                    to_write(75+comp+i*2,t)+=real(phi11[comp][i]*conj(phi11_t[comp][i]) +  conj(phi11[comp][i])*phi11_t[comp][i]  );//one_to_one_p11
+                    to_write(75+comp+i*2,t)+=real(phi11[comp][i]*conj(phi11_t[comp][i])   );//one_to_one_p11
+                    ///+  conj(phi11[comp][i])*phi11_t[comp][i] no need to add the conj because we are taking the real part
                 
             for (int comp=0; comp< 3;comp++)
                 for(int i=0;i<3;i++)
                     to_write(81+i+comp*3,t)+=real(o2p11[comp][i]*o2p11_t[comp][i]);//two_to_two_o2p11o2p11
                     
                     
-            to_write(90,t)+=real(phi111[0]*conj(phi111_t[0]) +  conj(phi111[0])*phi111_t[0]  );//one_to_one_p111
-            to_write(91,t)+=real(phi111[1]*conj(phi111_t[1]) +  conj(phi111[1])*phi111_t[1]  );
+            to_write(90,t)+=real(phi111[0]*conj(phi111_t[0])   );//one_to_one_p111
+            to_write(91,t)+=real(phi111[1]*conj(phi111_t[1])  );
             
             to_write(92,t)+=real(o2p111[0]*o2p111_t[0]);//two_to_two_o2p111o2p111
             to_write(93,t)+=real(o2p111[1]*o2p111_t[1]);
