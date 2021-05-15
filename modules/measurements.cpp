@@ -1217,9 +1217,29 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
             to_write(92,t)+=real(o2p111[0]*o2p111_t[0]);//two_to_two_o2p111o2p111
             to_write(93,t)+=real(o2p111[1]*o2p111_t[1]);
             to_write(94,t)+=real(o2p111[2]*o2p111_t[2]);
-                
+            
+            for (int comp=0; comp< 3;comp++)
+                for(int i=0;i<3;i++)
+                    to_write(95+i+comp*3,t)+=real(phip(comp%2,t1)* o2p1[comp][i]* phip(comp%2,tpt1) * o2p1_t[comp][i]);  //three_to_three_o3p1o3p1 
+                    
+             for (int comp=0; comp< 3;comp++)
+                for(int i=0;i<3;i++)
+                    to_write(104+i+comp*3,t)+=real(phip(comp%2,t1)*o2p11[comp][i]*  phip(comp%2,tpt1)*o2p11_t[comp][i]);//three_to_three_o2p11o2p11
+             
+            to_write(113,t)+=real(phip(0,t1)*o2p111[0]*phip(0,tpt1)*o2p111_t[0]);//three_to_three_o2p111o2p111
+            to_write(114,t)+=real(phip(1,t1)*o2p111[1]*phip(1,tpt1)*o2p111_t[1]);
+            to_write(115,t)+=real(phip(0,t1)*o2p111[2]  *phip(1,tpt1)*o2p111_t[2]);
+             
+            
+            to_write(116,t)+=real(phip(0,t1)*A1[0]*phip(0,tpt1)*A1_t[0]);//three_to_three_A1A1
+            to_write(117,t)+=real(phip(1,t1)*A1[1]*phip(1,tpt1)*A1_t[1]);
+            to_write(118,t)+=real(phip(0,t1)*A1[2]*phip(1,tpt1)*A1_t[2]);
             
             
+            to_write(119,t)+=real(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t_2)   );   //phi0^3  phi0^3phi1 phi1   
+            to_write(120,t)+=real(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t10)   );   //phi0^3  phi0^3phi1 phi1
+            to_write(121,t)+=real(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t12)   );   //phi0^3  phi0^3phi1 phi1
+            to_write(122,t)+=real(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t16)   );   //phi0^3  phi0^3phi1 phi1
         }
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)/=((double) T);
