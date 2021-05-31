@@ -620,10 +620,16 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
             to_write(118,t)+=(phip(0,t1)*A1[2]* phip(1,tpt1)*A1_t[2]).real();
             
             
-            to_write(119,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t_2)   );   //phi0^3  phi0^3phi1 phi1   
-            to_write(120,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t10)   );   //phi0^3  phi0^3phi1 phi1
-            to_write(121,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t12)   );   //phi0^3  phi0^3phi1 phi1
-            to_write(122,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t16)   );   //phi0^3  phi0^3phi1 phi1
+            to_write(119,t)+=(phip(1,t_2)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   * phip(0,t1)*phip(0,t1)*phip(0,t1)    );   //phi0^3  phi0^3phi1 phi1   
+            to_write(120,t)+=(phip(1,t10)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   * phip(0,t1)*phip(0,t1)*phip(0,t1)    );   //phi0^3  phi0^3phi1 phi1
+            to_write(121,t)+=(phip(1,t12)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   * phip(0,t1)*phip(0,t1)*phip(0,t1)    );   //phi0^3  phi0^3phi1 phi1
+            to_write(122,t)+=(phip(1,t16)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   * phip(0,t1)*phip(0,t1)*phip(0,t1)    );   //phi0^3  phi0^3phi1 phi1
+            
+            to_write(123,t)+=(phip(0,t_2)*phip(0,t_2)*phip(0,t_2)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1   
+            to_write(124,t)+=(phip(0,t10)*phip(0,t10)*phip(0,t10)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
+            to_write(125,t)+=(phip(0,t12)*phip(0,t12)*phip(0,t12)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
+            to_write(126,t)+=(phip(0,t16)*phip(0,t16)*phip(0,t16)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
+            
         }
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)/=((double) T);
