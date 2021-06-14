@@ -226,7 +226,7 @@ int main(int argc, char** argv) {
     printf("average acceptance rate= %g\n", ave_acc/(params.data.start_measure+params.data.total_measure));
     
     printf("  time mesuring = %f s (%f per single operation)\n", time_mes   , time_mes/(params.data.total_measure/ params.data.measure_every_X_updates ));
-    printf("  time reading  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.save_config_every_X_updates) );
+    printf("  time reading  = %f s (%f per single opertion)\n", time_writing, time_writing/(params.data.total_measure/ params.data.measure_every_X_updates) );
     printf("total time = %f s\n",time_writing+ time_mes );
 
 
