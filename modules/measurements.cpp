@@ -190,7 +190,7 @@ void compute_FT_old(const Viewphi phi, cluster::IO_params params ,  int iconf, V
             #ifdef DEBUG
             if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
                 printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                exit(1);
+                Kokkos::abort("FT_Vs_loop");
             }
             #endif
             for (int pz=0; pz<Lp;pz++){
@@ -246,7 +246,8 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
         const int py= (p- pz*Lp*Lp)/Lp;
         const int xp=t+T*(reim+p*2);
         #ifdef DEBUG
-            if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);exit(1);}
+        if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp); Kokkos::abort("aborting");
+        }
         #endif
         phip(comp,xp)=0;
         if (reim==0){
@@ -258,7 +259,7 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
             #ifdef DEBUG
             if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
                 printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                exit(1);
+                Kokkos::abort("aborting");
             }
             #endif
             double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
@@ -276,7 +277,7 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
             #ifdef DEBUG
             if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
                 printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                exit(1);
+                Kokkos::abort("aborting");
             }
             #endif
 		    double wr=6.28318530718 *( px*ix/(double (params.data.L[1])) +    py*iy/(double (params.data.L[2]))   +pz*iz/(double (params.data.L[3]))   );
@@ -320,7 +321,7 @@ void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, V
             #ifdef DEBUG
             if (x!= ix+ iy*params.data.L[1]+iz*params.data.L[1]*params.data.L[2]){ 
                 printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,params.data.L[1],iz,params.data.L[1],params.data.L[2]);
-                exit(1);
+                Kokkos::abort("aborting");
             }
             #endif
             for (int pz=0; pz<Lp;pz++){
@@ -469,7 +470,7 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
             
             for (int comp=0; comp< 2;comp++){
                 
-                for(int i=0;i<3;i++){
+                for(int i=0;i<3;i++){  // i = x,y,z
                     int t1_p =t1+(  2*p1[i])*T;   // 2,4 6    real part
                     int t1_ip=t1_p+T;//t1+(1+ 2*p1[i])*T;   /// 3,5 7 imag part
                     int tpt1_p=tpt1+(2*p1[i])*T;   //2,4 6    real part
@@ -483,7 +484,7 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
                     
                     
                     phi1[comp][i].real()=phip(comp,t1_p);       phi1[comp][i].imag()=phip(comp,t1_ip);
-                    phi1_t[comp][i].real()=phip(comp,tpt1_p);  phi1_t[comp][i].imag()=phip(comp,tpt1_ip);
+                    phi1_t[comp][i].real()=phip(comp,tpt1_p);   phi1_t[comp][i].imag()=phip(comp,tpt1_ip);
                     
                     
                     phi11[comp][i].real()=phip(comp,t1_p11);      phi11[comp][i].imag()=phip(comp,t1_ip11);
@@ -629,6 +630,28 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
             to_write(124,t)+=(phip(0,t10)*phip(0,t10)*phip(0,t10)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
             to_write(125,t)+=(phip(0,t12)*phip(0,t12)*phip(0,t12)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
             to_write(126,t)+=(phip(0,t16)*phip(0,t16)*phip(0,t16)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
+            
+            to_write(127,t)+=phip(0,t1)    * phip(1,tpt1);   //phi0 phi1 
+            // no need to program
+            //phi1(t1) phi0(t1+t)
+            // you can get it symmetryising 
+            //phi0(t1) phi1(t1+T-t)   =phi0(t1) phi1(t1-t)  (shift the sum in t1->t1+t) = phi1(t1) phi0(t1+t)
+            to_write(128,t)+=phip(0,t1)*phip(0,t1)*phip(0,t1)    * phip(1,tpt1);   //phi0^3 phi1 
+            
+            for(int i=0;i<3;i++)// i=x,y,z
+                to_write(129+i,t)+=(phi1[0][i]    * conj(phi1_t[1][i] ) ).real();   //phi0[px] phi1[px]  
+            for(int i=0;i<3;i++)
+                to_write(132+i,t)+=(phip(0,t1)* o2p1[0][i]    * conj(phi1_t[1][i] ) ).real();   //3phi0 [px] --> phi[px]
+            
+            for(int i=0;i<3;i++)// i=x,y,z
+                to_write(135+i,t)+=(phi11[0][i]    * conj(phi11_t[1][i] ) ).real();   //phi0[pxy] phi1[pxy]  
+            for(int i=0;i<3;i++)
+                to_write(138+i,t)+=(phip(0,t1)* o2p11[0][i]    * conj(phi11_t[1][i] ) ).real();   //3phi0 [pxy] --> phi[pxy]
+                        
+            to_write(141,t)+=(phi111[0]    * conj(phi111_t[1] ) ).real();   //phi0[pxyz] phi1[pxyz]  
+            to_write(142,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[1] ) ).real();   //3phi0[pxyz] phi1[pxyz]  
+            
+            
             
         }
         for(int c=0; c<Ncorr; c++) 

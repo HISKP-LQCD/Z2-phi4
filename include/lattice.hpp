@@ -13,7 +13,7 @@
 #define dim_spacetime 4
 #define Lp 2
 #define Vp Lp*Lp*Lp*2
-#define Ncorr 127
+#define Ncorr 143
 /* spatial extend of the lattice */
 //#define L 4
 // #define L 4LU
