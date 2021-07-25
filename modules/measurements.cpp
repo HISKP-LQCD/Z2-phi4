@@ -631,26 +631,32 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
             to_write(125,t)+=(phip(0,t12)*phip(0,t12)*phip(0,t12)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
             to_write(126,t)+=(phip(0,t16)*phip(0,t16)*phip(0,t16)*    phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)   *  phip(1,t1)   );   //phi0^3  phi0^3phi1 phi1
             
-            to_write(127,t)+=phip(0,t1)    * phip(1,tpt1);   //phi0 phi1 
+            to_write(127,t)+=phip(0,t1)    * phip(1,tpt1);   //phi0 --> phi1 
             // no need to program
             //phi1(t1) phi0(t1+t)
             // you can get it symmetryising 
             //phi0(t1) phi1(t1+T-t)   =phi0(t1) phi1(t1-t)  (shift the sum in t1->t1+t) = phi1(t1) phi0(t1+t)
-            to_write(128,t)+=phip(0,t1)*phip(0,t1)*phip(0,t1)    * phip(1,tpt1);   //phi0^3 phi1 
+            to_write(128,t)+=phip(0,t1)*phip(0,t1)*phip(0,t1)    * phip(1,tpt1);   //phi0^3 --> phi1 
+            to_write(129,t)+=phip(0,t1)*phip(0,t1)*phip(0,t1)    * phip(0,tpt1);   //phi0^3 --> phi0
             
             for(int i=0;i<3;i++)// i=x,y,z
-                to_write(129+i,t)+=(phi1[0][i]    * conj(phi1_t[1][i] ) ).real();   //phi0[px] phi1[px]  
+                to_write(130+i,t)+=(phi1[0][i]    * conj(phi1_t[1][i] ) ).real();   //phi0[px] phi1[px]  
             for(int i=0;i<3;i++)
-                to_write(132+i,t)+=(phip(0,t1)* o2p1[0][i]    * conj(phi1_t[1][i] ) ).real();   //3phi0 [px] --> phi[px]
+                to_write(133+i,t)+=(phip(0,t1)* o2p1[0][i]    * conj(phi1_t[1][i] ) ).real();   //3phi0 [px] --> phi1[px]
+            for(int i=0;i<3;i++)// i=x,y,z
+                to_write(136+i,t)+=(phip(0,t1)* o2p1[0][i]     * conj(phi1_t[0][i] ) ).real();   //3phi0 [px] --> phi0[px]
+                    
             
             for(int i=0;i<3;i++)// i=x,y,z
-                to_write(135+i,t)+=(phi11[0][i]    * conj(phi11_t[1][i] ) ).real();   //phi0[pxy] phi1[pxy]  
+                to_write(139+i,t)+=(phi11[0][i]    * conj(phi11_t[1][i] ) ).real();   //phi0[pxy] phi1[pxy]  
             for(int i=0;i<3;i++)
-                to_write(138+i,t)+=(phip(0,t1)* o2p11[0][i]    * conj(phi11_t[1][i] ) ).real();   //3phi0 [pxy] --> phi[pxy]
-                        
-            to_write(141,t)+=(phi111[0]    * conj(phi111_t[1] ) ).real();   //phi0[pxyz] phi1[pxyz]  
-            to_write(142,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[1] ) ).real();   //3phi0[pxyz] phi1[pxyz]  
-            
+                to_write(142+i,t)+=(phip(0,t1)* o2p11[0][i]    * conj(phi11_t[1][i] ) ).real();   //3phi0 [pxy] --> phi1[pxy]
+            for(int i=0;i<3;i++)
+                to_write(145+i,t)+=(phip(0,t1)* o2p11[0][i]    * conj(phi11_t[0][i] ) ).real();   //3phi0 [pxy] --> phi0[pxy]
+                    
+            to_write(146,t)+=(phi111[0]    * conj(phi111_t[1] ) ).real();   //phi0[pxyz] phi1[pxyz]  
+            to_write(147,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[1] ) ).real();   //3phi0[pxyz] phi1[pxyz]  
+            to_write(148,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[0] ) ).real();   //3phi0[pxyz] phi0[pxyz]  
             
             
         }
