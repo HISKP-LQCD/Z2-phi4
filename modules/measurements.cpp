@@ -365,12 +365,33 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
     // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
     Kokkos::View<double**,Kokkos::LayoutLeft > to_write("to_write",  Ncorr,T );
-    Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write );   
+    Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write ); 
+    Kokkos::View<Kokkos::complex<double> **> sphi("sphi",2,T*Vp/2);// Vp/2 because sphi is complex
+    int Ns=5;
+    double rho=0.2;
+    
+    Kokkos::parallel_for( "smearing ",T*Vp, KOKKOS_LAMBDA( size_t ii) {
+        //ii = comp+ 2*pt  
+        //pt=  t +T*( p)
+        const int comp=ii%2;
+        const int pt=ii/2;
+        const int t=pt%T;
+        const int p=pt/T;
+        //ipt = t+ (reim+2*pt)*T  
+        const int ipt=t+(p*2)*T;
+        Kokkos::complex<double> I;
+        I.real()=0; I.imag()=1;
+        sphi(comp,p).real()=phip(comp,ipt);
+        sphi(comp,p).real()=phip(comp,ipt+T);
+        for (int ns=0;ns<Ns;ns++){
+            sphi(comp,p)=sphi(comp,p)*exp(I*rho *sphi(comp,p));
+        }
+    });
     
     // Deep copy host views to device views.
     //Kokkos::deep_copy( phip, h_phip );
     
-    if (params.data.checks== "yes"){
+    if (params.data.checks== "yes") {
     	// Deep copy device views to host views.
     	Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
     }
@@ -657,6 +678,15 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
             to_write(146,t)+=(phi111[0]    * conj(phi111_t[1] ) ).real();   //phi0[pxyz] phi1[pxyz]  
             to_write(147,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[1] ) ).real();   //3phi0[pxyz] phi1[pxyz]  
             to_write(148,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[0] ) ).real();   //3phi0[pxyz] phi0[pxyz]  
+            
+            // smearing
+            to_write(149,t)+=(sphi(0,t1)*conj(sphi(0,tpt1))).real();
+            to_write(150,t)+=(sphi(1,t1)*conj(sphi(1,tpt1))).real();
+            to_write(151,t)+=(sphi(0,t1)*  phip(0,tpt1)     ).real();
+            to_write(152,t)+=(sphi(0,t1)*  phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)  ).real();
+            to_write(153,t)+=(sphi(0,t1)*  phip(1,tpt1)     ).real();
+            
+            
             
             
         }
