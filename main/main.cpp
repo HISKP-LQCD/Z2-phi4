@@ -119,6 +119,9 @@ int main(int argc, char** argv) {
     Viewphi phip("phip",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
     
+    complexphi cphip("complex_phip",2,params.data.L[0]*Vp/2);
+    complexphi::HostMirror h_cphip= Kokkos::create_mirror_view( cphip );
+    
     std::string suffix ="_T" + std::to_string(params.data.L[0]) +
                         "_L" + std::to_string(params.data.L[1]) +
                         "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
@@ -195,7 +198,14 @@ int main(int argc, char** argv) {
             //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
             //h_phip=construct_h_phip;
             #ifndef cuFFT   
-            	compute_FT(phi, params ,   ii, phip);
+//                 Kokkos::Timer  t1;
+//             	compute_FT(phi, params ,   ii, phip);
+//                 if (params.data.checks== "yes")  Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
+//                 printf(" time FT : %g s \n",t1.seconds());
+//                 Kokkos::Timer  t2;
+                compute_FT_complex(phi, params ,   ii, cphip);
+//                 if (params.data.checks== "yes")  Kokkos::deep_copy( h_cphip, cphip ); // deep_copy with two arguments is a fence
+//                 printf(" time FT complex: %g s\n",t2.seconds());
             #endif
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
@@ -218,7 +228,8 @@ int main(int argc, char** argv) {
             // Deep copy device views to host views.
     	    //Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
             //compute_G2t( h_phip,   params,f_G2t, ii);
-            parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+ //           parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+            parallel_measurement_complex(cphip,h_cphip  , params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;
         }
@@ -235,8 +246,10 @@ int main(int argc, char** argv) {
             FILE *f_conf = fopen(conf_file.c_str(), "w+"); 
             if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     exit(1);   }
             // Deep copy device views to host views.
-            Kokkos::deep_copy( h_phip, phip );
-            write_conf_FT(f_conf, layout_value,params , ii , h_phip );
+//             Kokkos::deep_copy( h_phip, phip );
+//             write_conf_FT(f_conf, layout_value,params , ii , h_phip );
+            Kokkos::deep_copy( h_cphip, cphip );
+            write_conf_FT_complex(f_conf, layout_value,params , ii , h_cphip );
             time = timer3.seconds();
             fclose(f_conf);
             time_writing+=time;

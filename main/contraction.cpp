@@ -85,6 +85,8 @@ int main(int argc, char** argv) {
     Viewphi phip("phip",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
     
+    complexphi cphip("complex_phip",2,params.data.L[0]*Vp/2);
+    complexphi::HostMirror h_cphip= Kokkos::create_mirror_view( cphip );
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -172,7 +174,8 @@ int main(int argc, char** argv) {
                     printf("Error opening file %s!\n", conf_file.c_str());
                     exit(1);
                 }
-                read_conf_FT(f_conf, layout_value, params , ii , h_phip ); 
+                //read_conf_FT(f_conf, layout_value, params , ii , phip ); 
+                read_conf_FT_complex(f_conf, layout_value, params , ii , cphip ); 
                 fclose(f_conf);
                 time = timer3.seconds();
                 time_writing+=time;
@@ -195,9 +198,8 @@ int main(int argc, char** argv) {
                 }
                 read_viewer(f_conf, layout_value, params , ii , phi ); 
                 
-                Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]*Vp);
-                h_phip=construct_h_phip;
-                compute_FT(phi, params ,   ii, phip);
+                //compute_FT(phi, params ,   ii, phip);
+                compute_FT_complex(phi, params ,   ii, cphip);
                 
                 fclose(f_conf);
                 time = timer3.seconds();
@@ -212,7 +214,8 @@ int main(int argc, char** argv) {
             free(m);//free(G2);
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
-            parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+            //parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+            parallel_measurement_complex(cphip,h_cphip  , params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;
 

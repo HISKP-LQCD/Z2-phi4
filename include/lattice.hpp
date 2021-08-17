@@ -13,7 +13,7 @@
 #define dim_spacetime 4
 #define Lp 2
 #define Vp Lp*Lp*Lp*2
-#define Ncorr 154
+#define Ncorr 149
 /* spatial extend of the lattice */
 //#define L 4
 // #define L 4LU
@@ -33,7 +33,7 @@ typedef Kokkos::View<double **>  Viewphi;
 //typedef Kokkos::View<double**, Kokkos::LayoutLeft>  writingphi;
 typedef Kokkos::View<size_t **>  ViewLatt;
 
-
+typedef Kokkos::View<Kokkos::complex<double> **>  complexphi;
 
 typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
 typedef typename RandPoolType::generator_type gen_type;
