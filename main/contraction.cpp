@@ -175,7 +175,8 @@ int main(int argc, char** argv) {
                     exit(1);
                 }
                 //read_conf_FT(f_conf, layout_value, params , ii , phip ); 
-                read_conf_FT_complex(f_conf, layout_value, params , ii , cphip ); 
+                read_conf_FT_complex(f_conf, layout_value, params , ii , cphip );
+                Kokkos::deep_copy(h_cphip, cphip);   // ----------------------fence-------------------------------// 
                 fclose(f_conf);
                 time = timer3.seconds();
                 time_writing+=time;
@@ -200,7 +201,8 @@ int main(int argc, char** argv) {
                 
                 //compute_FT(phi, params ,   ii, phip);
                 compute_FT_complex(phi, params ,   ii, cphip);
-                
+                Kokkos::deep_copy(h_cphip, cphip);   // ----------------------fence-------------------------------// 
+
                 fclose(f_conf);
                 time = timer3.seconds();
                 time_writing+=time;
@@ -214,7 +216,7 @@ int main(int argc, char** argv) {
             free(m);//free(G2);
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
-            //parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+    //        parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
             parallel_measurement_complex(cphip,h_cphip  , params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;

@@ -198,14 +198,15 @@ int main(int argc, char** argv) {
             //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
             //h_phip=construct_h_phip;
             #ifndef cuFFT   
-//                 Kokkos::Timer  t1;
-//             	compute_FT(phi, params ,   ii, phip);
-//                 if (params.data.checks== "yes")  Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
-//                 printf(" time FT : %g s \n",t1.seconds());
-//                 Kokkos::Timer  t2;
+              //  Kokkos::Timer  t1;
+              //  compute_FT(phi, params ,   ii, phip);
+              //  if (params.data.checks== "yes")  Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
+              //  printf(" time FT : %g s \n",t1.seconds());
+              //  Kokkos::Timer  t2;
                 compute_FT_complex(phi, params ,   ii, cphip);
-//                 if (params.data.checks== "yes")  Kokkos::deep_copy( h_cphip, cphip ); // deep_copy with two arguments is a fence
-//                 printf(" time FT complex: %g s\n",t2.seconds());
+                if (params.data.checks== "yes")  Kokkos::deep_copy( h_cphip, cphip ); // deep_copy with two arguments is a fence
+              //  printf(" time FT complex: %g s\n",t2.seconds());
+		Kokkos::fence();
             #endif
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
@@ -228,9 +229,14 @@ int main(int argc, char** argv) {
             // Deep copy device views to host views.
     	    //Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
             //compute_G2t( h_phip,   params,f_G2t, ii);
- //           parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+            //    Kokkos::Timer  t1;
+            //parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
+            //Kokkos::fence();    printf(" time mes : %g s \n",t1.seconds());
+            //    Kokkos::Timer  t2;
             parallel_measurement_complex(cphip,h_cphip  , params,f_G2t, f_checks, ii);
-            time = timer_2.seconds();
+            //Kokkos::fence();    printf(" time mes complex : %g s \n",t2.seconds());
+
+	    time = timer_2.seconds();
             time_mes+=time;
         }
         // write conf FT

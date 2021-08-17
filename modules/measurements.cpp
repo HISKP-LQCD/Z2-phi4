@@ -388,8 +388,8 @@ void  parallel_measurement(Viewphi phip,  Viewphi::HostMirror h_phip,  cluster::
         }
     });
     
-    // Deep copy host views to device views.
-    //Kokkos::deep_copy( phip, h_phip );
+    // Deep copy device views to host views.
+    Kokkos::deep_copy( h_phip, phip );
     
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
