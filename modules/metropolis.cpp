@@ -25,7 +25,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
   for (int parity = 0; parity <2 ;parity ++){
   //for(int x=0; x< V; x++) {  
   //Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx , double &update) {    
-  Kokkos::parallel_for( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx ) {    
+  Kokkos::parallel_for( "lattice metropolis loop", V/2, KOKKOS_LAMBDA( size_t xx ) {    
       size_t x=even_odd(parity,xx);
       double kappa[2] ={params.data.kappa0, params.data.kappa1};
       double lambda[2]={params.data.lambda0, params.data.lambda1};

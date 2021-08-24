@@ -88,6 +88,11 @@ int main(int argc, char** argv) {
     complexphi cphip("complex_phip",2,params.data.L[0]*Vp/2);
     complexphi::HostMirror h_cphip= Kokkos::create_mirror_view( cphip );
     
+    complexphi s_cphip("complex_phip",2,params.data.L[0]*Vp/2);
+    complexphi::HostMirror h_s_cphip= Kokkos::create_mirror_view( cphip );
+    complexphi cphi2p("complex_phi2p",2,params.data.L[0]*Vp/2);
+    
+    
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
     ViewLatt    ipt("ipt",V,dim_spacetime);
@@ -96,6 +101,7 @@ int main(int argc, char** argv) {
     cout << "hopping initialised"<< endl; 
         
     Viewphi  phi("phi",2,V);
+    Viewphi  s_phi("phi",2,V);
     #ifdef DEBUG
         test_FT(params);
     #endif
@@ -172,12 +178,32 @@ int main(int argc, char** argv) {
                 FILE *f_conf = fopen(conf_file.c_str(), "r"); 
                 if (f_conf == NULL) {
                     printf("Error opening file %s!\n", conf_file.c_str());
-                    exit(1);
+                    Kokkos::abort("opening file");
                 }
                 //read_conf_FT(f_conf, layout_value, params , ii , phip ); 
                 read_conf_FT_complex(f_conf, layout_value, params , ii , cphip );
                 Kokkos::deep_copy(h_cphip, cphip);   // ----------------------fence-------------------------------// 
                 fclose(f_conf);
+                
+                std::string s_conf_file = params.data.outpath + 
+                "/T" + std::to_string(params.data.L[0]) +
+                "_L" + std::to_string(params.data.L[1]) +
+                "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
+                "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
+                "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
+                "_rep" + std::to_string(params.data.replica) + 
+                "_conf_FT" + std::to_string(ii);
+                FILE *f_s_conf = fopen(s_conf_file.c_str(), "r"); 
+                if (f_s_conf == NULL) {
+                    printf("Error opening file %s!\n", s_conf_file.c_str());
+                    Kokkos::abort("opening file");
+                }
+                
+                read_conf_FT_complex(f_s_conf, layout_value, params , ii , s_cphip );
+                Kokkos::deep_copy(h_s_cphip, s_cphip);   // ----------------------fence-------------------------------// 
+                
+                fclose(f_s_conf);
+                
                 time = timer3.seconds();
                 time_writing+=time;
             }
@@ -198,9 +224,13 @@ int main(int argc, char** argv) {
                     exit(1);
                 }
                 read_viewer(f_conf, layout_value, params , ii , phi ); 
+                smearing_field( s_phi, phi, params);
                 
                 //compute_FT(phi, params ,   ii, phip);
-                compute_FT_complex(phi, params ,   ii, cphip);
+                compute_FT_complex(cphip, phi, params ,   1);
+                compute_FT_complex(s_cphip, s_phi, params ,   1 );
+                compute_FT_complex(cphi2p, phi, params ,   2);
+                
                 Kokkos::deep_copy(h_cphip, cphip);   // ----------------------fence-------------------------------// 
 
                 fclose(f_conf);
@@ -217,7 +247,7 @@ int main(int argc, char** argv) {
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
     //        parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
-            parallel_measurement_complex(cphip,h_cphip  , params,f_G2t, f_checks, ii);
+            parallel_measurement_complex(cphip,h_cphip, s_cphip , cphi2p , params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;
 

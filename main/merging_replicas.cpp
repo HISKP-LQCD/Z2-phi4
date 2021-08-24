@@ -246,31 +246,31 @@ int read_nconfs( FILE *stream, cluster::IO_params params){
 }
 
 void read_header(FILE *stream, cluster::IO_params &params ){
-   
-     fread(&params.data.L[0], sizeof(int), 1, stream); 
-     fread(&params.data.L[1], sizeof(int), 1, stream); 
-     fread(&params.data.L[2], sizeof(int), 1, stream); 
-     fread(&params.data.L[3], sizeof(int), 1, stream); 
+     int i=0;
+     i+=fread(&params.data.L[0], sizeof(int), 1, stream); 
+     i+=fread(&params.data.L[1], sizeof(int), 1, stream); 
+     i+=fread(&params.data.L[2], sizeof(int), 1, stream); 
+     i+=fread(&params.data.L[3], sizeof(int), 1, stream); 
      printf("%d %d %d %d\n",params.data.L[0],params.data.L[1],params.data.L[2],params.data.L[3]);
      char string[100];
-     fread(string, sizeof(char)*100, 1, stream); 
+     i+=fread(string, sizeof(char)*100, 1, stream); 
      params.data.formulation.assign(string,100);
      
-     fread(&params.data.msq0, sizeof(double), 1, stream); 
-     fread(&params.data.msq1, sizeof(double), 1, stream); 
-     fread(&params.data.lambdaC0, sizeof(double), 1, stream); 
-     fread(&params.data.lambdaC1, sizeof(double), 1, stream); 
-     fread(&params.data.muC, sizeof(double), 1, stream); 
-     fread(&params.data.gC, sizeof(double), 1, stream); 
+     i+=fread(&params.data.msq0, sizeof(double), 1, stream); 
+     i+=fread(&params.data.msq1, sizeof(double), 1, stream); 
+     i+=fread(&params.data.lambdaC0, sizeof(double), 1, stream); 
+     i+=fread(&params.data.lambdaC1, sizeof(double), 1, stream); 
+     i+=fread(&params.data.muC, sizeof(double), 1, stream); 
+     i+=fread(&params.data.gC, sizeof(double), 1, stream); 
 
-     fread(&params.data.metropolis_local_hits, sizeof(int), 1, stream); 
-     fread(&params.data.metropolis_global_hits, sizeof(int), 1, stream); 
-     fread(&params.data.metropolis_delta, sizeof(double), 1, stream); 
+     i+=fread(&params.data.metropolis_local_hits, sizeof(int), 1, stream); 
+     i+=fread(&params.data.metropolis_global_hits, sizeof(int), 1, stream); 
+     i+=fread(&params.data.metropolis_delta, sizeof(double), 1, stream); 
      
-     fread(&params.data.cluster_hits, sizeof(int), 1, stream); 
-     fread(&params.data.cluster_min_size, sizeof(double), 1, stream); 
+     i+=fread(&params.data.cluster_hits, sizeof(int), 1, stream); 
+     i+=fread(&params.data.cluster_min_size, sizeof(double), 1, stream); 
 
-     fread(&params.data.seed, sizeof(int), 1, stream); 
+     i+=fread(&params.data.seed, sizeof(int), 1, stream); 
      for (int &s : seeds){
          //printf("seed=%d\n",s);
          if(s==params.data.seed) {
@@ -279,7 +279,7 @@ void read_header(FILE *stream, cluster::IO_params &params ){
      }
      seeds.emplace_back(params.data.seed);
      
-     fread(&params.data.replica, sizeof(int), 1, stream); 
+     i+=fread(&params.data.replica, sizeof(int), 1, stream); 
      for (int &s : replicas){
          //printf("replica=%d\n",s);
          if(s==params.data.replica) {
@@ -289,10 +289,10 @@ void read_header(FILE *stream, cluster::IO_params &params ){
      replicas.emplace_back(params.data.replica);
      
     
-     fread(&params.data.ncorr, sizeof(int), 1, stream); 
+     i+=fread(&params.data.ncorr, sizeof(int), 1, stream); 
      printf("correlators=%d\n",params.data.ncorr);
     
-     fread(&params.data.size, sizeof(size_t), 1, stream); 
+     i+=fread(&params.data.size, sizeof(size_t), 1, stream); 
      printf("size=%ld\n",params.data.size);
      
      params.data.header_size=ftell(stream);
@@ -302,38 +302,42 @@ void read_header(FILE *stream, cluster::IO_params &params ){
          printf("params.data.size = %ld  !=  params.data.ncorr*params.data.L[0]= %d  *  %d",params.data.size,params.data.ncorr,params.data.L[0] );
          exit(2);
      }
+     if (i != 20 ){
+         printf("read_header: invilid read header  i=%d instead of %d", i,20);
+         exit(2);
+     }
 }
 
 
 
 
 void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
+     int i=0;
+     i+=fwrite(&params.data.L, sizeof(int), 4, f_conf); 
 
-     fwrite(&params.data.L, sizeof(int), 4, f_conf); 
+     i+=fwrite(params.data.formulation.c_str(), sizeof(char)*100, 1, f_conf); 
 
-     fwrite(params.data.formulation.c_str(), sizeof(char)*100, 1, f_conf); 
+     i+=fwrite(&params.data.msq0, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.msq1, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.lambdaC0, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.lambdaC1, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.muC, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.gC, sizeof(double), 1, f_conf); 
 
-     fwrite(&params.data.msq0, sizeof(double), 1, f_conf); 
-     fwrite(&params.data.msq1, sizeof(double), 1, f_conf); 
-     fwrite(&params.data.lambdaC0, sizeof(double), 1, f_conf); 
-     fwrite(&params.data.lambdaC1, sizeof(double), 1, f_conf); 
-     fwrite(&params.data.muC, sizeof(double), 1, f_conf); 
-     fwrite(&params.data.gC, sizeof(double), 1, f_conf); 
-
-     fwrite(&params.data.metropolis_local_hits, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.metropolis_global_hits, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.metropolis_delta, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.metropolis_local_hits, sizeof(int), 1, f_conf); 
+     i+=fwrite(&params.data.metropolis_global_hits, sizeof(int), 1, f_conf); 
+     i+=fwrite(&params.data.metropolis_delta, sizeof(double), 1, f_conf); 
      
-     fwrite(&params.data.cluster_hits, sizeof(int), 1, f_conf); 
-     fwrite(&params.data.cluster_min_size, sizeof(double), 1, f_conf); 
+     i+=fwrite(&params.data.cluster_hits, sizeof(int), 1, f_conf); 
+     i+=fwrite(&params.data.cluster_min_size, sizeof(double), 1, f_conf); 
 
-     fwrite(&params.data.seed, sizeof(int), 1, f_conf);
-     fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
+     i+=fwrite(&params.data.seed, sizeof(int), 1, f_conf);
+     i+=fwrite(&params.data.replica, sizeof(int), 1, f_conf); 
      
-     fwrite(&params.data.ncorr, sizeof(int), 1, f_conf); 
+     i+=fwrite(&params.data.ncorr, sizeof(int), 1, f_conf); 
      
       
-     fwrite(&params.data.size, sizeof(size_t), 1, f_conf); 
+     i+=fwrite(&params.data.size, sizeof(size_t), 1, f_conf); 
      
          
 }
@@ -343,7 +347,7 @@ void write_header_measuraments(FILE *f_conf, cluster::IO_params params ){
 template <typename T>
 void error_header(FILE *f_conf, T expected, const char *message){
      T read;
-     fread(&read, sizeof(T), 1, f_conf);
+     int i=fread(&read, sizeof(T), 1, f_conf);
      if (read != expected){
          cout <<"error:" << message << "   read=" << read << "  expected="<< expected << endl; 
 //         printf("error: %s read=%d   expected %d \n",message,rconf,iconf);
@@ -358,7 +362,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ){
      error_header(f_conf,params.data.L[3],"L3" ); 
 
      char string[100];
-     fread(&string, sizeof(char)*100, 1, f_conf); 
+     int i=fread(&string, sizeof(char)*100, 1, f_conf); 
      if (strcmp(params.data.formulation.c_str() ,string ) ){
          printf("error: formulation read=%s   expected %s \n",string,params.data.formulation.c_str());
          exit(2);
@@ -379,7 +383,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ){
      error_header(f_conf,params.data.cluster_min_size,"cluster_min_size" ); 
      int tmp;
      //error_header(f_conf,params.data.seed,"seed" ); 
-     fread(&tmp, sizeof(int), 1, f_conf);
+     i+=fread(&tmp, sizeof(int), 1, f_conf);
      for (int &s : seeds){
          if(s==tmp) {
              printf("error two replicas have the same seed\n"); exit(1);
@@ -387,7 +391,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ){
      }
     seeds.emplace_back(tmp);
      
-     fread(&tmp, sizeof(int), 1, f_conf);
+    i+=fread(&tmp, sizeof(int), 1, f_conf);
      for (int &s : replicas){
          if(s==tmp) {
              printf("error you select two identical replicas\n"); exit(1);
@@ -401,7 +405,7 @@ void check_header(FILE *f_conf, cluster::IO_params &params ){
      //error_header(f_conf,iconf,"iconf" ); 
      //error_header(f_conf,params.data.ncorr,"ncorr" ); 
      int ncorr;
-     fread(&ncorr, sizeof(int), 1, f_conf);
+     i+=fread(&ncorr, sizeof(int), 1, f_conf);
      if (ncorr > params.data.ncorr){
          cout <<"more correlators found, ignoring the extra:   read=" << ncorr << "  expected="<< params.data.ncorr << endl; 
      }
@@ -509,11 +513,12 @@ int main(int argc, char **argv){
    write_header_measuraments(outfile,params[0]);
    
    int iii;
+   int fi=0;
    for (int r=0 ;r < (argc-1);r++){
        double *data=(double*) malloc(sizeof(double)*(params[r].data.size));
        for(int iconf=0; iconf < confs[r];iconf++){
-           fread(&iii,sizeof(int),1,infiles[r]);
-           fread(data,sizeof(double),params[r].data.size, infiles[r]);
+           fi+=fread(&iii,sizeof(int),1,infiles[r]);
+           fi+=fread(data,sizeof(double),params[r].data.size, infiles[r]);
            fwrite(&iii,sizeof(int),1,outfile);
            if ( params[r].data.size == params[0].data.size ){
                fwrite(data,sizeof(double),params[0].data.size,outfile);

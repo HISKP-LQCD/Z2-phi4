@@ -104,7 +104,8 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
 
 
 
-void compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int iconf, complexphi &phip){
+//void compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int iconf, complexphi &phip){
+void compute_FT_complex(complexphi &phip, const Viewphi phi, cluster::IO_params params ,  int pow_n ){    
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     double norm0=sqrt(2*params.data.kappa0);
@@ -158,9 +159,10 @@ void compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int icon
             Kokkos::complex<double> ewr;
             ewr.real()=0; ewr.imag()=1;
             ewr=exp(- ewr*wr);
+            for (int n=0; n<pow_n;n++)
+                ewr*=phi(comp,i0);
             
-            
-            inner+=phi(comp,i0)*ewr;
+            inner+=ewr;
         }, phip(comp,xp) );
             
         
