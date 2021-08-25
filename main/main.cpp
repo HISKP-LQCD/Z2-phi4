@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
     }
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
-    if (params.data.save_config_FT == "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
+    if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
     
     std::string suffix ="_T" + std::to_string(params.data.L[0]) +
                         "_L" + std::to_string(params.data.L[1]) +
@@ -223,6 +223,8 @@ int main(int argc, char** argv) {
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
             #endif
+            if( params.data.checks == "yes")  Kokkos::deep_copy( h_mphip, mphip );
+                
             Kokkos::fence();   // ----------------------fence-------------------------------// 
             time = timer_FT.seconds();
             time_FT+=time;
@@ -246,7 +248,7 @@ int main(int argc, char** argv) {
             //parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
             //Kokkos::fence();    printf(" time mes : %g s \n",t1.seconds());
             //    Kokkos::Timer  t2;
-            parallel_measurement_complex(mphip, params, f_G2t, f_checks, ii);
+            parallel_measurement_complex(mphip, h_mphip, params, f_G2t, f_checks, ii);
             //Kokkos::fence();    printf(" time mes complex : %g s \n",t2.seconds());
 
 	    time = timer_2.seconds();

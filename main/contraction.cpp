@@ -92,7 +92,8 @@ int main(int argc, char** argv) {
     }
     
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
-    manyphi::HostMirror h_mphip=Kokkos::create_mirror_view( mphip ); 
+    manyphi::HostMirror h_mphip;
+    if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -215,6 +216,7 @@ int main(int argc, char** argv) {
                 compute_FT_complex(mphip, 2, phi,   params, 2);
                 compute_FT_complex(mphip, 3, phi,   params, 3);
                 
+                if (params.data.checks=="yes") Kokkos::deep_copy(h_mphip, mphip );   // ----------------------fence-------------------------------// 
                 
                 Kokkos::fence();
                 fclose(f_conf);
@@ -231,7 +233,7 @@ int main(int argc, char** argv) {
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
     //        parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
-            parallel_measurement_complex(mphip,  params,f_G2t, f_checks, ii);
+            parallel_measurement_complex(mphip, h_mphip,  params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;
 
