@@ -129,9 +129,13 @@ int main(int argc, char** argv) {
     
     complexphi cphi2p("complex_phi2p",2,params.data.L[0]*Vp/2);
     */
-    manyphi mphip("manyphi",4 ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
+    Npfileds=3;
+    if (params.data.checks== "yes"){
+        Npfileds++;
+    }
+    manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
-    if (params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
+    if (params.data.save_config_FT == "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
     
     std::string suffix ="_T" + std::to_string(params.data.L[0]) +
                         "_L" + std::to_string(params.data.L[1]) +
@@ -215,10 +219,6 @@ int main(int argc, char** argv) {
                 compute_FT_complex(mphip, 1, s_phi, params, 1 );
                 compute_FT_complex(mphip, 2, phi,   params, 2);
                 compute_FT_complex(mphip, 3, phi,   params, 3);
-                
-                if (params.data.checks== "yes"){
-                    Kokkos::deep_copy( h_mphip, mphip ); // deep_copy with two arguments is a fence
-                }
             #endif
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
@@ -252,7 +252,7 @@ int main(int argc, char** argv) {
 	    time = timer_2.seconds();
             time_mes+=time;
         }
-        /*
+        
         // write conf FT
         if(write_FT){
             Kokkos::Timer timer3;
@@ -266,27 +266,16 @@ int main(int argc, char** argv) {
             FILE *f_conf = fopen(conf_file.c_str(), "w+"); 
             if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     Kokkos::abort("opening file");   }
            
-            Kokkos::deep_copy( h_cphip, cphip );
-            write_conf_FT_complex(f_conf, layout_value,params , ii , h_cphip );
+            //Kokkos::deep_copy( h_cphip, cphip );
+            Kokkos::deep_copy( h_mphip, mphip );
+            write_conf_FT_complex(f_conf, layout_value,params , ii , h_mphip );
             
-            std::string s_conf_file = params.data.outpath + 
-            "/T" + std::to_string(params.data.L[0])     +  "_L" + std::to_string(params.data.L[1]) +
-            "_msq0" + std::to_string(params.data.msq0)  +  "_msq1" + std::to_string(params.data.msq1)+
-            "_l0" + std::to_string(params.data.lambdaC0)+  "_l1" + std::to_string(params.data.lambdaC1)+
-            "_mu" + std::to_string(params.data.muC)     +  "_g" + std::to_string(params.data.gC)  + 
-            "_rep" + std::to_string(params.data.replica) + 
-            "_smear_conf_FT" + std::to_string(ii);
-            FILE *f_s_conf = fopen(s_conf_file.c_str(), "w+"); 
-            if (f_s_conf == NULL) {  printf("Error opening file %s!\n", s_conf_file.c_str());     Kokkos::abort("opening file");   }
-            
-            Kokkos::deep_copy( h_s_cphip, s_cphip );
-            write_conf_FT_complex(f_s_conf, layout_value,params , ii , h_s_cphip );
             
             time = timer3.seconds();
-            fclose(f_s_conf);
+            fclose(f_conf);
             time_writing+=time;
         }
-        */
+        
         // write the configuration to disk
         
         if(write){
