@@ -20,7 +20,7 @@ void  parallel_measurement(Viewphi phip, Viewphi::HostMirror h_phip, cluster::IO
 void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE *f_G2t, FILE *f_checks, int iconf);
 
 void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf);
-void  compute_checks_complex(complexphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf);
+void  compute_checks_complex(manyphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf);
 
 
 void smearing_field( Viewphi &sphi,Viewphi &phi,  cluster::IO_params params);
