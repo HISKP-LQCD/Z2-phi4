@@ -761,8 +761,8 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
     auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
     auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
-    auto h_phip= Kokkos::subview( h_mphip, 0, Kokkos::ALL, Kokkos::ALL );
-    
+     
+        
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)=0;
@@ -1067,6 +1067,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     });
     
     if (params.data.checks== "yes"){
+        auto h_phip= Kokkos::subview( h_mphip, 0, Kokkos::ALL, Kokkos::ALL );
         compute_checks_complex( h_phip,   params,f_checks, iconf);
     }
     // Deep copy device views to host views.
