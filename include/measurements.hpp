@@ -16,7 +16,9 @@ void  compute_G2t(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *
 
 void  parallel_measurement(Viewphi phip, Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f_G2t, FILE *f_checks  , int iconf);
 //void  parallel_measurement_complex(complexphi phip, complexphi::HostMirror h_phip, complexphi s_phip,  cluster::IO_params params , FILE *f_G2t, FILE *f_checks  , int iconf);    
-void  parallel_measurement_complex(complexphi phip, complexphi::HostMirror h_phip, complexphi s_phip, complexphi phi2p,  cluster::IO_params params , FILE *f_G2t, FILE *f_checks  , int iconf);    
+// void  parallel_measurement_complex(complexphi phip, complexphi::HostMirror h_phip, complexphi s_phip, complexphi phi2p,  cluster::IO_params params , FILE *f_G2t, FILE *f_checks  , int iconf); 
+void  parallel_measurement_complex(manyphi mphip, cluster::IO_params params, FILE *f_G2t, FILE *f_checks, int iconf);
+
 void  compute_checks(Viewphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf);
 void  compute_checks_complex(complexphi::HostMirror h_phip, cluster::IO_params params , FILE *f , int iconf);
 

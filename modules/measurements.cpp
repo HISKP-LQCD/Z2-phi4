@@ -748,7 +748,8 @@ void smearing_field( Viewphi &sphi,Viewphi &phi, cluster::IO_params params){
     
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  parallel_measurement_complex(complexphi phip,  complexphi::HostMirror h_phip, complexphi s_phip,  complexphi phi2p,  cluster::IO_params params , FILE *f_G2t , FILE *f_checks, int iconf){
+//void  parallel_measurement_complex(complexphi phip,  complexphi::HostMirror h_phip, complexphi s_phip,  complexphi phi2p,  cluster::IO_params params , FILE *f_G2t , FILE *f_checks, int iconf){
+void  parallel_measurement_complex(manyphi mphip, cluster::IO_params params, FILE *f_G2t, FILE *f_checks, int iconf){
     int T=params.data.L[0];
     fwrite(&iconf,sizeof(int),1,f_G2t);        
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
@@ -756,6 +757,12 @@ void  parallel_measurement_complex(complexphi phip,  complexphi::HostMirror h_ph
     Kokkos::View<double**,Kokkos::LayoutLeft > to_write("to_write",  Ncorr,T );
     Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write ); 
     
+    auto phip  = Kokkos::subview( mphip, 0, Kokkos::ALL, Kokkos::ALL );
+    auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
+    auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
+    auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+    auto h_phip= Kokkos::create_mirror_view( phip );
+    Kokkos::deep_copy(h_phip,phip);
     
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 

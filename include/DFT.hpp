@@ -4,7 +4,7 @@
 void  compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi &phip);
 
 //void  compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int iconf, complexphi &phip);
-void compute_FT_complex(complexphi &phip, const Viewphi phi, cluster::IO_params params ,  int pow_n );
+void compute_FT_complex(manyphi &phip, int i, const Viewphi phi, cluster::IO_params params ,  int pow_n );
 
 #ifdef KOKKOS_ENABLE_CUDA
 #ifdef cuFFT

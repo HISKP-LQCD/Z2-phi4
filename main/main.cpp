@@ -117,6 +117,7 @@ int main(int argc, char** argv) {
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     }); 
+    /*
     Viewphi phip("phip",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
     
@@ -127,6 +128,10 @@ int main(int argc, char** argv) {
     complexphi::HostMirror h_s_cphip= Kokkos::create_mirror_view( s_cphip );
     
     complexphi cphi2p("complex_phi2p",2,params.data.L[0]*Vp/2);
+    */
+    manyphi mphip("manyphi",4 ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
+    manyphi::HostMirror h_mphip;
+    if (params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
     
     std::string suffix ="_T" + std::to_string(params.data.L[0]) +
                         "_L" + std::to_string(params.data.L[1]) +
@@ -206,24 +211,19 @@ int main(int argc, char** argv) {
             smearing_field( s_phi, phi, params);
                 
             #ifndef cuFFT   
-              //  Kokkos::Timer  t1;
-              //  compute_FT(phi, params ,   ii, phip);
-              //  if (params.data.checks== "yes")  Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
-              //  printf(" time FT : %g s \n",t1.seconds());
-              //  Kokkos::Timer  t2;
-                compute_FT_complex(cphip, phi, params ,   1);
-                compute_FT_complex(s_cphip, s_phi, params ,   1 );
-                compute_FT_complex(cphi2p, phi, params ,   2);
+                compute_FT_complex(mphip, 0, phi,   params, 1);
+                compute_FT_complex(mphip, 1, s_phi, params, 1 );
+                compute_FT_complex(mphip, 2, phi,   params, 2);
+                compute_FT_complex(mphip, 3, phi,   params, 3);
+                
                 if (params.data.checks== "yes"){
-                    Kokkos::deep_copy( h_cphip, cphip ); // deep_copy with two arguments is a fence
-                    //Kokkos::deep_copy( h_s_cphip, s_cphip ); // deep_copy with two arguments is a fence
+                    Kokkos::deep_copy( h_mphip, mphip ); // deep_copy with two arguments is a fence
                 }
-              //  printf(" time FT complex: %g s\n",t2.seconds());
-		Kokkos::fence();
             #endif
             #ifdef cuFFT   
             	compute_cuFFT(phi, params ,   ii, h_phip);
             #endif
+            Kokkos::fence();   // ----------------------fence-------------------------------// 
             time = timer_FT.seconds();
             time_FT+=time;
             nFT++;
@@ -246,12 +246,13 @@ int main(int argc, char** argv) {
             //parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
             //Kokkos::fence();    printf(" time mes : %g s \n",t1.seconds());
             //    Kokkos::Timer  t2;
-            parallel_measurement_complex(cphip,h_cphip,  s_cphip, cphi2p , params,f_G2t, f_checks, ii);
+            parallel_measurement_complex(mphip, params, f_G2t, f_checks, ii);
             //Kokkos::fence();    printf(" time mes complex : %g s \n",t2.seconds());
 
 	    time = timer_2.seconds();
             time_mes+=time;
         }
+        /*
         // write conf FT
         if(write_FT){
             Kokkos::Timer timer3;
@@ -285,6 +286,7 @@ int main(int argc, char** argv) {
             fclose(f_s_conf);
             time_writing+=time;
         }
+        */
         // write the configuration to disk
         
         if(write){

@@ -34,6 +34,7 @@ typedef Kokkos::View<double **>  Viewphi;
 typedef Kokkos::View<size_t **>  ViewLatt;
 
 typedef Kokkos::View<Kokkos::complex<double> **>  complexphi;
+typedef Kokkos::View<Kokkos::complex<double> ***>  manyphi;
 
 typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
 typedef typename RandPoolType::generator_type gen_type;

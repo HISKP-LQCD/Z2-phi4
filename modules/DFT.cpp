@@ -105,7 +105,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewp
 
 
 //void compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int iconf, complexphi &phip){
-void compute_FT_complex(complexphi &phip, const Viewphi phi, cluster::IO_params params ,  int pow_n ){    
+void compute_FT_complex(manyphi &phip, int i,  const Viewphi phi, cluster::IO_params params ,  int pow_n ){    
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     double norm0=sqrt(2*params.data.kappa0);
@@ -140,7 +140,7 @@ void compute_FT_complex(complexphi &phip, const Viewphi phi, cluster::IO_params 
         }
         #endif
         const int xp=t+T*(p);
-        phip(comp,xp)=0;
+        phip(i,comp,xp)=0;
         
         //	for (size_t x=0;x<Vs;x++){	
         Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, Kokkos::complex<double> &inner) {
@@ -163,11 +163,11 @@ void compute_FT_complex(complexphi &phip, const Viewphi phi, cluster::IO_params 
                 ewr*=phi(comp,i0);
             
             inner+=ewr;
-        }, phip(comp,xp) );
+        }, phip(i,comp,xp) );
             
         
         
-        phip(comp,xp)=phip(comp,xp)/((double) Vs *norm[comp]);
+        phip(i,comp,xp)=phip(i,comp,xp)/((double) Vs *norm[comp]);
         
     });
     
