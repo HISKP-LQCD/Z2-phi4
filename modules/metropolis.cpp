@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool  , ViewLatt hop, ViewLatt even_odd){
+double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool, ViewLatt even_odd){
                          //const double kappa, const double lambda, 
                          //const double delta, const size_t nb_of_hits){
   double mu=params.data.mu;
@@ -31,7 +31,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
       double lambda[2]={params.data.lambda0, params.data.lambda1};
       
       //getting a generator from the pool 
-      gen_type rgen = rand_pool.get_state();
+      gen_type rgen = rand_pool.get_state(xx);
       // computing phi^2 on x
       //auto phiSqr = phi[0][x]*phi[0][x] + phi[1][x]*phi[1][x];
 

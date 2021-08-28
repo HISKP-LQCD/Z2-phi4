@@ -81,21 +81,25 @@ int main(int argc, char** argv) {
     // Create a random number generator pool (64-bit states or 1024-bit state)
     // Both take an 64 bit unsigned integer seed to initialize a Random_XorShift generator 
     // which is used to fill the generators of the pool.
-    RandPoolType rand_pool(params.data.seed);
+    //RandPoolType rand_pool(params.data.seed);
+    RandPoolType rand_pool;
+    rand_pool.init(params.data.seed,V/2);
     //Kokkos::Random_XorShift1024_Pool<> rand_pool1024(5374857); 
     cout << "random pool initialised"<< endl;
+
+
     // we need a random generator on the host for the cluster
     // seed the PRNG (MT19937) for each  lattice size, with seed , CPU only
     std::mt19937_64 host_rand( params.data.seed );
     
     
   
-    
-    ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
-    ViewLatt    ipt("ipt",V,dim_spacetime);
-    
-    hopping( params.data.L, hop,even_odd,ipt);    
+    {
+        ViewLatt    hop("hop",V,2*dim_spacetime);
+        ViewLatt    ipt("ipt",V,dim_spacetime);
+        hopping( params.data.L, hop,even_odd,ipt);    
+    }
     cout << "hopping initialised"<< endl; 
         
     Viewphi  phi("phi",2,V);
@@ -109,11 +113,14 @@ int main(int argc, char** argv) {
     
     
     // Initialize phi on the device
-    Kokkos::parallel_for( "init_phi", V, KOKKOS_LAMBDA( size_t x) { 
+    Kokkos::parallel_for( "init_phi", V/2, KOKKOS_LAMBDA( size_t x) { 
         // get a random generatro from the pool
-        gen_type rgen = rand_pool.get_state();
+        gen_type rgen = rand_pool.get_state(x);
         phi(0,x)=(rgen.drand()*2.-1.);
         phi(1,x)=(rgen.drand()*2.-1.);
+
+        phi(0,x+V/2)=(rgen.drand()*2.-1.);
+        phi(1,x+V/2)=(rgen.drand()*2.-1.);
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     }); 
@@ -129,10 +136,10 @@ int main(int argc, char** argv) {
     
     complexphi cphi2p("complex_phi2p",2,params.data.L[0]*Vp/2);
     */
-    Npfileds=3;
-    if (params.data.checks== "yes"){
-        Npfileds++;
-    }
+    Npfileds=4;
+    //if (params.data.checks== "yes"){
+    //    Npfileds++;
+    //}
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
     if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
@@ -190,7 +197,7 @@ int main(int argc, char** argv) {
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++){
-           acc += metropolis_update(phi,params, rand_pool, hop, even_odd);
+           acc += metropolis_update(phi,params, rand_pool, even_odd);
         }
         acc/= (params.data.metropolis_global_hits);
         ave_acc += acc/((double) V);
