@@ -24,7 +24,7 @@ start_measure = 1
 total_measure = 3
 measure_every_X_updates = 1
 save_config = yes
-save_config_FT = yes
+save_config_FT = no
 compute_contractions = yes
 checks = yes
 
