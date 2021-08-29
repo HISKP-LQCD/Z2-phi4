@@ -86,10 +86,7 @@ int main(int argc, char** argv) {
     Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
     
        
-    Npfileds=3;
-    if (params.data.checks== "yes"){
-        Npfileds++;
-    }
+    Npfileds=4;
     
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;

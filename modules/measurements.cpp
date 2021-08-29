@@ -418,16 +418,16 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     Kokkos::View<double**,Kokkos::LayoutLeft > to_write("to_write",  Ncorr,T );
     Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write ); 
     
-    //auto phip  = Kokkos::subview( mphip, 0, Kokkos::ALL, Kokkos::ALL );
-//     auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
-//     auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
-//     auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
-     
+    auto phip  = Kokkos::subview( mphip, 0, Kokkos::ALL, Kokkos::ALL );
+    auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
+    auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
+    auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+    /* 
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phip( mphip, 0, Kokkos::ALL, Kokkos::ALL );
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip( mphip, 1, Kokkos::ALL, Kokkos::ALL );
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi2p( mphip, 2, Kokkos::ALL, Kokkos::ALL );
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p( mphip, 3, Kokkos::ALL, Kokkos::ALL );
-        
+      */  
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)=0;
