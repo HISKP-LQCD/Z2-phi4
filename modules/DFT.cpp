@@ -384,45 +384,44 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 	    }
 	    
 	    Kokkos::parallel_for( "cuFFT_to_Kokkos", Vp, KOKKOS_LAMBDA( size_t pp) {
-            int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
+                int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
 
-            int reim=pp%2;
-            int p=(pp-reim)/2;
-            const int px=p%Lp;
-            const int pz=p /(Lp*Lp);
-            const int py= (p- pz*Lp*Lp)/Lp;
-            int pcuff=(px+py*(L[1]/2 +1)+pz* (L[1]/2+1)*(L[2]));
-            int ip=t+pp*T;
-            double normFT[2]={Vs*sqrt(2*kappa0),Vs*sqrt(2*kappa1)}; 
-            if(reim==0)
-                Kphi(comp,ip)=odata[pcuff].x/normFT[comp];
-            else if(reim==1)
-                Kphi(comp,ip)=-odata[pcuff].y/normFT[comp];
+                int reim=pp%2;
+                int p=(pp-reim)/2;
+                const int px=p%Lp;
+                const int pz=p /(Lp*Lp);
+                const int py= (p- pz*Lp*Lp)/Lp;
+                int pcuff=(px+py*(L[1]/2 +1)+pz* (L[1]/2+1)*(L[2]));
+                int ip=t+pp*T;
+                double normFT[2]={Vs*sqrt(2*kappa0),Vs*sqrt(2*kappa1)}; 
+                if(reim==0)
+                    Kphi(comp,ip)=odata[pcuff].x/normFT[comp];
+                else if(reim==1)
+                    Kphi(comp,ip)=-odata[pcuff].y/normFT[comp];
                 #ifdef DEBUG
-                if(p!= px+py*Lp+pz*Lp*Lp)
-                    printf( "index problem if cuFFT  p=%d  !=  (%d,%d,%d)\n",p,px,py,pz);
-                if(pp!= reim+p*2)
-                    printf( "index problem if cuFFT  pp=%d  !=  %d+%d*2\n",pp,reim,p);
+                    if(p!= px+py*Lp+pz*Lp*Lp)
+                        printf( "index problem if cuFFT  p=%d  !=  (%d,%d,%d)\n",p,px,py,pz);
+                    if(pp!= reim+p*2)
+                        printf( "index problem if cuFFT  pp=%d  !=  %d+%d*2\n",pp,reim,p);
                 #endif
 	    });
 
 
 	    #ifdef DEBUG
-        Viewphi phip("phip",2,params.data.L[0]*Vp);
-        compute_FT(phi,params, iconf, phip);
-		Kokkos::parallel_for( "check_phi_cuFFT", Vp, KOKKOS_LAMBDA( size_t pp) {
-			int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
-            int reim=pp%2;
-			int p=(pp-reim)/2;
-			const int px=p%Lp;
-			const int pz=p /(Lp*Lp);
-			const int py= (p- pz*Lp*Lp)/Lp;
-			int pcuff=(px+py*(L[1]/2 +1)+pz* (L[1]/2+1)*(L[2]));
-			int ip=t+pp*T;
-			if (fabs(Kphi(0,ip)-phip(0,ip))>1e-6 )
-				printf("p=%d= (%d,%d,%d)  reim=%d pp=%ld ip=%d  t=%d pcuff=%d    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pp, ip,t,pcuff,Kphi(comp,ip) ,phip(comp,ip));
-
-		});
+                Viewphi phip("phip",2,params.data.L[0]*Vp);
+                compute_FT(phi,params, iconf, phip);
+                Kokkos::parallel_for( "check_phi_cuFFT", Vp, KOKKOS_LAMBDA( size_t pp) {
+                    int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
+                    int reim=pp%2;
+                    int p=(pp-reim)/2;
+		    const int px=p%Lp;
+		    const int pz=p /(Lp*Lp);
+		    const int py= (p- pz*Lp*Lp)/Lp;
+		    int pcuff=(px+py*(L[1]/2 +1)+pz* (L[1]/2+1)*(L[2]));
+		    int ip=t+pp*T;
+		    if (fabs(Kphi(0,ip)-phip(0,ip))>1e-6 )
+			printf("p=%d= (%d,%d,%d)  reim=%d pp=%ld ip=%d  t=%d pcuff=%d    cuFFT =%g DFT =%g\n", p,px,py,pz,reim, pp, ip,t,pcuff,Kphi(comp,ip) ,phip(comp,ip));
+	        });
 	    #endif
     }}
     /* Destroy the CUFFT plan. */
