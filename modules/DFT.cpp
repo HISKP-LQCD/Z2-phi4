@@ -384,6 +384,8 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 	    }
 	    
 	    Kokkos::parallel_for( "cuFFT_to_Kokkos", Vp, KOKKOS_LAMBDA( size_t pp) {
+            int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
+
             int reim=pp%2;
             int p=(pp-reim)/2;
             const int px=p%Lp;
@@ -409,7 +411,8 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
         Viewphi phip("phip",2,params.data.L[0]*Vp);
         compute_FT(phi,params, iconf, phip);
 		Kokkos::parallel_for( "check_phi_cuFFT", Vp, KOKKOS_LAMBDA( size_t pp) {
-			int reim=pp%2;
+			int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
+            int reim=pp%2;
 			int p=(pp-reim)/2;
 			const int px=p%Lp;
 			const int pz=p /(Lp*Lp);

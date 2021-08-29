@@ -7,6 +7,9 @@
 #include "lattice.hpp"
 #include <random>
 
+#ifdef DEBUG
+#include "geometry.hpp"
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool, ViewLatt even_odd){
@@ -21,6 +24,22 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
   double acc = .0;
   //auto &phi=*field; 
   
+  #ifdef DEBUG
+      static int init_hop=0;
+      ViewLatt    eo_debug;
+      ViewLatt    hop;
+      ViewLatt    ipt;
+      if (init_hop==0){        
+          ViewLatt    eo_debug("even_odd",2,V/2);
+          ViewLatt  tmp1("hop",V,2*dim_spacetime);
+          hop=tmp1;
+          ViewLatt    ipt("ipt",V,dim_spacetime);
+          hopping( params.data.L, hop,even_odd,ipt);    
+          init_hop=1;
+      } 
+      else init_hop=2;
+      int test=init_hop;
+  #endif
   
   for (int parity = 0; parity <2 ;parity ++){
   //for(int x=0; x< V; x++) {  
@@ -35,7 +54,7 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
       // computing phi^2 on x
       //auto phiSqr = phi[0][x]*phi[0][x] + phi[1][x]*phi[1][x];
 
-      // running over the four components, comp, of the phi field - Each 
+      // running over the two components, comp, of the phi field - Each 
       // component is updated individually with multiple hits
       for(size_t comp = 0; comp < 2; comp++){
         double phiSqr = phi(comp,x)*phi(comp,x);
@@ -68,17 +87,17 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
         neighbourSum += phi(comp, xp ) + phi(comp,xm );
 
         #ifdef DEBUG
-            double neighbourSum1=0;
-            for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
-                    neighbourSum1 += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
-            if(fabs(neighbourSum1 - neighbourSum)>1e-12) {
-                printf("error in computing the neighbourSum:\n");
-                printf("with hop:   %.12g   manually: %.12g\n",neighbourSum,neighbourSum1);
-                exit(1);
+            if(test==1){
+                double neighbourSum1=0;
+                for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
+                        neighbourSum1 += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
+                if(fabs(neighbourSum1 - neighbourSum)>1e-12) {
+                    printf("with hop:   %.12g   manually: %.12g\n",neighbourSum,neighbourSum1);
+                    Kokkos::abort("error in computing the neighbourSum:\n");
+                }
             }
         #endif
-        //for(size_t dir = 0; dir < dim_spacetime; dir++) // dir = direction
-        //    neighbourSum += phi(comp, hop(x,dir+dim_spacetime) ) + phi(comp, hop(x,dir) );
+        
         // doing the multihit
         for(size_t hit = 0; hit < nb_of_hits; hit++){
             double r[2];

@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
                 compute_FT_complex(mphip, 3, phi,   params, 3);
             #endif
             #ifdef cuFFT   
-            	compute_cuFFT(phi, params ,   ii, h_phip);
+            	//compute_cuFFT(phi, params ,   ii, h_phip);
             #endif
             if( params.data.checks == "yes")  Kokkos::deep_copy( h_mphip, mphip );
                 
