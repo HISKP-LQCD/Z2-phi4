@@ -5,12 +5,12 @@ check(){
 #cd ../../Ranalysis
 
 file=./data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0 
-ref=./data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0
+ref=./data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference
 
 Rscript  diff_mesuraments.R   $file $ref
 
 file=./data/checks_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0 
-ref=./data/checks_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0
+ref=./data/checks_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_reference
 
 Rscript  diff_mesuraments.R   $file $ref
 }

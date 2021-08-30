@@ -81,9 +81,11 @@ for (iconf in  c(1:header1$confs)){
 
 y<-"ok"
 for (iconf in  c(1:header$confs)){
+	   if(y=="error") break;
    for(t in c(1:header$L[1] ) ){
+	   if(y=="error") break;
     for (corr in  c(1:header$ncorr)){
-       if ( abs(d[corr, t, iconf] - d1[corr, t, iconf])> 1e-8 && y=="ok"){
+       if ( abs(d[corr, t, iconf] - d1[corr, t, iconf])> 1e-8 ){
         y<- "error"
         cat("error in cor=",corr, "  time=",t, "  conf=",iconf," diff=", abs(d[corr, t, iconf] - d1[corr, t, iconf]) ," ratio=",  d[corr, t, iconf] /d1[corr, t, iconf],"\n")
        }
