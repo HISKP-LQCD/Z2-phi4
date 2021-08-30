@@ -229,6 +229,8 @@ int main(int argc, char** argv) {
             #endif
             #ifdef cuFFT   
             	//compute_cuFFT(phi, params ,   ii, h_phip);
+                // fixme
+                Kokkos::abort("cuFFT not supported");
             #endif
             if( params.data.checks == "yes")  Kokkos::deep_copy( h_mphip, mphip );
                 
