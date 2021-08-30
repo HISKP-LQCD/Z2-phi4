@@ -415,8 +415,8 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     fwrite(&iconf,sizeof(int),1,f_G2t);        
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
     // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
-    Kokkos::View<double**,Kokkos::LayoutLeft > to_write("to_write",  Ncorr,T );
-    Kokkos::View<double**,Kokkos::LayoutLeft>::HostMirror h_write=  Kokkos::create_mirror_view( to_write ); 
+    Kokkos::View<double**,Kokkos::LayoutRight > to_write("to_write",  Ncorr,T );
+    Kokkos::View<double**,Kokkos::LayoutRight>::HostMirror h_write=  Kokkos::create_mirror_view( to_write ); 
     
     auto phip  = Kokkos::subview( mphip, 0, Kokkos::ALL, Kokkos::ALL );
     auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
@@ -726,6 +726,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
         }
          
         to_write(160,t)+= ( phi2p(0,t1)*phi2p(0,tpt1)).real();// phi2--> phi2 
+        
     }
     for(int c=0; c<Ncorr; c++) 
         to_write(c,t)/=((double) T);
@@ -736,7 +737,12 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     }
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_write, to_write ); 
-    fwrite(&h_write(0,0),sizeof(double),Ncorr*T,f_G2t);
+    Kokkos::View<double**,Kokkos::LayoutLeft >::HostMirror lh_write("lh_write",  Ncorr,T );
+    for(int c=0; c<Ncorr; c++)
+        for(int t=0; t<T; t++)
+            lh_write(c,t)=h_write(c,t);
+
+    fwrite(&lh_write(0,0),sizeof(double),Ncorr*T,f_G2t);
 }
  
 
