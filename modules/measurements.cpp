@@ -417,14 +417,26 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     Kokkos::View<double**,Kokkos::LayoutRight>::HostMirror h_write=  Kokkos::create_mirror_view( to_write ); 
     
     auto phip  = Kokkos::subview( mphip, 0, Kokkos::ALL, Kokkos::ALL );
-    auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
-    auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
-    auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+    //auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
+    //auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
+    //auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip;
+    if( params.data.smearing == "yes") {
+        Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp( mphip, 1, Kokkos::ALL, Kokkos::ALL );
+        s_phip=tmp;
+    }
+    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi2p;
+    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p;
+    if( params.data.FT_phin == "yes"){
+        Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp( mphip, 2, Kokkos::ALL, Kokkos::ALL );
+        phi2p=tmp;
+        Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp3( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+        phi3p=tmp3;
+    }
     /* 
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phip( mphip, 0, Kokkos::ALL, Kokkos::ALL );
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip( mphip, 1, Kokkos::ALL, Kokkos::ALL );
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi2p( mphip, 2, Kokkos::ALL, Kokkos::ALL );
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+    
       */  
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
@@ -701,29 +713,29 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(149,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[1] ) ).real();   //3phi0[pxyz] phi1[pxyz]  
             to_write(150,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[0] ) ).real();   //3phi0[pxyz] phi0[pxyz]  
                                         
-                                
-            to_write(151,t)+=(s_phip(0,t1) * s_phip(0,tpt1)).real(); // phi0-->phi0  smear-smear
-            to_write(152,t)+=(s_phip(0,t1) * phip(0,tpt1)).real();  
-            to_write(153,t)+=(s_phip(0,t1) * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1) ).real();  
-            to_write(154,t)+=(s_phip(0,t1) * phip(1,tpt1)).real();  
-            
-            to_write(155,t)+=(s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)*s_phip(0,tpt1) ).real();
-            
-            to_write(156,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)*s_phip(0,tpt1)*s_phip(0,tpt1) ).real();
-            to_write(157,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * phip(0,tpt1) ).real();
-            to_write(158,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1) ).real();
-            to_write(159,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * phip(1,tpt1) ).real();
-            
-            to_write(160,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)).real();// phi0^3-->phi0  smear-smear
-            
-            for(int i=0;i<3;i++){  // i = x,y,z
+            if( params.data.smearing == "yes"){                    
+                to_write(151,t)+=(s_phip(0,t1) * s_phip(0,tpt1)).real(); // phi0-->phi0  smear-smear
+                to_write(152,t)+=(s_phip(0,t1) * phip(0,tpt1)).real();  
+                to_write(153,t)+=(s_phip(0,t1) * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1) ).real();  
+                to_write(154,t)+=(s_phip(0,t1) * phip(1,tpt1)).real();  
+                
+                to_write(155,t)+=(s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)*s_phip(0,tpt1) ).real();
+                
+                to_write(156,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)*s_phip(0,tpt1)*s_phip(0,tpt1) ).real();
+                to_write(157,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * phip(0,tpt1) ).real();
+                to_write(158,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1) ).real();
+                to_write(159,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * phip(1,tpt1) ).real();
+                
+                to_write(160,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)).real();// phi0^3-->phi0  smear-smear
+                for(int i=0;i<3;i++){  // i = x,y,z
                 int t1_p =t1+(  p1[i])*T;   // 2,4 6    real part
                 int tpt1_p=tpt1+( p1[i])*T;   //2,4 6    real part
-                
                 to_write(161,t)+=(s_phip(0,t1_p) *  conj(s_phip(0,tpt1_p)) ).real();// phi0(p1)-->phi0(p1)  smear-smear
             }
-            
-            to_write(162,t)+= ( phi2p(0,t1)*phi2p(0,tpt1)).real();// phi2--> phi2 
+            }
+            if( params.data.FT_phin == "yes"){
+                to_write(162,t)+= ( phi2p(0,t1)*phi2p(0,tpt1)).real();// phi2--> phi2 
+            }
             
         }// end loop t1
         for(int c=0; c<Ncorr; c++) 
