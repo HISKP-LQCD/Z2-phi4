@@ -219,13 +219,16 @@ int main(int argc, char** argv) {
             Kokkos::Timer timer_FT;
             //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
             //h_phip=construct_h_phip;
-            smearing_field( s_phi, phi, params);
+            if( params.data.smearing == "yes") smearing_field( s_phi, phi, params);
                 
             #ifndef cuFFT   
                 compute_FT_complex(mphip, 0, phi,   params, 1);
-                compute_FT_complex(mphip, 1, s_phi, params, 1 );
-                compute_FT_complex(mphip, 2, phi,   params, 2);
-                compute_FT_complex(mphip, 3, phi,   params, 3);
+                if( params.data.smearing == "yes") 
+                    compute_FT_complex(mphip, 1, s_phi, params, 1 );
+                if( params.data.FT_phin == "yes"){
+                    compute_FT_complex(mphip, 2, phi,   params, 2);
+                    compute_FT_complex(mphip, 3, phi,   params, 3);
+                }
             #endif
             #ifdef cuFFT   
             	//compute_cuFFT(phi, params ,   ii, h_phip);
