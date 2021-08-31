@@ -743,10 +743,10 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     fwrite(&lh_write(0,0),sizeof(double),Ncorr*T,f_G2t);
 }
  
-
+#ifdef do_not_compile
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void  parallel_measurement_complex_case(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE *f_G2t, FILE *f_checks, int iconf){
+void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE *f_G2t, FILE *f_checks, int iconf){
     int T=params.data.L[0];
     fwrite(&iconf,sizeof(int),1,f_G2t);        
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
@@ -758,22 +758,21 @@ void  parallel_measurement_complex_case(manyphi mphip, manyphi::HostMirror h_mph
     auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
     auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
     auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
-    /* 
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phip( mphip, 0, Kokkos::ALL, Kokkos::ALL );
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip( mphip, 1, Kokkos::ALL, Kokkos::ALL );
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi2p( mphip, 2, Kokkos::ALL, Kokkos::ALL );
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p( mphip, 3, Kokkos::ALL, Kokkos::ALL );
-      */  
+     
+    // Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phip( mphip, 0, Kokkos::ALL, Kokkos::ALL );
+    // Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip( mphip, 1, Kokkos::ALL, Kokkos::ALL );
+    // Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi2p( mphip, 2, Kokkos::ALL, Kokkos::ALL );
+    // Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+        
     Kokkos::parallel_for( "measurement_t_loop",T*Ncorr, KOKKOS_LAMBDA( size_t tc) {
         int t=tc/Ncorr;
         int c=tc-t*Ncorr;
         
         to_write(c,t)=0;
         int cc=c;
-        if (c>=66 && c>=89 ) cc=66;
-        if (c>=95 && c<=112) cc=96;
-
-        
+        if (c>=66 && c<=89 ) cc=66;
+        if (c>=95 && c<=112) cc=95;
+        printf("c=%d   cc=%d   t=%d    tc=%d\n ",c,cc,t,tc);
             const int  p1[3]={1,Lp,Lp*Lp};
             const int  p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
             const int p111=1+Lp+Lp*Lp;
@@ -977,19 +976,22 @@ void  parallel_measurement_complex_case(manyphi mphip, manyphi::HostMirror h_mph
             */
 
             case 66:
-                if (c<75) 
+                if (c<75) {
                 for (int comp=0; comp< 3;comp++)
                     for(int i=0;i<3;i++)
-                    if(c==66+i+comp*3) to_write(66+i+comp*3,t)+=(o2p1[comp][i]*o2p1_t[comp][i]).real();  //two_to_two_o2p1o2p1 
-                else if(c>=75 && c<81)
+                        if(c==66+i+comp*3) to_write(66+i+comp*3,t)+=(o2p1[comp][i]*o2p1_t[comp][i]).real();  //two_to_two_o2p1o2p1 
+                }
+                else if(c>=75 && c<81){
                 for (int comp=0; comp< 2;comp++)
                     for(int i=0;i<3;i++)
-                    if(c==75+comp+i*2)  to_write(75+comp+i*2,t)+=(phi11[comp][i]*conj(phi11_t[comp][i])   ).real();//one_to_one_p11
+                        if(c==75+comp+i*2)  to_write(75+comp+i*2,t)+=(phi11[comp][i]*conj(phi11_t[comp][i])   ).real();//one_to_one_p11
                         ///+  conj(phi11[comp][i])*phi11_t[comp][i] no need to add the conj because we are taking the real part
-                else if(c>=81 && c<90)         
+                }
+                else if(c>=81 && c<90){         
                 for (int comp=0; comp< 3;comp++)
                     for(int i=0;i<3;i++)
                         if(c==81+i+comp*3) to_write(81+i+comp*3,t)+=(o2p11[comp][i]*o2p11_t[comp][i]).real() ;//two_to_two_o2p11o2p11
+                }
             break;    
             
                 
@@ -1002,14 +1004,16 @@ void  parallel_measurement_complex_case(manyphi mphip, manyphi::HostMirror h_mph
             case 94: to_write(94,t)+=(o2p111[2]*o2p111_t[2]).real();break;
 
             case 95:
-                if(c>=95 && c<104)  
+                if(c>=95 && c<104) {
                 for (int comp=0; comp< 3;comp++)
                     for(int i=0;i<3;i++)
                     if(c==95+i+comp*3) to_write(95+i+comp*3,t)+=(phip(comp%2,t1)* o2p1[comp][i]* phip(comp%2,tpt1) * o2p1_t[comp][i]).real();  //three_to_three_o3p1o3p1 
-                else if(c>=104 && c<113)      
+                }
+                else if(c>=104 && c<113)      {
                 for (int comp=0; comp< 3;comp++)
                     for(int i=0;i<3;i++)
                         if(c==104+i+comp*3) to_write(104+i+comp*3,t)+=(phip(comp%2,t1)*o2p11[comp][i]*  phip(comp%2,tpt1)*o2p11_t[comp][i]).real();//three_to_three_o3p11o3p11
+                }
             break;            
             case 113: to_write(113,t)+=(phip(0,t1)*o2p111[0]*phip(0,tpt1)*o2p111_t[0]).real();break;//three_to_three_o3p111o3p111
             case 114: to_write(114,t)+=(phip(1,t1)*o2p111[1]*phip(1,tpt1)*o2p111_t[1]).real();break;
@@ -1048,8 +1052,8 @@ void  parallel_measurement_complex_case(manyphi mphip, manyphi::HostMirror h_mph
             case 135: to_write(135,t)+=(phip(0,t1)* o2p1[0][2]    * conj(phi1_t[1][2] ) ).real(); break;  //3phi0 [px] --> phi1[px]
             
             case 136: to_write(136,t)+=(phip(0,t1)* o2p1[0][0]     * conj(phi1_t[0][0] ) ).real(); break;  //3phi0 [px] --> phi0[px]
-            case 137: to_write(136,t)+=(phip(0,t1)* o2p1[0][1]     * conj(phi1_t[0][1] ) ).real(); break;  //3phi0 [px] --> phi0[px]
-            case 138: to_write(136,t)+=(phip(0,t1)* o2p1[0][2]     * conj(phi1_t[0][2] ) ).real(); break;  //3phi0 [px] --> phi0[px]
+            case 137: to_write(137,t)+=(phip(0,t1)* o2p1[0][1]     * conj(phi1_t[0][1] ) ).real(); break;  //3phi0 [px] --> phi0[px]
+            case 138: to_write(138,t)+=(phip(0,t1)* o2p1[0][2]     * conj(phi1_t[0][2] ) ).real(); break;  //3phi0 [px] --> phi0[px]
                             
             case 139: to_write(139,t)+=(phi11[0][0]    * conj(phi11_t[1][0] ) ).real(); break; //phi0[pxy] phi1[pxy] 
             case 140: to_write(140,t)+=(phi11[0][1]    * conj(phi11_t[1][1] ) ).real(); break; //phi0[pxy] phi1[pxy] 
@@ -1109,7 +1113,7 @@ void  parallel_measurement_complex_case(manyphi mphip, manyphi::HostMirror h_mph
 
     fwrite(&lh_write(0,0),sizeof(double),Ncorr*T,f_G2t);
 }
-
+#endif
 void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params params , FILE *f , int iconf){
     int T=params.data.L[0];
     fwrite(&iconf,sizeof(int),1,f); 
