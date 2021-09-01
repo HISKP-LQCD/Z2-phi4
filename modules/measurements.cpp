@@ -410,7 +410,9 @@ void smearing_field( Viewphi &sphi,Viewphi &phi, cluster::IO_params params){
 ////////////////////////////////////////////////////////////////////////////////
 void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE *f_G2t, FILE *f_checks, int iconf){
     int T=params.data.L[0];
-    fwrite(&iconf,sizeof(int),1,f_G2t);        
+    fwrite(&iconf,sizeof(int),1,f_G2t);
+    bool smeared_contractions=  (params.data.smearing == "yes"); 
+    bool FT_phin_contractions=  (params.data.FT_phin == "yes");     
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
     // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
     Kokkos::View<double**,Kokkos::LayoutRight > to_write("to_write",  Ncorr,T );
@@ -421,13 +423,13 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     //auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
     //auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip;
-    if( params.data.smearing == "yes") {
+    if( smeared_contractions ) {
         Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp( mphip, 1, Kokkos::ALL, Kokkos::ALL );
         s_phip=tmp;
     }
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi2p;
     Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p;
-    if( params.data.FT_phin == "yes"){
+    if( FT_phin_contractions){
         Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp( mphip, 2, Kokkos::ALL, Kokkos::ALL );
         phi2p=tmp;
         Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp3( mphip, 3, Kokkos::ALL, Kokkos::ALL );
@@ -713,7 +715,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(149,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[1] ) ).real();   //3phi0[pxyz] phi1[pxyz]  
             to_write(150,t)+=(phip(0,t1)* o2p111[0]    * conj(phi111_t[0] ) ).real();   //3phi0[pxyz] phi0[pxyz]  
                                         
-            if( params.data.smearing == "yes"){                    
+            if( smeared_contractions){                    
                 to_write(151,t)+=(s_phip(0,t1) * s_phip(0,tpt1)).real(); // phi0-->phi0  smear-smear
                 to_write(152,t)+=(s_phip(0,t1) * phip(0,tpt1)).real();  
                 to_write(153,t)+=(s_phip(0,t1) * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1) ).real();  
@@ -728,14 +730,20 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 
                 to_write(160,t)+=(s_phip(0,t1)*s_phip(0,t1)*s_phip(0,t1) * s_phip(0,tpt1)).real();// phi0^3-->phi0  smear-smear
                 for(int i=0;i<3;i++){  // i = x,y,z
-                int t1_p =t1+(  p1[i])*T;   // 2,4 6    real part
-                int tpt1_p=tpt1+( p1[i])*T;   //2,4 6    real part
-                to_write(161,t)+=(s_phip(0,t1_p) *  conj(s_phip(0,tpt1_p)) ).real();// phi0(p1)-->phi0(p1)  smear-smear
+                    int t1_p =t1+(  p1[i])*T;   // 2,4 6    real part
+                    int tpt1_p=tpt1+( p1[i])*T;   //2,4 6    real part
+                    to_write(161,t)+=(s_phip(0,t1_p) *  conj(s_phip(0,tpt1_p)) ).real();// phi0(p1)-->phi0(p1)  smear-smear
+                }
             }
-            }
-            if( params.data.FT_phin == "yes"){
+            if( FT_phin_contractions){
                 to_write(162,t)+= ( phi2p(0,t1)*phi2p(0,tpt1)).real();// phi2--> phi2 
             }
+            // GEVP row:< (phi0^3 p-p A1)   O  >
+            to_write(163,t)+=(phip(0,t1)*A1[0]    * phip(1,tpt1)).real();   //phi0^3 p-p A1 --> phi0 
+            to_write(164,t)+=(phip(0,t1)*A1[0]    * phip(1,tpt1)).real();   //phi0^3 p-p A1 --> phi1 
+            to_write(165,t)+=(phip(0,t1)*A1[0]    * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)).real();  //phi0^3 p-p A1 --> phi0^3
+            
+            
             
         }// end loop t1
         for(int c=0; c<Ncorr; c++) 
@@ -777,31 +785,32 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     // Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi3p( mphip, 3, Kokkos::ALL, Kokkos::ALL );
         
     Kokkos::parallel_for( "measurement_t_loop",T*Ncorr, KOKKOS_LAMBDA( size_t tc) {
-        int t=tc/Ncorr;
-        int c=tc-t*Ncorr;
-        
+        //int t=tc/Ncorr;
+        //int c=tc-t*Ncorr;
+        int c=tc/T;
+        int t=tc-c*T;
+
         to_write(c,t)=0;
         int cc=c;
         if (c>=66 && c<=89 ) cc=66;
         if (c>=95 && c<=112) cc=95;
-        printf("c=%d   cc=%d   t=%d    tc=%d\n ",c,cc,t,tc);
-            const int  p1[3]={1,Lp,Lp*Lp};
-            const int  p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
-            const int p111=1+Lp+Lp*Lp;
-            Kokkos::complex<double> phi1[2][3]; //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
-            Kokkos::complex<double> phi11[2][3]; //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
-            Kokkos::complex<double> phi1_t[2][3];
-            Kokkos::complex<double> phi11_t[2][3];
-            Kokkos::complex<double> phi111[2]; //p=(1,1,1)
-            Kokkos::complex<double> phi111_t[2];
-            Kokkos::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
-            Kokkos::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
-            Kokkos::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
-            Kokkos::complex<double> E1[3],E1_t[3];
-            Kokkos::complex<double> E2[3],E2_t[3];
-            Kokkos::complex<double> o2p1[3][3],o2p1_t[3][3];
-            Kokkos::complex<double> o2p11[3][3],o2p11_t[3][3];
-            Kokkos::complex<double> o2p111[3],o2p111_t[3];
+        const int  p1[3]={1,Lp,Lp*Lp};
+        const int  p11[3]={1+Lp,Lp+Lp*Lp,1+Lp*Lp};// (1,1,0),(0,1,1),(1,0,1)
+        const int p111=1+Lp+Lp*Lp;
+        Kokkos::complex<double> phi1[2][3]; //phi[comp] [ P=(1,0,0),(0,1,0),(0,0,1)]
+        Kokkos::complex<double> phi11[2][3]; //phi[comp] [p=(1,1,0),(0,1,1),(1,0,1) ]
+        Kokkos::complex<double> phi1_t[2][3];
+        Kokkos::complex<double> phi11_t[2][3];
+        Kokkos::complex<double> phi111[2]; //p=(1,1,1)
+        Kokkos::complex<double> phi111_t[2];
+        Kokkos::complex<double> bb[3][3]; //back to back [00,11,01][x,y,z]
+        Kokkos::complex<double> bb_t[3][3]; //back to back [00,11,01][x,y,z]
+        Kokkos::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
+        Kokkos::complex<double> E1[3],E1_t[3];
+        Kokkos::complex<double> E2[3],E2_t[3];
+        Kokkos::complex<double> o2p1[3][3],o2p1_t[3][3];
+        Kokkos::complex<double> o2p11[3][3],o2p11_t[3][3];
+        Kokkos::complex<double> o2p111[3],o2p111_t[3];
         
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;

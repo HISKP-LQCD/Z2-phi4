@@ -173,6 +173,92 @@ void compute_FT_complex(manyphi &phip, int i,  const Viewphi phi, cluster::IO_pa
     
     
 }
+
+#ifdef SCRATCHPAD
+// not enough memory in kepler
+void compute_FT_scratchpad(manyphi &phip, int i,  const Viewphi phi, cluster::IO_params params ,  int pow_n ){    
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    double norm0=sqrt(2*params.data.kappa0);
+    double norm1=sqrt(2*params.data.kappa1);
+    int  L1=params.data.L[1], L2=params.data.L[2], L3=params.data.L[3];
+    
+    
+    typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+    typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    typedef Kokkos::View< double*,
+                        Kokkos::DefaultExecutionSpace::scratch_memory_space,
+                        Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+          ScratchViewType;
+    int scratch_size = ScratchViewType::shmem_size( Vs );
+
+    Kokkos::parallel_for( "FT_loop",
+     team_policy( T*Vp, Kokkos::AUTO).set_scratch_size(0,Kokkos::PerTeam(scratch_size)),
+      KOKKOS_LAMBDA ( const member_type &teamMember ) {
+        const int ii = teamMember.league_rank();
+        
+        double norm[2]={norm0,norm1};// need to be inside the loop for cuda<10
+        const int p=ii/(2*T);
+        int res=ii-p*2*T;
+        const int t=res/2;
+        const int comp=res-2*t;
+        
+        const int px=p%Lp;
+        const int pz=p /(Lp*Lp);
+        const int py= (p- pz*Lp*Lp)/Lp;
+        #ifdef DEBUG
+        if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);
+            Kokkos::abort("DFT index p");
+        }
+        if (ii!= comp+2*(t+T*(p))){ printf("error   in the FT\n");
+            Kokkos::abort("DFT index comp");
+        }
+        #endif
+        const int xp=t+T*(p);
+        phip(i,comp,xp)=0;
+
+        ScratchViewType s_x( teamMember.team_scratch( 0 ), scratch_size );
+        if ( teamMember.team_rank() == 0 ) {
+            Kokkos::parallel_for( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( size_t ix ) {
+            s_x( ix ) = phi( comp, ix );
+            });
+        }
+         teamMember.team_barrier();
+        //	for (size_t x=0;x<Vs;x++){	
+        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, Kokkos::complex<double> &inner) {
+            
+            size_t i0= x+t*Vs;
+            int ix=x%L1;
+            int iz=x /(L1*L2);
+            int iy=(x- iz*L1*L2)/L1;
+            #ifdef DEBUG
+            if (x!= ix+ iy*L1+iz*L1*L2){ 
+                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,L1,iz,L1,L2);
+                Kokkos::abort("DFT index x re");
+            }
+            #endif
+            double wr=6.28318530718 *( px*ix/(double (L1)) +    py*iy/(double (L2))   +pz*iz/(double (L3))   );
+            Kokkos::complex<double> ewr;
+            ewr.real()=0; ewr.imag()=1;
+            ewr=exp(- ewr*wr);
+            for (int n=0; n<pow_n;n++)
+                ewr*=s_x(i0);
+            
+            inner+=ewr;
+        }, phip(i,comp,xp) );
+            
+        
+        
+        phip(i,comp,xp)=phip(i,comp,xp)/((double) Vs *norm[comp]);
+        
+    });
+    
+#endif // SCRATCHPAD
+
+
+
+
+
 //#endif
 
 #ifdef DEBUG
