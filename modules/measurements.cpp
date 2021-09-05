@@ -1,4 +1,4 @@
-#define write_viewer_H 
+#define mesuraments_C 
 
 #include <Kokkos_Core.hpp>
 #include "lattice.hpp"
@@ -370,6 +370,10 @@ void smearing_field( Viewphi &sphi,Viewphi &phi, cluster::IO_params params){
     int L=params.data.L[3];
     int L2=params.data.L[3]* params.data.L[2];
     int L3=params.data.L[3]* params.data.L[2]*params.data.L[1];
+    if (params.data.L[3]!=params.data.L[2] || params.data.L[3]!=params.data.L[1]){
+                    Kokkos::abort("smearing for Lx!=Ly not implemented");
+    }
+        
     
     Kokkos::parallel_for( "smearing loop", V, KOKKOS_LAMBDA( size_t x ) { 
         //x=x3+ x2*L3+x1*L2*L3 + x0*L1*L2*L3  
@@ -394,10 +398,16 @@ void smearing_field( Viewphi &sphi,Viewphi &phi, cluster::IO_params params){
             for(int dx2=0;dx2<R;dx2++){
                 for(int dx1=0;dx1<R;dx1++){
                     w=exp(-rho *(dx3*dx3+dx2*dx2+dx1*dx1)); 
-                    int xp=ctolex((x3+dx3+L)%L, (x2+dx2+L)%L, (x1+dx1+L)%L, x0,  L, L2, L3);
+                    int xp=ctolex((x3+dx3)%L, (x2+dx2)%L, (x1+dx1)%L, x0,  L, L2, L3);
                     int xm=ctolex((x3-dx3+L)%L, (x2-dx2+L)%L, (x1-dx1+L)%L, x0,  L, L2, L3);
                     sphi(0,x) += w *(  phi(0,xp) + phi(0,xm) );
                     sphi(1,x) += w *(  phi(1,xp) + phi(1,xm) );
+                    #ifdef DEBUG
+                    if (xp!=(x3+dx3+L)%L+(x2+dx2+L)%L*L+(x1+dx1+L)%L*L2+x0*L3 ) { 
+                        printf("error   %ld   = %d  + %d  L+ %d L^2 + %d L^3\n",x,x3,x2,x1,x0);
+                        Kokkos::abort("DFT index p");
+                    }
+                    #endif
                 }
             }
         }
@@ -739,10 +749,17 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 to_write(162,t)+= ( phi2p(0,t1)*phi2p(0,tpt1)).real();// phi2--> phi2 
             }
             // GEVP row:< (phi0^3 p-p A1)   O  >
-            to_write(163,t)+=(phip(0,t1)*A1[0]    * phip(1,tpt1)).real();   //phi0^3 p-p A1 --> phi0 
+            to_write(163,t)+=(phip(0,t1)*A1[0]    * phip(0,tpt1)).real();   //phi0^3 p-p A1 --> phi0 
             to_write(164,t)+=(phip(0,t1)*A1[0]    * phip(1,tpt1)).real();   //phi0^3 p-p A1 --> phi1 
             to_write(165,t)+=(phip(0,t1)*A1[0]    * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)).real();  //phi0^3 p-p A1 --> phi0^3
             
+            // GEVP row:< (phi0^3 p1-A1)   O  >
+            for (int i=0; i<3;i++){
+                to_write(166,t)+=(phi1[0][i]*A1[0]    * conj(phi1_t[0][i]* A1_t[0]) ).real(); //phi0^3 p-p A1 --> phi0^3 p-p A1
+                to_write(167,t)+=(phi1[0][i]*A1[0]    * phip(0,tpt1)).real();   //phi0^3 p-p A1 --> phi0 
+                to_write(168,t)+=(phi1[0][i]*A1[0]    * phip(1,tpt1)).real();   //phi0^3 p-p A1 --> phi1 
+                to_write(169,t)+=(phi1[0][i]*A1[0]    * phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)).real();  //phi0^3 p-p A1 --> phi0^3
+            }
             
             
         }// end loop t1
