@@ -758,7 +758,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 to_write(166,t)+=(phi1[0][i]*A1[0]    * conj(phi1_t[0][i]* A1_t[0]) ).real(); //phi0^3 p1 A1 --> phi0^3 p1 A1
                 to_write(167,t)+=(phi1[0][i]*A1[0]    * conj(phi1_t[0][i])).real();   //phi0^3 p1 A1 --> phi0 p1
                 to_write(168,t)+=(phi1[0][i]*A1[0]    * conj(phi1_t[1][i])).real();   //phi0^3 p1 A1 --> phi1 p1
-                to_write(169,t)+=(phi1[0][i]*A1[0]    * phip(0,t1)* o2p1_t[0][i]     ).real(); //o2p1_t //phi0^3 p1 A1 --> phi0^3 p1
+                to_write(169,t)+=(phi1[0][i]*A1[0]    * conj(phip(0,tpt1))* o2p1_t[0][i]     ).real(); //o2p1_t //phi0^3 p1 A1 --> phi0^3 p1
             }
             
             
