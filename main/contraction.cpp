@@ -85,13 +85,12 @@ int main(int argc, char** argv) {
     Viewphi phip("phip",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
     
-    complexphi cphip("complex_phip",2,params.data.L[0]*Vp/2);
-    complexphi::HostMirror h_cphip= Kokkos::create_mirror_view( cphip );
+       
+    Npfileds=4;
     
-    complexphi s_cphip("complex_phip",2,params.data.L[0]*Vp/2);
-    complexphi::HostMirror h_s_cphip= Kokkos::create_mirror_view( cphip );
-    complexphi cphi2p("complex_phi2p",2,params.data.L[0]*Vp/2);
-    
+    manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
+    manyphi::HostMirror h_mphip;
+    if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);
@@ -181,28 +180,10 @@ int main(int argc, char** argv) {
                     Kokkos::abort("opening file");
                 }
                 //read_conf_FT(f_conf, layout_value, params , ii , phip ); 
-                read_conf_FT_complex(f_conf, layout_value, params , ii , cphip );
-                Kokkos::deep_copy(h_cphip, cphip);   // ----------------------fence-------------------------------// 
+                read_conf_FT_complex(f_conf, layout_value, params , ii , h_mphip );
+                Kokkos::deep_copy(mphip, h_mphip);   // ----------------------fence-------------------------------// 
                 fclose(f_conf);
                 
-                std::string s_conf_file = params.data.outpath + 
-                "/T" + std::to_string(params.data.L[0]) +
-                "_L" + std::to_string(params.data.L[1]) +
-                "_msq0" + std::to_string(params.data.msq0)  +   "_msq1" + std::to_string(params.data.msq1)+
-                "_l0" + std::to_string(params.data.lambdaC0)+     "_l1" + std::to_string(params.data.lambdaC1)+
-                "_mu" + std::to_string(params.data.muC)   + "_g" + std::to_string(params.data.gC)  + 
-                "_rep" + std::to_string(params.data.replica) + 
-                "_conf_FT" + std::to_string(ii);
-                FILE *f_s_conf = fopen(s_conf_file.c_str(), "r"); 
-                if (f_s_conf == NULL) {
-                    printf("Error opening file %s!\n", s_conf_file.c_str());
-                    Kokkos::abort("opening file");
-                }
-                
-                read_conf_FT_complex(f_s_conf, layout_value, params , ii , s_cphip );
-                Kokkos::deep_copy(h_s_cphip, s_cphip);   // ----------------------fence-------------------------------// 
-                
-                fclose(f_s_conf);
                 
                 time = timer3.seconds();
                 time_writing+=time;
@@ -224,15 +205,20 @@ int main(int argc, char** argv) {
                     exit(1);
                 }
                 read_viewer(f_conf, layout_value, params , ii , phi ); 
+                
                 smearing_field( s_phi, phi, params);
                 
-                //compute_FT(phi, params ,   ii, phip);
-                compute_FT_complex(cphip, phi, params ,   1);
-                compute_FT_complex(s_cphip, s_phi, params ,   1 );
-                compute_FT_complex(cphi2p, phi, params ,   2);
+                compute_FT_complex(mphip, 0, phi,   params, 1);
+                if( params.data.smearing == "yes") 
+                    compute_FT_complex(mphip, 1, s_phi, params, 1 );
+                if( params.data.FT_phin == "yes"){
+                    compute_FT_complex(mphip, 2, phi,   params, 2);
+                    compute_FT_complex(mphip, 3, phi,   params, 3);
+                }
                 
-                Kokkos::deep_copy(h_cphip, cphip);   // ----------------------fence-------------------------------// 
-
+                if (params.data.checks=="yes") Kokkos::deep_copy(h_mphip, mphip );   // ----------------------fence-------------------------------// 
+                
+                Kokkos::fence();
                 fclose(f_conf);
                 time = timer3.seconds();
                 time_writing+=time;
@@ -247,7 +233,7 @@ int main(int argc, char** argv) {
             
             //compute_G2t( h_phip,   params,f_G2t, ii);
     //        parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
-            parallel_measurement_complex(cphip,h_cphip, s_cphip , cphi2p , params,f_G2t, f_checks, ii);
+            parallel_measurement_complex(mphip, h_mphip,  params,f_G2t, f_checks, ii);
             time = timer_2.seconds();
             time_mes+=time;
 
