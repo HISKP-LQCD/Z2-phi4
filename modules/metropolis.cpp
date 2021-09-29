@@ -2,10 +2,8 @@
 
 #include <math.h>
 #include "updates.hpp"
-#include "random.hpp"
 #include "IO_params.hpp"
 #include "lattice.hpp"
-#include <random>
 
 #ifdef DEBUG
 #include "geometry.hpp"

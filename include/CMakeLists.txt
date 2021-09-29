@@ -34,6 +34,7 @@ elseif(CUFFT)
     target_link_libraries(DFT  PUBLIC cufft)
 ENDIF()
 target_link_libraries_kokkos(DFT)
+
 #add_library(
 #    lattice STATIC
 #    lattice.hpp
@@ -49,8 +50,8 @@ add_library(
     ../modules/mutils.cpp
 ) 
 
-#target_include_directories(mutils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries_kokkos(mutils)
+target_include_directories(mutils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+#target_link_libraries_kokkos(mutils)
 
 add_library(
     random STATIC
@@ -58,8 +59,8 @@ add_library(
     ../modules/ranlxd.cpp
 ) 
 set_target_properties(random PROPERTIES LINKER_LANGUAGE CXX)
-#target_include_directories(random PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries_kokkos(random)
+target_include_directories(random PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+#target_link_libraries_kokkos(random)
 
 add_library(
     utils STATIC
@@ -88,8 +89,8 @@ add_library(
     IO_params.hpp
 ) 
 set_target_properties(IO_params PROPERTIES LINKER_LANGUAGE CXX)
-#target_include_directories(IO_params PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries_kokkos(IO_params)
+target_include_directories(IO_params PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+#target_link_libraries_kokkos(IO_params)
 
 
 add_library(

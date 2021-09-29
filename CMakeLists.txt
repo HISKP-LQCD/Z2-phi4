@@ -5,7 +5,6 @@ project(Z2-phi4  CXX)
 # full path of g++  otherwise it does not work
 #set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
-#set(CMAKE_CXX_FLAGS "-fopenmp   -pedantic -g   -lm -lgmp -lfftw3 ")
 #set(CMAKE_CXX_FLAGS "-fopenmp   -pedantic  -g -O0 -pg -no-pie  -lm -lgmp -lfftw3 ")
 #-g # then compile , then open gdb, write the commands : file $namefile; run  $options ; bt
 # valgrind --leak-check=yes --track-origins=yes  ./program   #compile with -g to have line number
@@ -51,13 +50,8 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/external/kokkos" "external/kokkos")
 #add_subdirectory(${PROJECT_SOURCE_DIR}/external/HighFive)
 
 
-#include_directories(include)
 add_subdirectory(include  include)
-#include_directories(${CMAKE_SOURCE_DIR}/include)
 
-
-
-include_directories(${CMAKE_SOURCE_DIR}/include)
 
 
 ######################### git version ################
@@ -89,14 +83,14 @@ macro(add_target_with_lib TARGETNAME)
   target_link_libraries(${TARGETNAME} PUBLIC utils)
   target_link_libraries(${TARGETNAME} PUBLIC updates)
   target_link_libraries(${TARGETNAME} PUBLIC geometry)
-  target_link_libraries(${TARGETNAME} PUBLIC random)
+  #target_link_libraries(${TARGETNAME} PUBLIC random)
   target_link_libraries(${TARGETNAME} PUBLIC write_viewer)
   target_link_libraries(${TARGETNAME} PUBLIC measurements)
   target_link_libraries(${TARGETNAME} PUBLIC DFT)
 
 #  target_link_libraries(${TARGETNAME} PUBLIC HighFive)
-  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
-  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_BINARY_DIR}/include")
+#  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+#  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_BINARY_DIR}/include")
     
   target_compile_definitions(${TARGETNAME} PRIVATE
     "-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
