@@ -28,14 +28,14 @@ double *compute_magnetisations( Viewphi phi,  cluster::IO_params params){
   size_t V=params.data.V; //you can not use params.data.X  on the device
   double *mr=(double*) calloc(2,sizeof(double));
 
-  for (int comp=0; comp<2;comp++){
+  for (int comp=0; comp<1;comp++){
       Kokkos::parallel_reduce( "magnetization", V, KOKKOS_LAMBDA ( const size_t x, double &inner ) {
            inner+=sqrt(phi(comp,x)*phi(comp,x));
        }, mr[comp] );
   }
 
   mr[0]*=sqrt(2*params.data.kappa0)/((double)params.data.V);
-  mr[1]*=sqrt(2*params.data.kappa1)/((double)params.data.V);
+  //mr[1]*=sqrt(2*params.data.kappa1)/((double)params.data.V);
   
   return mr;
 }
@@ -391,7 +391,7 @@ void smearing_field( Viewphi &sphi,Viewphi &phi, cluster::IO_params params){
         #endif
         
         sphi(0,x) = -phi(0,x);
-        sphi(1,x) = -phi(1,x);
+        sphi(1,x) = -phi(0,x);
         double w;
         
         for(int dx3=0;dx3<R;dx3++){
@@ -401,7 +401,7 @@ void smearing_field( Viewphi &sphi,Viewphi &phi, cluster::IO_params params){
                     int xp=ctolex((x3+dx3)%L, (x2+dx2)%L, (x1+dx1)%L, x0,  L, L2, L3);
                     int xm=ctolex((x3-dx3+L)%L, (x2-dx2+L)%L, (x1-dx1+L)%L, x0,  L, L2, L3);
                     sphi(0,x) += w *(  phi(0,xp) + phi(0,xm) );
-                    sphi(1,x) += w *(  phi(1,xp) + phi(1,xm) );
+                    sphi(1,x) += w *(  phi(0,xp) + phi(0,xm) );
                     #ifdef DEBUG
                     if (xp!=(x3+dx3+L)%L+(x2+dx2+L)%L*L+(x1+dx1+L)%L*L2+x0*L3 ) { 
                         printf("error   %ld   = %d  + %d  L+ %d L^2 + %d L^3\n",x,x3,x2,x1,x0);

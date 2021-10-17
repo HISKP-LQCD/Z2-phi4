@@ -61,27 +61,27 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
       size_t xm=x+( -xp+ (xp+params.data.L[0]- 1)%params.data.L[0]  )*( params.data.L[3]* params.data.L[2]*params.data.L[1]);
       xp=x+(- xp+  (xp+1)%params.data.L[0]) *( params.data.L[3]* params.data.L[2]*params.data.L[1]) ;
       neighbourSum[0] += phi(0, xp ) + phi(0,xm );
-      neighbourSum[1] += phi(1, xp ) + phi(1,xm );
+//       neighbourSum[1] += phi(1, xp ) + phi(1,xm );
       // direction 1
       xp=(x %(params.data.L[3]* params.data.L[2]*params.data.L[1])) / (params.data.L[3]* params.data.L[2] );
       xm=x+( -xp+ (xp+params.data.L[1]- 1)%params.data.L[1]  )*( params.data.L[3]* params.data.L[2]);
       xp=x+(- xp+  (xp+1)%params.data.L[1]) *( params.data.L[3]* params.data.L[2]) ;
       neighbourSum[0] += phi(0, xp ) + phi(0,xm );
-      neighbourSum[1] += phi(1, xp ) + phi(1,xm );
+//       neighbourSum[1] += phi(1, xp ) + phi(1,xm );
       
       // direction 3
       xp=(x %(params.data.L[3]));
       xm=x+( -xp+ (xp+params.data.L[3]- 1)%params.data.L[3]  );
       xp=x+(- xp+  (xp+1)%params.data.L[3])  ;
       neighbourSum[0] += phi(0, xp ) + phi(0,xm );
-      neighbourSum[1] += phi(1, xp ) + phi(1,xm );
+//       neighbourSum[1] += phi(1, xp ) + phi(1,xm );
       
       // direction 2
       xp=(x %(params.data.L[3]*params.data.L[2]  ))/params.data.L[3];
       xm=x+( -xp+ (xp+params.data.L[2]- 1)%params.data.L[2]  )*params.data.L[3];
       xp=x+(- xp+  (xp+1)%params.data.L[2]) *params.data.L[3] ;
       neighbourSum[0] += phi(0, xp ) + phi(0,xm );
-      neighbourSum[1] += phi(1, xp ) + phi(1,xm );
+//       neighbourSum[1] += phi(1, xp ) + phi(1,xm );
       
 
       #ifdef DEBUG
@@ -89,24 +89,24 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
               double neighbourSum1[2]={0, 0};
               for(size_t dir = 0; dir < dim_spacetime; dir++){ // dir = direction
                       neighbourSum1[0] += phi(0, hop(x,dir+dim_spacetime) ) + phi(0, hop(x,dir) );
-                      neighbourSum1[1] += phi(1, hop(x,dir+dim_spacetime) ) + phi(1, hop(x,dir) );
+//                       neighbourSum1[1] += phi(1, hop(x,dir+dim_spacetime) ) + phi(1, hop(x,dir) );
               }
               if(fabs(neighbourSum1[0] - neighbourSum[0])>1e-12
-                 || fabs(neighbourSum1[1] - neighbourSum[1])>1e-12) {
+                 /*|| fabs(neighbourSum1[1] - neighbourSum[1])>1e-12*/) {
                   printf("comp 0 with hop:   %.12g   manually: %.12g\n",neighbourSum[0],neighbourSum1[0]);
-                  printf("comp 1 with hop:   %.12g   manually: %.12g\n",neighbourSum[0],neighbourSum1[0]);
+//                   printf("comp 1 with hop:   %.12g   manually: %.12g\n",neighbourSum[1],neighbourSum1[1]);
                   Kokkos::abort("error in computing the neighbourSum:\n");
               }
           }
       #endif
       // running over the two components, comp, of the phi field - Each 
       // component is updated individually with multiple hits
-      for(size_t comp = 0; comp < 2; comp++){
+      for(size_t comp = 0; comp < 1; comp++){
           double phiSqr = phi(comp,x)*phi(comp,x);
 
           // The other component 
-          int comp_n=(comp+1)%2;
-          double phi_n = phi(comp_n,x);
+          //int comp_n=(comp+1)%2;
+          //double phi_n = phi(comp_n,x);
           // doing the multihit
           for(size_t hit = 0; hit < nb_of_hits; hit++){
             
@@ -119,10 +119,10 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
                      deltaPhideltaPhi*(1. - 2.*lambda[comp]*(1. )) +
                      lambda[comp]*(6.*deltaPhiPhi*deltaPhiPhi + deltaPhideltaPhi*deltaPhideltaPhi);
            
-              dS+= mu *phi_n * phi_n *( 2.* deltaPhiPhi + deltaPhideltaPhi       ) ;
+              //dS+= mu *phi_n * phi_n *( 2.* deltaPhiPhi + deltaPhideltaPhi       ) ;
             
-              dS+= comp * g * phi_n * phi_n * phi_n * deltaPhi;  //component 1
-              dS+= comp_n * g * deltaPhi * phi_n *( deltaPhideltaPhi + 3. * phiSqr + 3 * phi(comp,x) * deltaPhi  );   //component 0
+              //dS+= comp * g * phi_n * phi_n * phi_n * deltaPhi;  //component 1
+              //dS+= comp_n * g * deltaPhi * phi_n *( deltaPhideltaPhi + 3. * phiSqr + 3 * phi(comp,x) * deltaPhi  );   //component 0
 
             
                //  accept reject step -------------------------------------

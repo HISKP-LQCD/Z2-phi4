@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     // which is used to fill the generators of the pool.
     //RandPoolType rand_pool(params.data.seed);
     RandPoolType rand_pool;
-    rand_pool.init(params.data.seed,V/2);
+    rand_pool.init(params.data.seed,V);
     //Kokkos::Random_XorShift1024_Pool<> rand_pool1024(5374857); 
     cout << "random pool initialised"<< endl;
 
@@ -102,8 +102,27 @@ int main(int argc, char** argv) {
     }
     cout << "hopping initialised"<< endl; 
         
-    Viewphi  phi("phi",2,V);
-    Viewphi  s_phi("s_phi",2,V);
+    Viewphi  phi;
+    if( params.data.metropolis_local_hits > 0){
+        Viewphi construct_phi("phi",1,V);
+        phi=construct_phi;
+    }
+    else if( params.data.Langevin3rd_steps > 0){
+        Viewphi construct_phi("phi",3,V);
+        phi=construct_phi;
+    }
+    else if( params.data.Langevin_steps > 0){
+        Viewphi construct_phi("phi",1,V);
+        phi=construct_phi;
+    }
+    
+    
+    
+    Viewphi  s_phi;
+    if( params.data.smearing == "yes") {
+        Viewphi construct_s_phi("s_phi",1,V);
+        s_phi=construct_s_phi;
+    }
     #ifdef DEBUG
     test_FT(params);
     #ifdef FFTW
@@ -117,10 +136,10 @@ int main(int argc, char** argv) {
         // get a random generatro from the pool
         gen_type rgen = rand_pool.get_state(x);
         phi(0,x)=(rgen.drand()*2.-1.);
-        phi(1,x)=(rgen.drand()*2.-1.);
+        //phi(1,x)=(rgen.drand()*2.-1.);
 
         phi(0,x+V/2)=(rgen.drand()*2.-1.);
-        phi(1,x+V/2)=(rgen.drand()*2.-1.);
+        //phi(1,x+V/2)=(rgen.drand()*2.-1.);
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     }); 
@@ -194,13 +213,24 @@ int main(int argc, char** argv) {
         time = timer1.seconds();
         //printf("time cluster (%g  s)   size=%g\n",time,cluster_size);
       
+        
         // metropolis update
         double acc = 0.0;
         for(int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits;         global_metro_hits++){
-           acc += metropolis_update(phi,params, rand_pool, even_odd);
+            acc += metropolis_update(phi,params, rand_pool, even_odd);
         }
         acc/= (params.data.metropolis_global_hits);
         ave_acc += acc/((double) V);
+        //Langevin3rd
+        for(int steps = 0; steps < params.data.Langevin3rd_steps;   steps++){
+            Langevin3rd_euler(phi,params,  rand_pool );
+        }
+        for(int steps = 0; steps < params.data.Langevin_steps;   steps++){
+            Langevin_euler(phi,params,  rand_pool );
+        }
+
+        
+        
        // cout << "Metropolis.acc=" << acc/V << endl ;
 
         // Calculate time of Metropolis update
@@ -221,7 +251,7 @@ int main(int argc, char** argv) {
             //h_phip=construct_h_phip;
             if( params.data.smearing == "yes") smearing_field( s_phi, phi, params);
                 
-            #ifndef cuFFT   
+            #ifndef cuFFT  
                 compute_FT_complex(mphip, 0, phi,   params, 1);
                 if( params.data.smearing == "yes") 
                     compute_FT_complex(mphip, 1, s_phi, params, 1 );

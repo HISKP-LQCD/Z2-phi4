@@ -160,7 +160,7 @@ void compute_FT_complex(manyphi &phip, int i,  const Viewphi phi, cluster::IO_pa
             ewr.real()=0; ewr.imag()=1;
             ewr=exp(- ewr*wr);
             for (int n=0; n<pow_n;n++)
-                ewr*=phi(comp,i0);
+                ewr*=phi(0,i0);//phi(comp,i0);
             
             inner+=ewr;
         }, phip(i,comp,xp) );

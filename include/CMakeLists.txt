@@ -8,6 +8,7 @@ add_library(
     updates.hpp
     ../modules/metropolis.cpp
     ../modules/cluster.cpp
+    ../modules/Langevin3rd.cpp
 ) 
 set_target_properties(updates PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries_kokkos(updates )
