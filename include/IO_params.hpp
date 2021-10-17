@@ -40,6 +40,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   int Langevin3rd_steps;
   double Langevin3rd_eps;
   double Langevin3rd_gamma;
+  double Langevin3rd_xi;
   //Langevin
   int Langevin_steps;
   double Langevin_eps;
@@ -455,6 +456,7 @@ private:
     read_par_int(newfile, "Langevin3rd_steps", data.Langevin3rd_steps);
     read_par_double(newfile, "Langevin3rd_eps", data.Langevin3rd_eps);
     read_par_double(newfile, "Langevin3rd_gamma", data.Langevin3rd_gamma);
+    read_par_double(newfile, "Langevin3rd_xi", data.Langevin3rd_xi);
     // Langevin
     read_par_int(newfile, "Langevin_steps", data.Langevin_steps);
     read_par_double(newfile, "Langevin_eps", data.Langevin_eps);

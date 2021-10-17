@@ -61,19 +61,19 @@ void Langevin3rd_euler(Viewphi &phi, cluster::IO_params params, RandPoolType &ra
         
         gen_type rgen = rand_pool.get_state(x);
         
+        // mom update
+        tmp(2,x)=phi(2,x) +c1 * phi(1,x);
+        tmp(2,x)+=gauss_rand( 0,  c2, rgen.drand(), rgen.drand());
+        
+        
         // partial_t phi=pi
         tmp(0,x)=phi(0,x)+ params.data.Langevin3rd_eps * phi(1,x);
         // partial_t pi=rho
         tmp(1,x)=phi(1,x)+ params.data.Langevin3rd_eps * phi(2,x);
         
         // partial_t phi= - F -\gamma pi + sqrt(2*gamma*eps) *eta
-        tmp(2,x)=phi(2,x);
-
         tmp(2,x)-=params.data.Langevin3rd_eps*force(params ,phi,  x);
-        tmp(2,x)+=c1 * phi(1,x);
-        // noise
-        //rgen.drand()= number in flat distribution [0,1)
-        tmp(2,x)+=gauss_rand( 0,  c2, rgen.drand(), rgen.drand());
+        
         
        
         
@@ -87,6 +87,38 @@ void Langevin3rd_euler(Viewphi &phi, cluster::IO_params params, RandPoolType &ra
 }
 
 
+
+void Langevin3rd_paper_euler(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool){
+    size_t V=params.data.V;
+    Viewphi tmp("tmp_field", 3,V);
+    double gamma=params.data.Langevin3rd_gamma;
+    double xi= params.data.Langevin3rd_gamma;
+    double eps=params.data.Langevin3rd_eps;
+        
+    Kokkos::parallel_for( "lattice Langevin3d loop", V, KOKKOS_LAMBDA( size_t x ) {    
+        
+        gen_type rgen = rand_pool.get_state(x);
+        
+        // mom update
+        double eta=gauss_rand( 0,  sqrt(2*xi), rgen.drand(), rgen.drand());
+        
+        
+        // partial_t phi=pi
+        tmp(0,x)=phi(0,x)+ eps * phi(1,x);
+        // partial_t pi=
+        tmp(1,x)=phi(1,x)+eps*(-force(params ,phi,  x) + gamma * phi(2,x) );
+        
+        // partial_t rho= 
+        tmp(2,x)=phi(2,x) - eps * (gamma* phi(1,x) +xi*phi(2,x) +eta);
+        
+        rand_pool.free_state(rgen);
+    });
+    Kokkos::deep_copy(phi,tmp);
+    
+    
+    
+    
+}
 
 void Langevin_euler(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool){
     size_t V=params.data.V;

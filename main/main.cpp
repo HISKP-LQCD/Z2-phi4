@@ -223,7 +223,7 @@ int main(int argc, char** argv) {
         ave_acc += acc/((double) V);
         //Langevin3rd
         for(int steps = 0; steps < params.data.Langevin3rd_steps;   steps++){
-            Langevin3rd_euler(phi,params,  rand_pool );
+            Langevin3rd_paper_euler(phi,params,  rand_pool );
         }
         for(int steps = 0; steps < params.data.Langevin_steps;   steps++){
             Langevin_euler(phi,params,  rand_pool );
