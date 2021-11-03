@@ -362,9 +362,10 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phi, phi );
     
-    Viewphi phip_test("phip",2,params.data.L[0]*Vp);
-    Viewphi::HostMirror h_phip_test= Kokkos::create_mirror_view( phip_test );
-    compute_FT(phi, params , phip_test);
+    manyphi phip_test("phip",1,2,params.data.L[0]*Vp/2);
+    manyphi::HostMirror h_phip_test= Kokkos::create_mirror_view( phip_test );
+    // compute_FT(phi, params , phip_test);
+    compute_FT_complex(phip_test, 0, phi, params,  1 );
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip_test, phip_test );
     
@@ -382,7 +383,7 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     out=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*Vs);
     
     //FFTW_FORWARD=e^{-ipx}   FFTW_BACKWARD=e^{+ipx}
-    p=fftw_plan_dft(3,n,in,out,FFTW_BACKWARD,FFTW_ESTIMATE);
+    p=fftw_plan_dft(3,n,in,out,FFTW_FORWARD,FFTW_ESTIMATE);
     for(int t =0; t<T ;t++){
     for (int x=0; x< Vs; x++){
         in[x][0]=h_phi(0,x+t*Vs);// h_phi should be avaluated at x+0*L^3 but it is the same
@@ -390,23 +391,28 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     }
     fftw_execute(p);
     for (int x=0; x< Vs; x++){
-        out[x][0]/=Vs*sqrt(2.*params.data.kappa0);// h_phi should be avaluated at x+0*L^3 but it is the same
-        out[x][1]/=Vs*sqrt(2.*params.data.kappa0);
+        out[x][0]/=((double) Vs)*sqrt(2.*params.data.kappa0);// h_phi should be avaluated at x+0*L^3 but it is the same
+        out[x][1]/=((double) Vs)*sqrt(2.*params.data.kappa0);
+        // printf("%g\t",out[x][1]);
+       // out[x][1]/=-1;
+        // printf("%g\n",out[x][1]);
     }
     for (int px=0; px< Lp; px++){
         for (int py=0; py< Lp; py++){
             for (int pz=0; pz< Lp; pz++){
                 int p=px +py*params.data.L[1]+pz*params.data.L[1]*params.data.L[2];
                 int lp=px +py*Lp+pz*Lp*Lp;
-                if (fabs(out[p][0]-h_phip_test(0,t+T*( 0+lp*2) ) )>1e-8 ){
+                if (fabs(out[p][0]-h_phip_test(0,0,t+T*( 0+lp) ).real() )>1e-6 ){
                     printf("error: FT does not produce the same result of FFTW (real part):");
                     printf("t=%d p=%d px=%d  py=%d  pz=%d\t",t,p,px,py,pz);
-                    printf("real: FFTW=%.15g    FT=%.15g \n",out[p][0],h_phip_test(0,t+T*( 0+lp*2) ) );
+                    printf("real: FFTW=%.15g    FT=%.15g \n",out[p][0],h_phip_test(0,0,t+T*( 0+lp) ).real() );
+                    Kokkos::abort("");
                 }
-                if (fabs(out[p][1]-h_phip_test(0,t+T*( 1+lp*2) ) )>1e-8 ){
+                if (fabs(out[p][1]-h_phip_test(0,0,t+T*( 0+lp) ).imag() )>1e-6 ){
                     printf("error: FT does not produce the same result of FFTW (imag part):");
                     printf("t=%d p=%d px=%d  py=%d  pz=%d\t",t,p,px,py,pz);
-                    printf(" imag: FFTW=%.15g    FT=%.15g \n",out[p][1],h_phip_test(0,t+T*( 1+lp*2) ) );
+                    printf(" imag: FFTW=%.15g    FT=%.15g \n",out[p][1],h_phip_test(0,0,t+T*( 0+lp) ).imag() );
+                    Kokkos::abort("");
                 }
                 
                 
