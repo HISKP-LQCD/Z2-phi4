@@ -96,10 +96,12 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
          double time=timer.seconds();
          printf("time to write the header %f\n",time);
      #endif
-     size_t V=params.data.V; 
-     Viewphi::HostMirror h_phi("write_host",2,V);// = Kokkos::create_mirror_view( phi ); does not create a new one if the device is a CPU
+     size_t V=params.data.V;
+     Viewphi::HostMirror h_phi; 
           
      if (layout_value==0){
+         Viewphi::HostMirror tmp("write_host",2,V);
+         h_phi=tmp;
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, phi );
          if(endian==BIG_ENDIAN){
@@ -115,6 +117,8 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
          
      }
      else if (layout_value==1){
+         Viewphi::HostMirror tmp("write_host",V,2);
+         h_phi=tmp;
          Viewphi w_phi("w_phi",V,2);
          Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
              //phi (c,x ) is stored in the divice with the order i=c+x*2
