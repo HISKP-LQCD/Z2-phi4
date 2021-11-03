@@ -277,7 +277,7 @@ void test_FT(cluster::IO_params params){
     Viewphi  phip_test("phip_test",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip_test("h_phip_test",2,params.data.L[0]*Vp);
     
-    compute_FT(phi, params ,   0, phip_test);
+    compute_FT(phi, params ,   phip_test);
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip_test, phip_test ); 
     
@@ -313,7 +313,7 @@ void test_FT(cluster::IO_params params){
             phi(1,x)= 0;
         }
     });  
-    compute_FT(phi, params ,   0, phip_test);
+    compute_FT(phi, params ,  phip_test);
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip_test, phip_test ); 
     for (size_t t=0; t< 1; t++) {
@@ -364,7 +364,7 @@ void test_FT_vs_FFTW(cluster::IO_params params){
     
     Viewphi phip_test("phip",2,params.data.L[0]*Vp);
     Viewphi::HostMirror h_phip_test= Kokkos::create_mirror_view( phip_test );
-    compute_FT(phi, params ,   0, phip_test);
+    compute_FT(phi, params , phip_test);
     // Deep copy device views to host views.
     Kokkos::deep_copy( h_phip_test, phip_test );
     
@@ -495,7 +495,7 @@ void compute_cuFFT(const Viewphi phi, cluster::IO_params params ,  int iconf, Vi
 
 	    #ifdef DEBUG
                 Viewphi phip("phip",2,params.data.L[0]*Vp);
-                compute_FT(phi,params, iconf, phip);
+                compute_FT(phi,params, phip);
                 Kokkos::parallel_for( "check_phi_cuFFT", Vp, KOKKOS_LAMBDA( size_t pp) {
                     int L[3] = {params.data.L[1], params.data.L[2],params.data.L[3]};
                     int reim=pp%2;
