@@ -1,6 +1,6 @@
 macro(target_link_libraries_kokkos TARGETNAME)
-    #target_link_libraries(${TARGETNAME}  PUBLIC Kokkos::kokkos)
-    target_link_libraries(${TARGETNAME}  kokkos)
+    target_link_libraries(${TARGETNAME}  PUBLIC Kokkos::kokkos)
+    #target_link_libraries(${TARGETNAME}  kokkos)
     target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}") 
 endmacro()
 
@@ -49,6 +49,7 @@ elseif(CUFFT)
     target_link_libraries(DFT  PUBLIC cufft)
 ENDIF()
 target_link_libraries_kokkos(DFT)
+
 
 #add_library(
 #    lattice STATIC
