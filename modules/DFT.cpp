@@ -14,7 +14,7 @@
 #endif
 
 //#ifndef cuFFT
-void compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi &phip){
+void compute_FT(const Viewphi phi, cluster::IO_params params , Viewphi &phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     double norm0=sqrt(2*params.data.kappa0);

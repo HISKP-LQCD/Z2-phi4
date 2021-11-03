@@ -1,5 +1,6 @@
 macro(target_link_libraries_kokkos TARGETNAME)
-    target_link_libraries(${TARGETNAME}  PUBLIC Kokkos::kokkos)
+    #target_link_libraries(${TARGETNAME}  PUBLIC Kokkos::kokkos)
+    target_link_libraries(${TARGETNAME}  kokkos)
     target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}") 
 endmacro()
 
@@ -12,11 +13,25 @@ add_library(
 set_target_properties(updates PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries_kokkos(updates )
 
+
+
+add_library(
+    utils STATIC
+    utils.hpp
+    ../modules/utils.cpp
+    ../modules/endian.cpp
+) 
+set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+#target_link_libraries_kokkos(utils)
+
 add_library(
     write_viewer STATIC
     write_viewer.hpp
     ../modules/write_viewer.cpp
-) 
+)
+#target_link_libraries(write_viewer PUBLIC lattice) 
+#target_link_libraries(write_viewer PRIVATE utils) 
 target_link_libraries_kokkos(write_viewer )
 
 
@@ -62,15 +77,7 @@ set_target_properties(random PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(random PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 #target_link_libraries_kokkos(random)
 
-add_library(
-    utils STATIC
-    utils.hpp
-    ../modules/utils.cpp
-    ../modules/endian.cpp
-) 
-set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)
-#target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries_kokkos(utils)
+
 
 add_library(
     geometry STATIC

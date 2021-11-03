@@ -100,7 +100,6 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
      Viewphi::HostMirror h_phi("write_host",2,V);// = Kokkos::create_mirror_view( phi ); does not create a new one if the device is a CPU
           
      if (layout_value==0){
-         Viewphi::HostMirror h_phi("write_host",2,V);
          // Deep copy device views to host views.
          Kokkos::deep_copy( h_phi, phi );
          if(endian==BIG_ENDIAN){
@@ -116,7 +115,6 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
          
      }
      else if (layout_value==1){
-         Viewphi::HostMirror h_phi("write_host",V,2);       
          Viewphi w_phi("w_phi",V,2);
          Kokkos::parallel_for( "reordering for writing loop", V, KOKKOS_LAMBDA( size_t x ) {    
              //phi (c,x ) is stored in the divice with the order i=c+x*2
@@ -392,14 +390,14 @@ void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params par
     if(endian==BIG_ENDIAN){
         for(size_t x=0; x<V;x++) 
             for(size_t c=0; c<2;c++)
-                for(size_t n=0; n<Npfileds;n++)
+                for(int n=0; n<Npfileds;n++)
                 bswap_Kokkos_complex( h_phip(n,c,x) );
     }
     
     if (layout_value==1){
         
         manyphi::HostMirror w_phip("w_phi",V/2,2,Npfileds);
-        for(size_t n=0; n<Npfileds;n++){
+        for(int n=0; n<Npfileds;n++){
             for (size_t x=0;x<V/2;x++){
                 for(size_t c=0; c<2;c++){
                     w_phip(x,c,n)=h_phip(n,c,x);
@@ -421,7 +419,7 @@ void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params par
     if(endian==BIG_ENDIAN){
         for(size_t x=0; x<V;x++) 
             for(size_t c=0; c<2;c++)
-                for(size_t n=0; n<Npfileds;n++)
+                for(int n=0; n<Npfileds;n++)
                     bswap_Kokkos_complex( h_phip(n,c,x) );
     }
     #ifdef TIMER
@@ -456,7 +454,7 @@ void read_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params para
         manyphi::HostMirror r_phip("r_phip",V/2,2,Npfileds);
         i+=fread(&r_phip(0,0,0), sizeof(double), 2*V*Npfileds, f_conf);
         
-        for(size_t n=0; n<Npfileds;n++)
+        for(int n=0; n<Npfileds;n++)
             for (size_t x=0;x<V/2;x++)
                 for(size_t c=0; c<2;c++)
                     h_phip(n,c,x)=r_phip(x,c,n);

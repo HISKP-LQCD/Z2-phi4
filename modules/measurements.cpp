@@ -171,7 +171,7 @@ namespace Kokkos { //reduction identity must be defined in Kokkos namespace
 }
 
 
-void compute_FT_old(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+void compute_FT_old(const Viewphi phi, cluster::IO_params params ,  Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     double norm[2]={sqrt(2.*params.data.kappa0),sqrt(2.*params.data.kappa1)};
@@ -220,7 +220,7 @@ void compute_FT_old(const Viewphi phi, cluster::IO_params params ,  int iconf, V
     }
 }
 
-void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+void compute_FT_good(const Viewphi phi, cluster::IO_params params , Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     
@@ -299,7 +299,7 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params ,  int iconf, 
 }
 
  
-void compute_FT_tmp(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi::HostMirror &h_phip){
+void compute_FT_tmp(const Viewphi phi, cluster::IO_params params , Viewphi::HostMirror &h_phip){
     int T=params.data.L[0];
     size_t Vs=params.data.V/T;
     

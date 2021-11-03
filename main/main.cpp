@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
     std::string mes_file = params.data.outpath + "/mes"+ suffix;
                               
     std::string G2t_file = params.data.outpath + "/G2t"+ suffix;
-    FILE *f_checks;
+    FILE *f_checks=NULL;
     if( params.data.checks == "yes") {
         std::string checks_file = params.data.outpath + "/checks"+ suffix;
         f_checks = fopen(checks_file.c_str(), "w+"); 

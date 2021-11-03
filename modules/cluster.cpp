@@ -150,7 +150,7 @@ inline void check_neighbour(const size_t x_look, const size_t y,
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType &rand_pool, std::mt19937_64 host_rand  ,ViewLatt &hop ){ 
+double cluster_update(Viewphi  &phi, cluster::IO_params params ,  std::mt19937_64 host_rand  ,ViewLatt &hop ){ 
                       //std::vector<size_t>& look_1, std::vector<size_t>& look_2){
  
   Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
@@ -169,7 +169,7 @@ double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType &r
    
   std::uniform_real_distribution<double> dist(0.0, 1.0);
   // while-loop: until at least some percentage of the lattice is updated ------
-  size_t cluster_size = 0; int count=0;
+  size_t cluster_size = 0; 
   while(double(cluster_size)/V <= min_size){
   //printf("iteration %d \n",count++);
  
@@ -228,7 +228,7 @@ double cluster_update(Viewphi  &phi, cluster::IO_params params , RandPoolType &r
   } // while loop to ensure minimal total cluster size ends here
 
   // perform the phi flip ------------------------------------------------------
-  for (int x=0; x<V; x++){
+  for (size_t x=0; x<V; x++){
      if(checked_points.at(x) == CLUSTER_FLIP){
         h_phi(0,x) = -h_phi(0,x) ;
         h_phi(1,x) = -h_phi(1,x) ;

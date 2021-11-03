@@ -46,6 +46,8 @@ MESSAGE("CMAKE_CXX_FLAGS   ${CMAKE_CXX_FLAGS}")
 MESSAGE("CXXFLAGS   ${CXXFLAGS}")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/kokkos" "external/kokkos")
+include_directories(${Kokkos_INCLUDE_DIRS_RET})
+#target_link_libraries(myTarget kokkos)
 
 #add_subdirectory(${PROJECT_SOURCE_DIR}/external/HighFive)
 

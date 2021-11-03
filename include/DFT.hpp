@@ -1,7 +1,7 @@
 #ifndef DFT_H
 #define DFT_H
 
-void  compute_FT(const Viewphi phi, cluster::IO_params params ,  int iconf, Viewphi &phip);
+void  compute_FT(const Viewphi phi, cluster::IO_params params , Viewphi &phip);
 
 //void  compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int iconf, complexphi &phip);
 void compute_FT_complex(manyphi &phip, int i, const Viewphi phi, cluster::IO_params params ,  int pow_n );

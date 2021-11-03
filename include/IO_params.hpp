@@ -230,9 +230,9 @@ private:
         split(s, delim, std::back_inserter(elems));
         std::vector<std::string>  r;
         std::string empty=" ";
-        for (std::string s: elems)
-            if (s.empty()==0){
-                r.emplace_back(s);
+        for (std::string s1: elems)
+            if (s1.empty()==0){
+                r.emplace_back(s1);
             }
                 
         return r;
@@ -363,7 +363,7 @@ private:
     int opt = -1;
     char infilename[200];
     
-    LatticeDataContainer data;
+    LatticeDataContainer data_in;
 
     // search for command line option and put filename in "infilename"
     for(int i = 0; i < argc; ++i) {
@@ -390,106 +390,106 @@ private:
       exit(-10);
     }
     // lattice size
-    read_L(newfile,data.L);
-    //reader += fscanf(infile, "L = %d %d %d %d \n", &data.L[0], &data.L[1], 
-    //                                               &data.L[2], &data.L[3]);
-    data.V = data.L[0]*data.L[1]*data.L[2]*data.L[3];
+    read_L(newfile,data_in.L);
+    //reader += fscanf(infile, "L = %d %d %d %d \n", &data_in.L[0], &data_in.L[1], 
+    //                                               &data_in.L[2], &data_in.L[3]);
+    data_in.V = data_in.L[0]*data_in.L[1]*data_in.L[2]*data_in.L[3];
     
-    read_par_string(newfile,"formulation",data.formulation);
+    read_par_string(newfile,"formulation",data_in.formulation);
     
     // kappa and lambda
-    read_par_double(newfile,"msq0",data.msq0);
-    read_par_double(newfile,"msq1",data.msq1);
-    read_par_double(newfile,"lambdaC0",data.lambdaC0);
-    read_par_double(newfile,"lambdaC1",data.lambdaC1);
-    read_par_double(newfile,"muC",data.muC);
-    read_par_double(newfile,"gC",data.gC);
+    read_par_double(newfile,"msq0",data_in.msq0);
+    read_par_double(newfile,"msq1",data_in.msq1);
+    read_par_double(newfile,"lambdaC0",data_in.lambdaC0);
+    read_par_double(newfile,"lambdaC1",data_in.lambdaC1);
+    read_par_double(newfile,"muC",data_in.muC);
+    read_par_double(newfile,"gC",data_in.gC);
     
-    if (data.formulation.size()>99){
+    if (data_in.formulation.size()>99){
         printf("formulation must be a string of maximum 100 char");
         exit(1);
     }
     
     
-    if(data.formulation == "O2"){
+    if(data_in.formulation == "O2"){
       cout << "using O2 version of the two scalars lambdaC0=lambdaC1=muC/2: \n" << endl;
-      if ( data.lambdaC1 !=0 || data.muC !=0 ){
+      if ( data_in.lambdaC1 !=0 || data_in.muC !=0 ){
           cout    << "if formulation = O2  you need to set lambdaC1= muC2=0 "<< endl; 
           exit(0);
       }
-      data.lambdaC1= data.lambdaC0;
-      data.muC= 2.*data.lambdaC0;
+      data_in.lambdaC1= data_in.lambdaC0;
+      data_in.muC= 2.*data_in.lambdaC0;
 
     }
     //fill formulation with null char    
-    for (int i=data.formulation.size();i<99;i++)
-        data.formulation=data.formulation+'\0';
+    for (int i=data_in.formulation.size();i<99;i++)
+        data_in.formulation=data_in.formulation+'\0';
     
-    data.kappa0=comp_kappa(data.msq0, data.lambdaC0);
-    data.kappa1=comp_kappa(data.msq1, data.lambdaC1);
-    data.lambda0=data.lambdaC0 * 4. * data.kappa0 *data.kappa0;
-    data.lambda1=data.lambdaC1 * 4. * data.kappa1 *data.kappa1;
-    data.mu=data.muC*(4. *data.kappa0*data.kappa1 );
-    data.g=data.gC*(4. * sqrt(data.kappa0 *data.kappa1 * data.kappa1 * data.kappa1) );
+    data_in.kappa0=comp_kappa(data_in.msq0, data_in.lambdaC0);
+    data_in.kappa1=comp_kappa(data_in.msq1, data_in.lambdaC1);
+    data_in.lambda0=data_in.lambdaC0 * 4. * data_in.kappa0 *data_in.kappa0;
+    data_in.lambda1=data_in.lambdaC1 * 4. * data_in.kappa1 *data_in.kappa1;
+    data_in.mu=data_in.muC*(4. *data_in.kappa0*data_in.kappa1 );
+    data_in.g=data_in.gC*(4. * sqrt(data_in.kappa0 *data_in.kappa1 * data_in.kappa1 * data_in.kappa1) );
     printf("parameters:\n");
-    printf( "msq0 = %.6f     -> kappa0   = %.6f\n", data.msq0, data.kappa0);
-    printf( "msq1 = %.6f     -> kappa1   = %.6f\n", data.msq1, data.kappa1);
-    printf( "lambdaC0 = %.6f -> lambda0  = %.6f\n", data.lambdaC0, data.lambda0);
-    printf( "lambdaC1 = %.6f -> lambda1  = %.6f\n", data.lambdaC1, data.lambda1);
-    printf( "muC = %.6f      -> mu       = %.6f\n", data.muC, data.mu);
-    printf( "gC = %.6f       -> g        = %.6f\n",  data.gC, data.g);
+    printf( "msq0 = %.6f     -> kappa0   = %.6f\n", data_in.msq0, data_in.kappa0);
+    printf( "msq1 = %.6f     -> kappa1   = %.6f\n", data_in.msq1, data_in.kappa1);
+    printf( "lambdaC0 = %.6f -> lambda0  = %.6f\n", data_in.lambdaC0, data_in.lambda0);
+    printf( "lambdaC1 = %.6f -> lambda1  = %.6f\n", data_in.lambdaC1, data_in.lambda1);
+    printf( "muC = %.6f      -> mu       = %.6f\n", data_in.muC, data_in.mu);
+    printf( "gC = %.6f       -> g        = %.6f\n",  data_in.gC, data_in.g);
 
     // metropolis 
-    read_par_int(newfile, "metropolis_local_hits", data.metropolis_local_hits);
-    read_par_int(newfile, "metropolis_global_hits", data.metropolis_global_hits);
-    read_par_double(newfile, "metropolis_delta", data.metropolis_delta);
+    read_par_int(newfile, "metropolis_local_hits", data_in.metropolis_local_hits);
+    read_par_int(newfile, "metropolis_global_hits", data_in.metropolis_global_hits);
+    read_par_double(newfile, "metropolis_delta", data_in.metropolis_delta);
     // cluster
-    read_par_int(newfile, "cluster_hits", data.cluster_hits);
-    read_par_double(newfile, "cluster_min_size", data.cluster_min_size);
+    read_par_int(newfile, "cluster_hits", data_in.cluster_hits);
+    read_par_double(newfile, "cluster_min_size", data_in.cluster_min_size);
     // configs
-    read_par_int(newfile, "seed", data.seed);
-    read_par_int(newfile, "level", data.level);
-    read_par_int(newfile, "append", data.append);
-    read_par_int(newfile, "replica", data.replica);
-    read_par_int(newfile, "start_measure", data.start_measure);
+    read_par_int(newfile, "seed", data_in.seed);
+    read_par_int(newfile, "level", data_in.level);
+    read_par_int(newfile, "append", data_in.append);
+    read_par_int(newfile, "replica", data_in.replica);
+    read_par_int(newfile, "start_measure", data_in.start_measure);
 
     
-    if(data.append < 0 || data.replica < 0){
+    if(data_in.append < 0 || data_in.replica < 0){
       cout << "append and replica value must not be negative!" << endl;
       exit(0);
     }
-    if (data.append ==1 && data.start_measure!=0){
+    if (data_in.append ==1 && data_in.start_measure!=0){
       cout << "if append mode you can not wait for termalization" << endl;
       exit(0);  
     }    
     
-    read_par_int(newfile, "total_measure", data.total_measure);
-    read_par_int(newfile, "measure_every_X_updates", data.measure_every_X_updates);
-    read_par_string(newfile, "save_config", data.save_config);
-    read_par_string(newfile, "save_config_FT", data.save_config_FT);
-    read_par_string(newfile, "compute_contractions", data.compute_contractions);
+    read_par_int(newfile, "total_measure", data_in.total_measure);
+    read_par_int(newfile, "measure_every_X_updates", data_in.measure_every_X_updates);
+    read_par_string(newfile, "save_config", data_in.save_config);
+    read_par_string(newfile, "save_config_FT", data_in.save_config_FT);
+    read_par_string(newfile, "compute_contractions", data_in.compute_contractions);
 
 
-    if (data.compute_contractions!= "yes" &&  data.save_config_FT!="yes"  &&  data.save_config!="yes"){
+    if (data_in.compute_contractions!= "yes" &&  data_in.save_config_FT!="yes"  &&  data_in.save_config!="yes"){
         printf("error: at least one of the following in the input file must be yes \n");
-        printf("save_config    = %s\n",data.save_config.c_str());
-        printf("save_config_FT = %s\n",data.save_config_FT.c_str());
-        printf("compute_contractions = %s\n",data.compute_contractions.c_str());
+        printf("save_config    = %s\n",data_in.save_config.c_str());
+        printf("save_config_FT = %s\n",data_in.save_config_FT.c_str());
+        printf("compute_contractions = %s\n",data_in.compute_contractions.c_str());
         exit(0);
     }
 
-    data.checks="yes";
-    read_par_string(newfile, "checks", data.checks, false);
-    read_par_string(newfile, "outpath", data.outpath);
+    data_in.checks="yes";
+    read_par_string(newfile, "checks", data_in.checks, false);
+    read_par_string(newfile, "outpath", data_in.outpath);
 
-    data.smearing="yes";
-    data.FT_phin="yes";
-    read_par_string(newfile, "smearing", data.smearing, false);
-    read_par_string(newfile, "FT_phin", data.FT_phin, false);
+    data_in.smearing="yes";
+    data_in.FT_phin="yes";
+    read_par_string(newfile, "smearing", data_in.smearing, false);
+    read_par_string(newfile, "FT_phin", data_in.FT_phin, false);
 
     newfile.close();
 
-    return data;
+    return data_in;
   };
 
 

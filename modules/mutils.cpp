@@ -597,8 +597,7 @@ long read_line(FILE *stream,char *tag,char *format,...)
 long myscanf(int n, char *format,...)
 {
    int is,ic=0,i;
-   long tofs;
-   char *pl,tmp[100];
+   char tmp[100];
    char *p;
    va_list args;
 
@@ -643,8 +642,7 @@ long myscanf(int n, char *format,...)
         
    }
    va_end(args);
-   tofs+=ic;
-   return tofs;
+   return ic;
 }
 
 int count_tokens(FILE *stream,char *tag)

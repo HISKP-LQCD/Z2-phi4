@@ -40,7 +40,7 @@ typedef Kokkos::View<Kokkos::complex<double> ***>  manyphi;
 typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
 typedef typename RandPoolType::generator_type gen_type;
 /* GLOBAL_VECTORS */
-EXTERN int      V;
+//EXTERN int      V;
 EXTERN double  rand_max;
 EXTERN int endian;
 EXTERN int Npfileds;
