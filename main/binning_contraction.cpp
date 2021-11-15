@@ -340,7 +340,7 @@ int main(int argc, char **argv){
    sprintf(namefile,"%s_bin%d",argv[1],bin);
    FILE *outfile=NULL;
    outfile=fopen(namefile,"w+");
-   if (outfile==NULL) {printf("can not open binning output file file\n %s \n",namefile); exit(1);}
+   if (outfile==NULL) {printf("can not open binning output file \n %s \n",namefile);fclose(infile); exit(1);}
    write_header_measuraments(outfile,params);   
    
    

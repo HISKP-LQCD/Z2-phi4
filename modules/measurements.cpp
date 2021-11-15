@@ -760,6 +760,21 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 to_write(168,t)+=(phi1[0][i]*A1[0]    * conj(phi1_t[1][i])).real();   //phi0^3 p1 A1 --> phi1 p1
                 to_write(169,t)+=(phi1[0][i]*A1[0]    * conj(phip(0,tpt1))* o2p1_t[0][i]     ).real(); //o2p1_t //phi0^3 p1 A1 --> phi0^3 p1
             }
+            double p5=(phip(0,t1)*phip(0,t1)*phip(0,t1)*phip(0,t1)*phip(0,t1)).real();
+            double p5_t=(phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)*phip(0,tpt1)).real();
+
+            if( FT_phin_contractions){
+                to_write(170,t)+= ( phi3p(0,t1)*phi3p(0,tpt1)).real();// phi30--> phi30
+                to_write(171,t)+=(phip(0,t1)    * phi3p(0,tpt1)).real();   //phi0 --> phi1 
+                to_write(172,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * phi3p(0,tpt1)).real();   //phi0^3 --> phi1 
+                to_write(173,t)+=(phip(1,t1)* phi3p(0,tpt1)).real();   //phi0^3 --> phi0
+                to_write(174,t)+=(p5* phi3p(0,tpt1)).real();   //phi0^3 --> phi0
+            
+            }
+            to_write(175,t)+= p5*p5_t;// phi50--> phi50
+            to_write(176,t)+=(phip(0,t1)    * p5_t).real();   //phi0 --> phi5 
+            to_write(177,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * p5_t).real();   //phi0^3 --> phi5 
+            to_write(178,t)+=(phip(1,t1)* p5_t).real();   //phi0^3 --> phi05
             
             
         }// end loop t1
