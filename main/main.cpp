@@ -136,10 +136,15 @@ int main(int argc, char** argv) {
     
     complexphi cphi2p("complex_phi2p",2,params.data.L[0]*Vp/2);
     */
-    Npfileds=4;
-    //if (params.data.checks== "yes"){
-    //    Npfileds++;
-    //}
+    // the following ordering is important
+    Npfileds=1;
+    if( params.data.smearing == "yes") 
+        Npfileds=2;
+    if( params.data.FT_phin == "yes")
+        Npfileds=4;
+    if( params.data.smearing3FT == "yes")
+        Npfileds=5;
+                  
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
     if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
@@ -205,7 +210,6 @@ int main(int argc, char** argv) {
 
         // Calculate time of Metropolis update
         time = timer1.seconds();
-       // printf("time metropolis (%g  s)\n",time);
         time_update+=time;
         
         // bool condition in the infile 
@@ -214,20 +218,22 @@ int main(int argc, char** argv) {
         bool write_FT=     (measure &&   params.data.save_config_FT == "yes");
         bool write=        (measure &&   params.data.save_config == "yes");
 
-        //Viewphi::HostMirror h_phip("h_phip",2,params.data.L[0]*Vp);
         if( contractions || write_FT ){
             Kokkos::Timer timer_FT;
-            //Viewphi::HostMirror   construct_h_phip("h_phip",2,params.data.L[0]);
-            //h_phip=construct_h_phip;
-            if( params.data.smearing == "yes") smearing_field( s_phi, phi, params);
+            
                 
             #ifndef cuFFT   
                 compute_FT_complex(mphip, 0, phi,   params, 1);
-                if( params.data.smearing == "yes") 
+                if( params.data.smearing == "yes") {
+                    smearing_field( s_phi, phi, params);
                     compute_FT_complex(mphip, 1, s_phi, params, 1 );
+                }
                 if( params.data.FT_phin == "yes"){
                     compute_FT_complex(mphip, 2, phi,   params, 2);
                     compute_FT_complex(mphip, 3, phi,   params, 3);
+                }
+                if( params.data.smearing3FT == "yes"){
+                    compute_smearing3FT(mphip, 4, phi,   params);
                 }
             #endif
             #ifdef cuFFT   
@@ -253,15 +259,7 @@ int main(int argc, char** argv) {
             fprintf(f_mes,"%.15g   %.15g \n",m[0], m[1]);
             free(m);
             
-            // Deep copy device views to host views.
-    	    //Kokkos::deep_copy( h_phip, phip ); // deep_copy with two arguments is a fence
-            //compute_G2t( h_phip,   params,f_G2t, ii);
-            //    Kokkos::Timer  t1;
-            //parallel_measurement(phip,h_phip  , params,f_G2t, f_checks, ii);
-            //Kokkos::fence();    printf(" time mes : %g s \n",t1.seconds());
-            //    Kokkos::Timer  t2;
             parallel_measurement_complex(mphip, h_mphip, params, f_G2t, f_checks, ii);
-            //Kokkos::fence();    printf(" time mes complex : %g s \n",t2.seconds());
 
 	    time = timer_2.seconds();
             time_mes+=time;
@@ -280,18 +278,15 @@ int main(int argc, char** argv) {
             FILE *f_conf = fopen(conf_file.c_str(), "w+"); 
             if (f_conf == NULL) {  printf("Error opening file %s!\n", conf_file.c_str());     Kokkos::abort("opening file");   }
            
-            //Kokkos::deep_copy( h_cphip, cphip );
             Kokkos::deep_copy( h_mphip, mphip );
             write_conf_FT_complex(f_conf, layout_value,params , ii , h_mphip );
-            
-            
+             
             time = timer3.seconds();
             fclose(f_conf);
             time_writing+=time;
         }
         
         // write the configuration to disk
-        
         if(write){
             Kokkos::Timer timer3;
             std::string conf_file = params.data.outpath + 

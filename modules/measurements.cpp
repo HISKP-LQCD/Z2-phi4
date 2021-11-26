@@ -422,7 +422,8 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     int T=params.data.L[0];
     fwrite(&iconf,sizeof(int),1,f_G2t);
     bool smeared_contractions=  (params.data.smearing == "yes"); 
-    bool FT_phin_contractions=  (params.data.FT_phin == "yes");     
+    bool FT_phin_contractions=  (params.data.FT_phin == "yes"); 
+    bool smearing3FT=  ( params.data.smearing3FT == "yes") ;
     //Viewphi phip("phip",2,params.data.L[0]*Vp);
     // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
     Kokkos::View<double**,Kokkos::LayoutRight > to_write("to_write",  Ncorr,T );
@@ -445,11 +446,12 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
         Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp3( mphip, 3, Kokkos::ALL, Kokkos::ALL );
         phi3p=tmp3;
     }
-    /* 
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phip( mphip, 0, Kokkos::ALL, Kokkos::ALL );
-    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> s_phip( mphip, 1, Kokkos::ALL, Kokkos::ALL );
-    
-      */  
+    Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> phi_s3p;
+    if( smearing3FT){
+        Kokkos::View<Kokkos::complex<double> **, Kokkos::LayoutStride> tmp( mphip, 4, Kokkos::ALL, Kokkos::ALL );
+        phi_s3p=tmp;
+    }
+
     Kokkos::parallel_for( "measurement_t_loop",T, KOKKOS_LAMBDA( size_t t) {
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)=0;
@@ -769,13 +771,62 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 to_write(172,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * phi3p(0,tpt1)).real();   //phi0^3 --> phi1 
                 to_write(173,t)+=(phip(1,t1)* phi3p(0,tpt1)).real();   //phi0^3 --> phi0
                 to_write(174,t)+=(p5* phi3p(0,tpt1)).real();   //phi0^3 --> phi0
+                   
             
             }
             to_write(175,t)+= p5*p5_t;// phi50--> phi50
             to_write(176,t)+=(phip(0,t1)    * p5_t).real();   //phi0 --> phi5 
             to_write(177,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * p5_t).real();   //phi0^3 --> phi5 
             to_write(178,t)+=(phip(1,t1)* p5_t).real();   //phi0^3 --> phi05
+            to_write(179,t)+=(phip(0,t1)*A1[0] * p5_t).real();   //phi0^3 --> phi05
+
+            if( FT_phin_contractions){
+                to_write(180,t)+=(phip(0,t1)*A1[0] * phi3p(0,tpt1)).real();   //phi0^3 --> phi05
+                to_write(181,t)+= ( phip(0,t1)*phi2p(0,t1)  *  phip(0,tpt1)*phi2p(0,tpt1)).real();
+                to_write(182,t)+=(phip(0,t1)    *  phip(0,tpt1)*phi2p(0,tpt1)  ).real();   
+                to_write(183,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    *  phip(0,tpt1)*phi2p(0,tpt1) ).real();   
+                to_write(184,t)+=(phip(1,t1)*  phip(0,tpt1)*phi2p(0,tpt1) ).real();   
+                to_write(185,t)+=(p5*  phip(0,tpt1)*phi2p(0,tpt1) ).real();   
+                to_write(185,t)+=(phi3p(0,t1)*  phip(0,tpt1)*phi2p(0,tpt1) ).real();   
+                to_write(186,t)+=(phip(0,t1)*A1[0] * phip(0,tpt1)*phi2p(0,tpt1)).real();   
+                
+            }
+            double c001=(phip(0,t1)*phip(0,t1)*phip(1,t1)).real();
+            double c001_t=(phip(0,tpt1)*phip(0,tpt1)*phip(1,tpt1)).real();
+            to_write(187,t)+= c001*c001_t;// phi50--> phi50
+            to_write(188,t)+=(phip(0,t1)    * c001_t).real();   //phi0 --> phi5 
+            to_write(189,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * c001_t).real();   //phi0^3 --> phi5 
+            to_write(190,t)+=(phip(1,t1)* c001_t).real();   //phi0^3 --> phi05
+            to_write(191,t)+=(phip(0,t1)*A1[0] * c001_t).real();   //phi0^3 --> phi05
+            to_write(192,t)+=(p5 * c001_t);   //phi0^3 --> phi05
+            double c011=(phip(0,t1)*phip(1,t1)*phip(1,t1)).real();
+            double c011_t=(phip(0,tpt1)*phip(1,tpt1)*phip(1,tpt1)).real();
+            to_write(193,t)+= c011*c011_t;// phi50--> phi50
+            to_write(194,t)+=(phip(0,t1)    * c011_t).real();   //phi0 --> phi5 
+            to_write(195,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * c011_t).real();   //phi0^3 --> phi5 
+            to_write(196,t)+=(phip(1,t1)* c011_t).real();   //phi0^3 --> phi05
+            to_write(197,t)+=(phip(0,t1)*A1[0] * c011_t).real();   //phi0^3 --> phi05
+            to_write(198,t)+=(p5 * c011_t);   //phi0^3 --> phi05
+            to_write(199,t)+=(c001 * c011_t);   //phi0^3 --> phi05
             
+            double c111_t=(phip(1,tpt1)*phip(1,tpt1)*phip(1,tpt1)).real();
+            to_write(200,t)+=(phip(0,t1)    * c111_t).real();   //phi0 --> phi5 
+            to_write(201,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * c111_t).real();   //phi0^3 --> phi5 
+            to_write(202,t)+=(phip(1,t1)* c111_t).real();   //phi0^3 --> phi05
+            to_write(203,t)+=(phip(0,t1)*A1[0] * c111_t).real();   //phi0^3 --> phi05
+            to_write(204,t)+=(p5 * c111_t);   //phi0^3 --> phi05
+            to_write(205,t)+=(c001 * c111_t);   //phi0^3 --> phi05
+            to_write(206,t)+=(c011 * c111_t);   //phi0^3 --> phi05
+            
+            to_write(207,t)+=(phip(0,tpt1) * phip(0,tpt1)).real();   //phi0^3 --> phi05
+
+            if( smearing3FT){
+                to_write(208,t)+=(phip(0,t1)    * phi_s3p(0,tpt1)   ).real();   //phi0 --> phi5 
+                to_write(209,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * phi_s3p(0,tpt1)).real();   //phi0^3 --> phi5 
+                to_write(210,t)+=(phip(1,t1)* phi_s3p(0,tpt1)).real();   //phi0^3 --> phi05
+         
+            }
+
             
         }// end loop t1
         for(int c=0; c<Ncorr; c++) 

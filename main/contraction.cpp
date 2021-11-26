@@ -86,7 +86,14 @@ int main(int argc, char** argv) {
     Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
     
        
-    Npfileds=4;
+    // the following ordering is important
+    Npfileds=1;
+    if( params.data.smearing == "yes") 
+        Npfileds=2;
+    if( params.data.FT_phin == "yes")
+        Npfileds=4;
+    if( params.data.smearing3FT == "yes")
+        Npfileds=5;
     
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
@@ -206,14 +213,18 @@ int main(int argc, char** argv) {
                 }
                 read_viewer(f_conf, layout_value, params , ii , phi ); 
                 
-                smearing_field( s_phi, phi, params);
                 
                 compute_FT_complex(mphip, 0, phi,   params, 1);
-                if( params.data.smearing == "yes") 
+                if( params.data.smearing == "yes") {
+                    smearing_field( s_phi, phi, params);
                     compute_FT_complex(mphip, 1, s_phi, params, 1 );
+                }
                 if( params.data.FT_phin == "yes"){
                     compute_FT_complex(mphip, 2, phi,   params, 2);
                     compute_FT_complex(mphip, 3, phi,   params, 3);
+                }
+                if( params.data.smearing3FT == "yes"){
+                    compute_smearing3FT(mphip, 4, phi,   params);
                 }
                 
                 if (params.data.checks=="yes") Kokkos::deep_copy(h_mphip, mphip );   // ----------------------fence-------------------------------// 
@@ -241,8 +252,6 @@ int main(int argc, char** argv) {
         }
       
     }
-
-    
 
     printf("average acceptance rate= %g\n", ave_acc/(params.data.start_measure+params.data.total_measure));
     

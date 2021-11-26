@@ -159,8 +159,9 @@ void compute_FT_complex(manyphi &phip, int i,  const Viewphi phi, cluster::IO_pa
             Kokkos::complex<double> ewr;
             ewr.real()=0; ewr.imag()=1;
             ewr=exp(- ewr*wr);
-            for (int n=0; n<pow_n;n++)
+            for (int n=0; n<pow_n;n++){
                 ewr*=phi(comp,i0);
+            }
             
             inner+=ewr;
         }, phip(i,comp,xp) );
@@ -173,6 +174,97 @@ void compute_FT_complex(manyphi &phip, int i,  const Viewphi phi, cluster::IO_pa
     
     
 }
+
+
+
+void compute_smearing3FT(manyphi &phip, int i,  const Viewphi phi, cluster::IO_params params  ){    
+    int T=params.data.L[0];
+    size_t Vs=params.data.V/T;
+    double norm0=sqrt(2*params.data.kappa0);
+    double norm1=sqrt(2*params.data.kappa1);
+    int  L1=params.data.L[1], L2=params.data.L[2], L3=params.data.L[3];
+    
+    typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+    typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    
+    
+    Kokkos::parallel_for( "FT_loop", team_policy( T*Vp, Kokkos::AUTO), KOKKOS_LAMBDA ( const member_type &teamMember ) {
+        const int ii = teamMember.league_rank();
+        //ii = comp+ 2*myt  
+        //myt=  t +T*(reim+ p*2)
+        //p=px+py*4+pz*16
+        double norm[2]={norm0,norm1};// need to be inside the loop for cuda<10
+        const int p=ii/(2*T);
+        int res=ii-p*2*T;
+        const int t=res/2;
+        const int comp=res-2*t;
+        
+        const int px=p%Lp;
+        const int pz=p /(Lp*Lp);
+        const int py= (p- pz*Lp*Lp)/Lp;
+        #ifdef DEBUG
+        if (p!= px+ py*Lp+pz*Lp*Lp){ printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n",p,px,py,Lp,pz,Lp,Lp);
+            Kokkos::abort("DFT index p");
+        }
+        if (ii!= comp+2*(t+T*(p))){ printf("error   in the FT\n");
+            Kokkos::abort("DFT index comp");
+        }
+        #endif
+        const int xp=t+T*(p);
+        phip(i,comp,xp)=0;
+        
+        //	for (size_t x=0;x<Vs;x++){	
+        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, Kokkos::complex<double> &inner) {
+            
+            size_t i0= x+t*Vs;
+            int ix=x%L1;
+            int iz=x /(L1*L2);
+            int iy=(x- iz*L1*L2)/L1;
+            #ifdef DEBUG
+            if (x!= ix+ iy*L1+iz*L1*L2){ 
+                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n",x,ix,iy,L1,iz,L1,L2);
+                Kokkos::abort("DFT index x re");
+            }
+            #endif
+            double wr=6.28318530718 *( px*ix/(double (L1)) +    py*iy/(double (L2))   +pz*iz/(double (L3))   );
+            Kokkos::complex<double> ewr;
+            ewr.real()=0; ewr.imag()=1;
+            ewr=exp(- ewr*wr);
+            
+            double neighbourSum=0;
+            //x
+            int xp=((ix+1)%L1) + iy*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp);
+            xp=((ix+L1-1)%L1) + iy*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp);
+            //y 
+            xp=ix + ((iy+1)%L2)*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp);
+            xp=ix + ((iy+L2-1)%L2)*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp);
+            //z
+            xp=ix + iy*L1+  ((iz+1)%L3)*L1*L2+  t*Vs;
+            neighbourSum+=phi(comp,xp);
+            xp=ix + iy*L1+  ((iz+L3-1)%L3)*L1*L2+  t*Vs;
+            neighbourSum+=phi(comp,xp);
+            // sum also the center
+            neighbourSum+=phi(comp,i0);
+
+            ewr*=neighbourSum*neighbourSum*neighbourSum;            
+            
+            inner+=ewr;
+        }, phip(i,comp,xp) );
+            
+        
+        
+        phip(i,comp,xp)=phip(i,comp,xp)/((double) Vs *norm[comp]);
+        
+    });
+    
+    
+}
+
+
 
 #ifdef SCRATCHPAD
 // not enough memory in kepler

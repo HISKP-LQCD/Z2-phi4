@@ -56,7 +56,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   
   std::string smearing;
   std::string FT_phin;
-  
+  std::string smearing3FT;
   
 };
 // -----------------------------------------------------------------------------
@@ -486,6 +486,8 @@ private:
     data_in.FT_phin="yes";
     read_par_string(newfile, "smearing", data_in.smearing, false);
     read_par_string(newfile, "FT_phin", data_in.FT_phin, false);
+    data_in.smearing3FT="yes";
+    read_par_string(newfile, "smearing3FT", data_in.smearing3FT, false);
 
     newfile.close();
 
