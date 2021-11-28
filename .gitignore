@@ -4,3 +4,17 @@
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 .vscode/tasks.json
+
+/test/CMakeFiles
+/test/include
+/test/external
+/test/main
+test/data/T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_conf_FT3
+test/data/T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_conf_FT2
+test/data/T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0_conf_FT1
+test/data/checks_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0
+test/data/G2t_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0
+test/data/mes_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000_g0.000000_rep0
+test/Makefile
+test/do_cmake_qbig_kepler.sh
+test/CMakeCache.txt
