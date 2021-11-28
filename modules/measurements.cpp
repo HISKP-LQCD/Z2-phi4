@@ -809,21 +809,24 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(198,t)+=(p5 * c011_t);   //phi0^3 --> phi05
             to_write(199,t)+=(c001 * c011_t);   //phi0^3 --> phi05
             
+            double c111=(phip(1,t1)*phip(1,t1)*phip(1,t1)).real();
             double c111_t=(phip(1,tpt1)*phip(1,tpt1)*phip(1,tpt1)).real();
-            to_write(200,t)+=(phip(0,t1)    * c111_t).real();   //phi0 --> phi5 
-            to_write(201,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * c111_t).real();   //phi0^3 --> phi5 
-            to_write(202,t)+=(phip(1,t1)* c111_t).real();   //phi0^3 --> phi05
-            to_write(203,t)+=(phip(0,t1)*A1[0] * c111_t).real();   //phi0^3 --> phi05
-            to_write(204,t)+=(p5 * c111_t);   //phi0^3 --> phi05
-            to_write(205,t)+=(c001 * c111_t);   //phi0^3 --> phi05
-            to_write(206,t)+=(c011 * c111_t);   //phi0^3 --> phi05
+            to_write(200,t)+=  ( c111    * c111_t);
+            to_write(201,t)+=(phip(0,t1)    * c111_t).real();   //phi0 --> phi5 
+            to_write(202,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * c111_t).real();   //phi0^3 --> phi5 
+            to_write(203,t)+=(phip(1,t1)* c111_t).real();   //phi0^3 --> phi05
+            to_write(204,t)+=(phip(0,t1)*A1[0] * c111_t).real();   //phi0^3 --> phi05
+            to_write(205,t)+=(p5 * c111_t);   //phi0^3 --> phi05
+            to_write(206,t)+=(c001 * c111_t);   //phi0^3 --> phi05
+            to_write(207,t)+=(c011 * c111_t);   //phi0^3 --> phi05
             
-            to_write(207,t)+=(phip(0,tpt1) * phip(0,tpt1)).real();   //phi0^3 --> phi05
+            to_write(208,t)+=(phip(0,tpt1) * phip(0,tpt1)).real();   //phi0^3 --> phi05
 
             if( smearing3FT){
-                to_write(208,t)+=(phip(0,t1)    * phi_s3p(0,tpt1)   ).real();   //phi0 --> phi5 
-                to_write(209,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * phi_s3p(0,tpt1)).real();   //phi0^3 --> phi5 
-                to_write(210,t)+=(phip(1,t1)* phi_s3p(0,tpt1)).real();   //phi0^3 --> phi05
+                to_write(209,t)+=(phi_s3p(0,t1)    * phi_s3p(0,tpt1)   ).real();   //phi0 --> phi5 
+                to_write(210,t)+=(phip(0,t1)    * phi_s3p(0,tpt1)   ).real();   //phi0 --> phi5 
+                to_write(211,t)+=(phip(0,t1)*phip(0,t1)*phip(0,t1)    * phi_s3p(0,tpt1)).real();   //phi0^3 --> phi5 
+                to_write(212,t)+=(phip(1,t1)* phi_s3p(0,tpt1)).real();   //phi0^3 --> phi05
          
             }
 

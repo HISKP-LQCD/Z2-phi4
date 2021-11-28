@@ -233,20 +233,20 @@ void compute_smearing3FT(manyphi &phip, int i,  const Viewphi phi, cluster::IO_p
             
             double neighbourSum=0;
             //x
-            int xp=((ix+1)%L1) + iy*L1+iz*L1*L2+t*Vs;
-            neighbourSum+=phi(comp,xp);
-            xp=((ix+L1-1)%L1) + iy*L1+iz*L1*L2+t*Vs;
-            neighbourSum+=phi(comp,xp);
+            int xp1=((ix+1)%L1) + iy*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp1);
+            xp1=((ix+L1-1)%L1) + iy*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp1);
             //y 
-            xp=ix + ((iy+1)%L2)*L1+iz*L1*L2+t*Vs;
-            neighbourSum+=phi(comp,xp);
-            xp=ix + ((iy+L2-1)%L2)*L1+iz*L1*L2+t*Vs;
-            neighbourSum+=phi(comp,xp);
+            xp1=ix + ((iy+1)%L2)*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp1);
+            xp1=ix + ((iy+L2-1)%L2)*L1+iz*L1*L2+t*Vs;
+            neighbourSum+=phi(comp,xp1);
             //z
-            xp=ix + iy*L1+  ((iz+1)%L3)*L1*L2+  t*Vs;
-            neighbourSum+=phi(comp,xp);
-            xp=ix + iy*L1+  ((iz+L3-1)%L3)*L1*L2+  t*Vs;
-            neighbourSum+=phi(comp,xp);
+            xp1=ix + iy*L1+  ((iz+1)%L3)*L1*L2+  t*Vs;
+            neighbourSum+=phi(comp,xp1);
+            xp1=ix + iy*L1+  ((iz+L3-1)%L3)*L1*L2+  t*Vs;
+            neighbourSum+=phi(comp,xp1);
             // sum also the center
             neighbourSum+=phi(comp,i0);
 
