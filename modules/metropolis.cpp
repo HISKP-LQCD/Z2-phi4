@@ -144,46 +144,94 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
 
       // running over the two components, comp, of the phi field - Each 
       // component is updated individually with multiple hits
-      for(size_t comp = 0; comp < 2; comp++){
-          double phiSqr = phi(comp,x)*phi(comp,x);
+    //   for(size_t comp = 0; comp < 2; comp++){
+    //       double phiSqr = phi(comp,x)*phi(comp,x);
 
-          // The other component 
-          int comp_n=(comp+1)%2;
-          double &phi_n = phi(comp_n,x);
-          // doing the multihit
-          for(size_t hit = 0; hit < nb_of_hits; hit++){
+    //       // The other component 
+    //       int comp_n=(comp+1)%2;
+    //       double &phi_n = phi(comp_n,x);
+    //       // doing the multihit
+    //       for(size_t hit = 0; hit < nb_of_hits; hit++){
             
-              double d = (rgen.drand()*2. - 1.)*delta;
-              double dPhi = d * phi(comp,x);
-              double dd = d * d;
-              // change of action
-              double dS = -2.*kappa[comp]*d*neighbourSum[comp] + 
-                     2.*dPhi*(1. - 2.*lambda[comp]*(1. - phiSqr - dd)) +
-                     dd*(1. - 2.*lambda[comp]*(1. )) +
-                     lambda[comp]*(6.*dPhi*dPhi + dd*dd);
+    //           double d = (rgen.drand()*2. - 1.)*delta;
+    //           double dPhi = d * phi(comp,x);
+    //           double dd = d * d;
+    //           // change of action
+    //           double dS = -2.*kappa[comp]*d*neighbourSum[comp] + 
+    //                  2.*dPhi*(1. - 2.*lambda[comp]*(1. - phiSqr - dd)) +
+    //                  dd*(1. - 2.*lambda[comp]*(1. )) +
+    //                  lambda[comp]*(6.*dPhi*dPhi + dd*dd);
            
-              dS+= mu *phi_n * phi_n *( 2.* dPhi + dd       ) ;
-            //   dS+= comp * g * phi_n * phi_n * phi_n * d;  //component 1
-            //   dS+= comp_n * g * d * phi_n *( dd + 3. * phiSqr + 3 * phi(comp,x) * d  );   //component 0
+    //           dS+= mu *phi_n * phi_n *( 2.* dPhi + dd       ) ;
+    //         //   dS+= comp * g * phi_n * phi_n * phi_n * d;  //component 1
+    //         //   dS+= comp_n * g * d * phi_n *( dd + 3. * phiSqr + 3 * phi(comp,x) * d  );   //component 0
               
-              if (comp==1){
-                   dS+=  g * phi_n * phi_n * phi_n * d;  //component 1
-                //    dS+=  g * phi_n * neighbourSum[0] * neighbourSum[0] * d /64.0;  //component 1
-              }
-              else { //if (comp==0)
-                    dS+=  g * d * phi_n *( dd + 3. * (phiSqr +  dPhi)  );   //component 0
-                //   dS+=  g * d * phi_n *( neighbourSum[0]*neighbourSum[0]  )/64.0;   //component 0
-              }
+    //           if (comp==1){
+    //                dS+=  g * phi_n * phi_n * phi_n * d;  //component 1
+    //             //    dS+=  g * phi_n * neighbourSum[0] * neighbourSum[0] * d /64.0;  //component 1
+    //           }
+    //           else { //if (comp==0)
+    //                 dS+=  g * d * phi_n *( dd + 3. * (phiSqr +  dPhi)  );   //component 0
+    //             //   dS+=  g * d * phi_n *( neighbourSum[0]*neighbourSum[0]  )/64.0;   //component 0
+    //           }
 
             
+    //            //  accept reject step -------------------------------------
+    //           if(rgen.drand() < exp(-dS)) {
+    //             phi(comp,x) += d;
+    //             phiSqr = phi(comp,x)*phi(comp,x);
+    //            // update++; 
+    //           }
+    //       } // multi hit ends here
+    //   } // loop components  ends here
+
+
+        double phiSqr = phi(0,x)*phi(0,x);
+          // doing the multihit
+        for(size_t hit = 0; hit < nb_of_hits; hit++){  
+            double d = (rgen.drand()*2. - 1.)*delta;
+            double dPhi = d * phi(0,x);
+            double dd = d * d;
+            // change of action
+            double dS = -2.*kappa[0]*d*neighbourSum[0] + 
+                2.*dPhi*(1. - 2.*lambda[0]*(1. - phiSqr - dd)) +
+                dd*(1. - 2.*lambda[0]) +
+                lambda[0]*(6.*dPhi*dPhi + dd*dd);
+           
+            dS+= mu *phi(1,x) * phi(1,x) *( 2.* dPhi + dd       ) ;
+            dS+=  g * d * phi(1,x) *( dd + 3. * (phiSqr +  dPhi)  );
+              
                //  accept reject step -------------------------------------
-              if(rgen.drand() < exp(-dS)) {
-                phi(comp,x) += d;
-                phiSqr = phi(comp,x)*phi(comp,x);
+            if(rgen.drand() < exp(-dS)) {
+               phi(0,x) += d;
+               phiSqr = phi(0,x)*phi(0,x);
                // update++; 
-              }
-          } // multi hit ends here
-      } // loop components  ends here
+            }
+        } // multi hit ends here
+        phiSqr = phi(1,x)*phi(1,x);
+          // doing the multihit
+        for(size_t hit = 0; hit < nb_of_hits; hit++){  
+            double d = (rgen.drand()*2. - 1.)*delta;
+            double dPhi = d * phi(1,x);
+            double dd = d * d;
+            // change of action
+            double dS = -2.*kappa[1]*d*neighbourSum[1] + 
+                2.*dPhi*(1. - 2.*lambda[1]*(1. - phiSqr - dd)) +
+                dd*(1. - 2.*lambda[1]) +
+                lambda[1]*(6.*dPhi*dPhi + dd*dd);
+           
+            //   dS+= mu *phi(0,x) * phi(0,x) *( 2.* dPhi + dd       ) ;              
+            //   dS+=  g * phi(0,x) * phi(0,x) * phi(0,x) * d;  
+            dS+= phi(0,x) * phi(0,x) *( mu *(2.* dPhi + dd ) + g* phi(0,x) * d);
+
+            //  accept reject step -------------------------------------
+            if(rgen.drand() < exp(-dS)) {
+                phi(1,x) += d;
+                phiSqr = phi(1,x)*phi(1,x);
+                // update++; 
+            }
+        } // multi hit ends here
+
     // Give the state back, which will allow another thread to aquire it
     rand_pool.free_state(rgen);
   //},acc);  // end lattice_even loop in parallel
