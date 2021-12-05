@@ -37,6 +37,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   int metropolis_global_hits;
   double metropolis_delta;
   //Langevin3rd
+  int newHMC_steps;
   int Langevin3rd_steps;
   double Langevin3rd_eps;
   double Langevin3rd_gamma;
@@ -453,6 +454,7 @@ private:
     read_par_int(newfile, "metropolis_global_hits", data.metropolis_global_hits);
     read_par_double(newfile, "metropolis_delta", data.metropolis_delta);
     // Langevin3rd
+    read_par_int(newfile, "newHMC_steps", data.newHMC_steps);
     read_par_int(newfile, "Langevin3rd_steps", data.Langevin3rd_steps);
     read_par_double(newfile, "Langevin3rd_eps", data.Langevin3rd_eps);
     read_par_double(newfile, "Langevin3rd_gamma", data.Langevin3rd_gamma);
@@ -462,11 +464,18 @@ private:
     read_par_double(newfile, "Langevin_eps", data.Langevin_eps);
     
     
-    if(data.Langevin3rd_steps >0 &&  data.metropolis_local_hits>0  && data.Langevin_steps>0){
-        printf("metropolis or langevin, both are not allowed");
-        exit(1);
+    if(data.Langevin3rd_steps >0 ){
+        if (data.metropolis_local_hits>0){ printf("metropolis or langevin, both are not allowed");  exit(1);}
+        if (data.Langevin_steps>0){ printf("metropolis or langevin, both are not allowed");  exit(1);}
+        if (data.newHMC_steps>0){ printf("metropolis or langevin, both are not allowed");  exit(1);}
     }
-    
+    if (data.metropolis_local_hits>0){
+        if (data.Langevin_steps>0){ printf("metropolis or langevin, both are not allowed");  exit(1);}
+        if (data.newHMC_steps>0){ printf("metropolis or langevin, both are not allowed");  exit(1);}
+    }
+    if (data.Langevin_steps>0){
+        if (data.newHMC_steps>0){ printf("metropolis or langevin, both are not allowed");  exit(1);}
+    }
     // cluster
     read_par_int(newfile, "cluster_hits", data.cluster_hits);
     read_par_double(newfile, "cluster_min_size", data.cluster_min_size);

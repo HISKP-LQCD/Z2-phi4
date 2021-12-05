@@ -51,6 +51,42 @@ KOKKOS_INLINE_FUNCTION double force( cluster::IO_params params ,Viewphi phi, siz
 
 
 
+
+void newHMC_euler(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool){
+    size_t V=params.data.V;
+    Viewphi tmp("tmp_field", 2,V);
+    double c1=exp(-params.data.Langevin3rd_gamma*params.data.Langevin3rd_eps);
+    double c2= sqrt(1.-c1*c1);
+    
+    double c1p=exp(-params.data.Langevin3rd_xi*params.data.Langevin3rd_eps);
+    double c2p= sqrt(1.-c1*c1);
+        
+    Kokkos::parallel_for( "lattice Langevin3d loop", V, KOKKOS_LAMBDA( size_t x ) {    
+        
+        gen_type rgen = rand_pool.get_state(x);
+      
+        double F=force(params ,phi,  x);
+        // mom update
+        tmp(1,x)=c1 * phi(1,x);
+        tmp(1,x)+=gauss_rand( 0,  c2, rgen.drand(), rgen.drand());
+        tmp(1,x)-=params.data.Langevin3rd_eps*F;
+        
+        //field update
+        tmp(0,x)=phi(0,x) + params.data.Langevin3rd_eps*phi(1,x);
+        tmp(0,x)+=gauss_rand( 0,  c2p, rgen.drand(), rgen.drand());
+        tmp(0,x)-=params.data.Langevin3rd_eps*  params.data.Langevin3rd_xi* F ;
+        
+        
+        rand_pool.free_state(rgen);
+    });
+    Kokkos::deep_copy(phi,tmp);
+    
+    
+    
+    
+}
+
+
 void Langevin3rd_euler(Viewphi &phi, cluster::IO_params params, RandPoolType &rand_pool){
     size_t V=params.data.V;
     Viewphi tmp("tmp_field", 3,V);

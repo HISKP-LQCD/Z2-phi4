@@ -115,7 +115,10 @@ int main(int argc, char** argv) {
         Viewphi construct_phi("phi",1,V);
         phi=construct_phi;
     }
-    
+    else if( params.data.newHMC_steps > 0){
+        Viewphi construct_phi("phi",2,V);
+        phi=construct_phi;
+    }
     
     
     Viewphi  s_phi;
@@ -225,8 +228,13 @@ int main(int argc, char** argv) {
         for(int steps = 0; steps < params.data.Langevin3rd_steps;   steps++){
             Langevin3rd_paper_euler(phi,params,  rand_pool );
         }
+        //Langevin
         for(int steps = 0; steps < params.data.Langevin_steps;   steps++){
             Langevin_euler(phi,params,  rand_pool );
+        }
+        //newHMC
+        for(int steps = 0; steps < params.data.newHMC_steps;   steps++){
+            newHMC_euler(phi,params,  rand_pool );
         }
 
         
