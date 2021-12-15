@@ -469,9 +469,9 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
         Kokkos::complex<double> A1[3],A1_t[3];  // phi0, phi1, phi01
         Kokkos::complex<double> E1[3],E1_t[3];
         Kokkos::complex<double> E2[3],E2_t[3];
-        Kokkos::complex<double> o2p1[3][3],o2p1_t[3][3];
-        Kokkos::complex<double> o2p11[3][3],o2p11_t[3][3];
-        Kokkos::complex<double> o2p111[3],o2p111_t[3];
+        Kokkos::complex<double> o2p1[4][3],o2p1_t[4][3];
+        Kokkos::complex<double> o2p11[4][3],o2p11_t[4][3];
+        Kokkos::complex<double> o2p111[4],o2p111_t[4];
     
         for(int t1=0; t1<T; t1++) {
             int tpt1=(t+t1)%T;
@@ -583,20 +583,28 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 phi111_t[comp]=phip(comp,tpt1_p111); 
                 
                 o2p111[comp]=(phi111[comp] * phip(comp,t1));
-                o2p111_t[comp]=(conj(phi111_t[comp])*phip(comp,(t1+t)%T));
+                o2p111_t[comp]=(conj(phi111_t[comp])*phip(comp,tpt1));
                 
             }
             for(int i=0;i<3;i++){
                 bb[2][i]  =(phi1[0][i]*conj(phi1[1][i])+phi1[1][i]*conj(phi1[0][i])  )/1.41421356237;//sqrt(2);
                 bb_t[2][i]=(phi1_t[0][i]*conj(phi1_t[1][i])+phi1_t[1][i]*conj(phi1_t[0][i])  )/1.41421356237;//sqrt(2);
                 o2p1[2][i]=phi1[0][i]*phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
-                o2p1_t[2][i]=conj(phi1_t[0][i])*phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+                o2p1_t[2][i]=conj(phi1_t[0][i])*phip(1,tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+                o2p1[3][i]=phi1[1][i]*phip(0,t1);//  +  phi[1][i]*h_phip(0,t1) ;
+                o2p1_t[3][i]=conj(phi1_t[1][i])*phip(0,tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
         
+
                 o2p11[2][i]=phi11[0][i]*phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
-                o2p11_t[2][i]=conj(phi11_t[0][i])*phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+                o2p11_t[2][i]=conj(phi11_t[0][i])*phip(1,tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+                o2p11[3][i]=phi11[1][i]*phip(0,t1);//  +  phi[1][i]*h_phip(0,t1) ;
+                o2p11_t[3][i]=conj(phi11_t[1][i])*phip(0,tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
             }
             o2p111[2]=phi111[0]*phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
-            o2p111_t[2]=conj(phi111_t[0])*phip(1,(t1+t)%T);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+            o2p111_t[2]=conj(phi111_t[0])*phip(1,tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
+            
+            o2p111[3]=phi111[0]*phip(1,t1);//  +  phi[1][i]*h_phip(0,t1) ;
+            o2p111_t[3]=conj(phi111_t[0])*phip(1,tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
             
             for (int comp=0; comp< 3;comp++){
                 A1[comp]=  (bb[comp][0]+bb[comp][1]+bb[comp][2])/1.73205080757;//sqrt(3);
@@ -832,6 +840,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(213,t)+=(phip(0,t1)*phip(0,t1)*phip(0,tpt1)*phip(1,tpt1)  ).real(); 
             to_write(214,t)+=(phip(1,t1)*phip(1,t1)*phip(0,tpt1)*phip(1,tpt1)  ).real(); 
             
+            ///////////////////// p1
             to_write(215,t)+=((o2p1[0][0]*o2p1_t[1][0]).real()  
                              +(o2p1[0][1]*o2p1_t[1][1]).real()
                              +(o2p1[0][2]*o2p1_t[1][2]).real() )/3.; // phi0(p1) phi0-->phi1(p1) phi1
@@ -844,27 +853,156 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                              +(o2p1[1][1]*o2p1_t[2][1]).real()
                              +(o2p1[1][2]*o2p1_t[2][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
 
-            to_write(218,t)+=((o2p11[0][0]*o2p11_t[1][0]).real()  
+            to_write(218,t)+=((o2p1[0][0]*o2p1_t[3][0]).real()  
+                             +(o2p1[0][1]*o2p1_t[3][1]).real()
+                             +(o2p1[0][2]*o2p1_t[3][2]).real())/3;  // phi0(p1) phi0-->phi0(p1) phi1
+
+            to_write(219,t)+=((o2p1[1][0]*o2p1_t[3][0]).real()
+                             +(o2p1[1][1]*o2p1_t[3][1]).real()
+                             +(o2p1[1][2]*o2p1_t[3][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
+
+            to_write(220,t)+=((o2p1[2][0]*o2p1_t[3][0]).real()
+                             +(o2p1[2][1]*o2p1_t[3][1]).real()
+                             +(o2p1[2][2]*o2p1_t[3][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
+
+            to_write(221,t)+=((o2p1[3][0]*o2p1_t[3][0]).real()
+                             +(o2p1[3][1]*o2p1_t[3][1]).real()
+                             +(o2p1[3][2]*o2p1_t[3][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
+
+
+//////////////////////////p 11
+
+
+
+            to_write(222,t)+=((o2p11[0][0]*o2p11_t[1][0]).real()  
                              +(o2p11[0][1]*o2p11_t[1][1]).real()
                              +(o2p11[0][2]*o2p11_t[1][2]).real() )/3.; // phi0(p11) phi0-->phi1(p11) phi1
 
-            to_write(219,t)+=((o2p11[0][0]*o2p11_t[2][0]).real()  
+            to_write(223,t)+=((o2p11[0][0]*o2p11_t[2][0]).real()  
                              +(o2p11[0][1]*o2p11_t[2][1]).real()
                              +(o2p11[0][2]*o2p11_t[2][2]).real())/3;  // phi0(p11) phi0-->phi0(p11) phi1
 
-            to_write(220,t)+=((o2p11[1][0]*o2p11_t[2][0]).real()
+            to_write(224,t)+=((o2p11[1][0]*o2p11_t[2][0]).real()
                              +(o2p11[1][1]*o2p11_t[2][1]).real()
                              +(o2p11[1][2]*o2p11_t[2][2]).real())/3;  // phi1(p11) phi1-->phi0(p11) phi1
 
-            to_write(221,t)+=(o2p111[0]*o2p111_t[1]).real();  // phi0(p111) phi0-->phi1(p111) phi1
-            to_write(222,t)+=(o2p111[0]*o2p111_t[2]).real();  // phi0(p111) phi0-->phi0(p111) phi1
-            to_write(223,t)+=(o2p111[1]*o2p111_t[2]).real();  // phi1(p111) phi1-->phi0(p111) phi1
+            to_write(225,t)+=((o2p11[0][0]*o2p11_t[3][0]).real()  
+                             +(o2p11[0][1]*o2p11_t[3][1]).real()
+                             +(o2p11[0][2]*o2p11_t[3][2]).real())/3;  // phi0(p1) phi0-->phi0(p1) phi1
+
+            to_write(226,t)+=((o2p11[1][0]*o2p11_t[3][0]).real()
+                             +(o2p11[1][1]*o2p11_t[3][1]).real()
+                             +(o2p11[1][2]*o2p11_t[3][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
+
+            to_write(227,t)+=((o2p11[2][0]*o2p11_t[3][0]).real()
+                             +(o2p11[2][1]*o2p11_t[3][1]).real()
+                             +(o2p11[2][2]*o2p11_t[3][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
+                             
+            to_write(228,t)+=((o2p11[3][0]*o2p11_t[3][0]).real()
+                             +(o2p11[3][1]*o2p11_t[3][1]).real()
+                             +(o2p11[3][2]*o2p11_t[3][2]).real())/3;  // phi1(p1) phi1-->phi0(p1) phi1
+////////////////////////////// p 1 1 1
+            to_write(229,t)+=(o2p111[0]*o2p111_t[1]).real();  // phi0(p111) phi0-->phi1(p111) phi1
+            to_write(230,t)+=(o2p111[0]*o2p111_t[2]).real();  // phi0(p111) phi0-->phi0(p111) phi1
+            to_write(231,t)+=(o2p111[1]*o2p111_t[2]).real();  // phi1(p111) phi1-->phi0(p111) phi1
+            to_write(232,t)+=(o2p111[0]*o2p111_t[3]).real();  // phi0(p111) phi0-->phi1(p111) phi1
+            to_write(233,t)+=(o2p111[1]*o2p111_t[3]).real();  // phi0(p111) phi0-->phi0(p111) phi1
+            to_write(234,t)+=(o2p111[2]*o2p111_t[3]).real();  // phi1(p111) phi1-->phi0(p111) phi1
+            to_write(235,t)+=(o2p111[3]*o2p111_t[3]).real();  // phi1(p111) phi1-->phi0(p111) phi1
+
+            to_write(236,t)+=(A1[0]*A1_t[1]).real();  // phi0(p) phi0(-p)-->phi1(p) phi1(-p)
+            to_write(237,t)+=(A1[0]*A1_t[2]).real();  // phi0(p) phi0(-p)-->phi0(p) phi1(-p)
+            to_write(238,t)+=(A1[1]*A1_t[2]).real();  // phi1(p) phi1(-p)-->phi0(p) phi1(-p)
            
-            to_write(224,t)+=(A1[0]*A1_t[1]).real();  // phi0(p) phi0(-p)-->phi1(p) phi1(-p)
-            to_write(225,t)+=(A1[0]*A1_t[2]).real();  // phi0(p) phi0(-p)-->phi0(p) phi1(-p)
-            to_write(226,t)+=(A1[1]*A1_t[2]).real();  // phi1(p) phi1(-p)-->phi0(p) phi1(-p)
-           
+            ///// three body
             
+            to_write(239,t)+=(phi1[0][0]    * phip(1,tpt1)*o2p1_t[0][0]
+                             +phi1[0][1]    * phip(1,tpt1)*o2p1_t[0][1]
+                             +phi1[0][2]    * phip(1,tpt1)*o2p1_t[0][2]).real()/3.;   //phi0p --> 001p 
+            to_write(240,t)+=(phip(0,t1)*o2p1[0][0]  * phip(1,tpt1)*o2p1_t[0][0]
+                             +phip(0,t1)*o2p1[0][1]  * phip(1,tpt1)*o2p1_t[0][1]
+                             +phip(0,t1)*o2p1[0][2]  * phip(1,tpt1)*o2p1_t[0][2] ).real()/3. ;// 001p--> 001p
+            to_write(241,t)+=(phi1[1][0]    * phip(1,tpt1)*o2p1_t[0][0]
+                             +phi1[1][1]    * phip(1,tpt1)*o2p1_t[0][1]
+                             +phi1[1][2]    * phip(1,tpt1)*o2p1_t[0][2]).real()/3.;   //phi0p --> 001p 
+            to_write(242,t)+=(phip(1,t1)*o2p1[0][0]  * phip(1,tpt1)*o2p1_t[0][0]
+                             +phip(1,t1)*o2p1[0][1]  * phip(1,tpt1)*o2p1_t[0][1]
+                             +phip(1,t1)*o2p1[0][2]  * phip(1,tpt1)*o2p1_t[0][2] ).real()/3. ;// 001p--> 001p
+            
+            to_write(243,t)+=((phi1[0][0]    *  phi1_t[1][0]
+                             +phi1[0][1]    *  phi1_t[1][1]
+                             +phi1[0][2]    *  phi1_t[1][2]
+                             )* phip(0,tpt1)*phip(0,tpt1) ).real()/3.;   //phi0p --> 001p 
+            to_write(244,t)+=(phip(0,t1)*(
+                              o2p1[0][0]    *  phi1_t[1][0]
+                             +o2p1[0][1]    *  phi1_t[1][1]
+                             +o2p1[0][2]    *  phi1_t[1][2]
+                             )* phip(0,tpt1)*phip(0,tpt1) ).real()/3.;   //phi0p --> 001p
+            to_write(245,t)+=((phi1[1][0]    *  phi1_t[1][0]
+                             +phi1[1][1]    *  phi1_t[1][1]
+                             +phi1[1][2]    *  phi1_t[1][2]
+                             )* phip(0,tpt1)*phip(0,tpt1) ).real()/3.;   //phi0p --> 001p 
+            to_write(246,t)+=(phip(1,t1) *(
+                                 o2p1[0][0] * phi1_t[1][0]
+                                +o2p1[0][1] * phi1_t[1][1]
+                                +o2p1[0][2] * phi1_t[1][2]
+                                )* phip(0,tpt1)*phip(0,tpt1) ).real()/3. ;// 001p--> 001p
+            to_write(247,t)+=(phip(0,t1)*phip(0,t1) *(
+                                 phi1[1][0] * phi1_t[1][0]
+                                +phi1[1][1] * phi1_t[1][1]
+                                +phi1[1][2] * phi1_t[1][2]
+                                )* phip(0,tpt1)*phip(0,tpt1) ).real()/3. ;// 001p--> 001p
+
+            //011
+            to_write(248,t)+=(phi1[0][0]    * phip(0,tpt1)*o2p1_t[1][0]
+                             +phi1[0][1]    * phip(0,tpt1)*o2p1_t[1][1]
+                             +phi1[0][2]    * phip(0,tpt1)*o2p1_t[1][2]).real()/3.;   //phi0p --> 001p 
+            to_write(249,t)+=(phip(0,t1)*o2p1[0][0]  * phip(0,tpt1)*o2p1_t[1][0]
+                             +phip(0,t1)*o2p1[0][1]  * phip(0,tpt1)*o2p1_t[1][1]
+                             +phip(0,t1)*o2p1[0][2]  * phip(0,tpt1)*o2p1_t[1][2] ).real()/3. ;// 001p--> 001p
+            to_write(250,t)+=(phi1[1][0]    * phip(0,tpt1)*o2p1_t[1][0]
+                             +phi1[1][1]    * phip(0,tpt1)*o2p1_t[1][1]
+                             +phi1[1][2]    * phip(0,tpt1)*o2p1_t[1][2]).real()/3.;   //phi0p --> 001p 
+            to_write(251,t)+=(phip(1,t1)*o2p1[0][0]  * phip(0,tpt1)*o2p1_t[1][0]
+                             +phip(1,t1)*o2p1[0][1]  * phip(0,tpt1)*o2p1_t[1][1]
+                             +phip(1,t1)*o2p1[0][2]  * phip(0,tpt1)*o2p1_t[1][2] ).real()/3. ;// 001p--> 011p
+            to_write(252,t)+=(phip(0,t1)*phip(0,t1) *(
+                                 phi1[1][0]  *o2p1_t[1][0]
+                                +phi1[1][1]  *o2p1_t[1][1]
+                                +phi1[1][2]  *o2p1_t[1][2]
+                                )* phip(0,tpt1) ).real()/3. ;// 001p--> 011p
+            to_write(253,t)+=(phip(0,t1)*o2p1[1][0]  * phip(0,tpt1)*o2p1_t[1][0]
+                             +phip(0,t1)*o2p1[1][1]  * phip(0,tpt1)*o2p1_t[1][1]
+                             +phip(0,t1)*o2p1[1][2]  * phip(0,tpt1)*o2p1_t[1][2] ).real()/3. ;// 001p--> 001p
+            
+
+                             
+            to_write(254,t)+=((phi1[0][0]    * phi1_t[0][0]
+                             +phi1[0][1]    * phi1_t[0][1]
+                             +phi1[0][2]    * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p 
+            to_write(255,t)+=(phip(0,t1)*(
+                              o2p1[0][0]  * phi1_t[0][0]
+                             +o2p1[0][1]  * phi1_t[0][1]
+                             +o2p1[0][2]  * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p 
+            to_write(256,t)+=((phi1[1][0]    * phi1_t[0][0]
+                             +phi1[1][1]    * phi1_t[0][1]
+                             +phi1[1][2]    * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p 
+            to_write(257,t)+=(phip(1,t1)*(
+                              o2p1[0][0]  * phi1_t[0][0]
+                             +o2p1[0][1]  * phi1_t[0][1]
+                             +o2p1[0][2]  * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p      
+            to_write(258,t)+=(phip(0,t1)*phip(0,t1)*(
+                              phi1[1][0]  * phi1_t[0][0]
+                             +phi1[1][1]  * phi1_t[0][1]
+                             +phi1[1][2]  * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p
+            to_write(259,t)+=(phip(0,t1)*(
+                              o2p1[1][0]  * phi1_t[0][0]
+                             +o2p1[1][1]  * phi1_t[0][1]
+                             +o2p1[1][2]  * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p      
+            to_write(260,t)+=(phip(1,tpt1)*phip(1,tpt1)*(
+                              phi1[0][0]  * phi1_t[0][0]
+                             +phi1[0][1]  * phi1_t[0][1]
+                             +phi1[0][2]  * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p      
         }// end loop t1
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)/=((double) T);
