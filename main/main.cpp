@@ -144,6 +144,8 @@ int main(int argc, char** argv) {
         Npfileds=4;
     if( params.data.smearing3FT == "yes")
         Npfileds=5;
+
+    std::cout<< "Npfileds = " << Npfileds<< std::endl;
                   
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
@@ -179,7 +181,26 @@ int main(int argc, char** argv) {
                exit(1);
     }    
     write_header_measuraments(f_G2t, params ); 
-     
+    
+    FILE *f_conf_bundle;
+    if( params.data.save_config_FT_bundle == "yes") {
+        std::string conf_file = params.data.outpath + 
+                "/T" + std::to_string(params.data.L[0])     +  "_L" + std::to_string(params.data.L[1]) +
+                "_msq0" + std::to_string(params.data.msq0)  +  "_msq1" + std::to_string(params.data.msq1)+
+                "_l0" + std::to_string(params.data.lambdaC0)+  "_l1" + std::to_string(params.data.lambdaC1)+
+                "_mu" + std::to_string(params.data.muC)     +  "_g" + std::to_string(params.data.gC)  + 
+                "_rep" + std::to_string(params.data.replica) + 
+                "_conf_FT_bundle";
+        f_conf_bundle = fopen(conf_file.c_str(), "w+"); 
+        if (f_conf_bundle == NULL) {  
+            printf("Error opening file %s!\n", conf_file.c_str());
+            Kokkos::abort("opening file");   
+        }
+        cout << "Writing all the FT config  to: " << conf_file.c_str() << endl;
+        write_header(f_conf_bundle,  params );
+        int Nmeas=params.data.total_measure/params.data.measure_every_X_updates;
+        fwrite(&Nmeas, sizeof(int), 1, f_conf_bundle);
+    }
      
     double time_update=0,time_mes=0,time_writing=0 ,time_FT=0;
     int nFT=0;
@@ -216,9 +237,10 @@ int main(int argc, char** argv) {
         bool measure =(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0 );
         bool contractions= (measure &&   params.data.compute_contractions == "yes");
         bool write_FT=     (measure &&   params.data.save_config_FT == "yes");
+        bool write_FT_bundle=(measure &&   params.data.save_config_FT_bundle == "yes");
         bool write=        (measure &&   params.data.save_config == "yes");
 
-        if( contractions || write_FT ){
+        if( contractions || write_FT || write_FT_bundle ){
             Kokkos::Timer timer_FT;
             
                 
@@ -285,6 +307,15 @@ int main(int argc, char** argv) {
             fclose(f_conf);
             time_writing+=time;
         }
+        if(write_FT_bundle){
+            Kokkos::Timer timer3;
+            
+            Kokkos::deep_copy( h_mphip, mphip );
+            write_single_conf_FT_complex(f_conf_bundle, layout_value,params , ii , h_mphip );
+             
+            time = timer3.seconds();
+            time_writing+=time;
+        }
         
         // write the configuration to disk
         if(write){
@@ -323,9 +354,12 @@ int main(int argc, char** argv) {
 
     fclose(f_G2t);
     fclose(f_mes);
+    if (params.data.save_config_FT_bundle== "yes") fclose(f_conf_bundle);
     if (params.data.checks== "yes")  fclose(f_checks);
     printf("total kokkos time = %f s\n", timer.seconds());
     }
+                
+
     Kokkos::finalize();
     
     return 0;

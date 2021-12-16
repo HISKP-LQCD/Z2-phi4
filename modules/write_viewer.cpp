@@ -54,7 +54,7 @@ int check_layout(){
     return swap_layout;
 }
 
-void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
+void write_header(FILE *f_conf, cluster::IO_params params ){
 
      fwrite(&params.data.L, sizeof(int), 4, f_conf); 
 
@@ -81,7 +81,6 @@ void write_header(FILE *f_conf, cluster::IO_params params ,int iconf){
      //fwrite(&params.data.total_measure, sizeof(int), 1, f_conf); 
      //fwrite(&params.data.measure_every_X_updates, sizeof(int), 1, f_conf); 
      
-     fwrite(&iconf, sizeof(int), 1, f_conf); 
 
 }
 
@@ -91,7 +90,10 @@ void write_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int 
      #ifdef TIMER
          Kokkos::Timer timer;
      #endif
-     write_header(f_conf, params, iconf);
+     write_header(f_conf, params);
+     fwrite(&iconf, sizeof(int), 1, f_conf); 
+
+     
      #ifdef TIMER
          double time=timer.seconds();
          printf("time to write the header %f\n",time);
@@ -171,7 +173,7 @@ void error_header(FILE *f_conf, T expected, const char *message){
      }
 }
 
-void check_header(FILE *f_conf, cluster::IO_params &params ,int iconf){
+void check_header(FILE *f_conf, cluster::IO_params &params ){
 
      error_header(f_conf,params.data.L[0],"L0" ); 
      error_header(f_conf,params.data.L[1],"L1" ); 
@@ -202,14 +204,15 @@ void check_header(FILE *f_conf, cluster::IO_params &params ,int iconf){
      error_header(f_conf,params.data.seed,"seed" ); 
      error_header(f_conf,params.data.replica,"replica" ); 
      
-     error_header(f_conf,iconf,"iconf" ); 
+    
 }
 
 void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  ,  Viewphi &phi  ){
      #ifdef TIMER
          Kokkos::Timer timer;
      #endif
-     check_header(f_conf, params, iconf);
+     check_header(f_conf, params);
+     error_header(f_conf,iconf,"iconf" ); 
      #ifdef TIMER
          double time=timer.seconds();
          printf("time to check header %f\n",time);
@@ -261,115 +264,6 @@ void read_viewer(FILE *f_conf,int layout_value, cluster::IO_params params, int i
 ////////////////////////////////////////////////////
 // write conf after the FT, only a sublattice is written. 
 ////////////////////////////////////////////////////
-void write_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , Viewphi::HostMirror h_phip ){
-    
-    #ifdef TIMER
-    Kokkos::Timer timer;
-    #endif
-    write_header(f_conf, params, iconf);
-    #ifdef TIMER
-    double time=timer.seconds();
-    printf("time to write the header %f\n",time);
-    #endif
-    size_t V=params.data.L[0]*Vp; 
-    
-    if(endian==BIG_ENDIAN){
-        for(size_t x=0; x<V;x++) 
-            for(size_t c=0; c<2;c++)
-                bswap_double(1,&h_phip(c,x));
-    }
-   
-    if (layout_value==1){
-        
-        Viewphi::HostMirror w_phip("w_phi",V,2);
-        for (size_t x=0;x<V;x++){
-            //phi (c,x ) is stored in the device with the order i=c+x*2
-            // I want to save it on the disk with order i1=x+c*V
-            // so we need the coordinate c1 and x1 of  i1=c1+x1*2
-            for(size_t c=0; c<2;c++){
-                //size_t i1=x+c*V;
-                //size_t c1=i1%2;
-                //size_t x1=i1/2;
-                w_phip(x,c)=h_phip(c,x);
-            }
-        }
-        
-        // Deep copy device views to host views.
-        //Kokkos::deep_copy( h_phi, w_phi );
-        fwrite(&w_phip(0,0), sizeof(double), 2*V, f_conf); 
-        
-        
-    }
-    else{
-        fwrite(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
-        
-    }
-    
-    if(endian==BIG_ENDIAN){
-        for(size_t x=0; x<V;x++) 
-            for(size_t c=0; c<2;c++)
-                bswap_double(1,&h_phip(c,x));
-    }
-    #ifdef TIMER
-    double time2=timer.seconds()-time;
-    printf("time of fwrite %f\n",time2);
-    #endif
-    
-}
-
-
-void read_conf_FT(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , Viewphi &phip ){
-    #ifdef TIMER
-    Kokkos::Timer timer;
-    #endif
-    check_header(f_conf, params, iconf);
-    #ifdef TIMER
-    double time=timer.seconds();
-    printf("time to check header %f\n",time);
-    #endif
-    size_t V=params.data.L[0]*Vp; 
-    int i=0;
-    Viewphi::HostMirror h_phip("h_phip",2,V);
-    
-    if (layout_value==0){
-        i+=fread(&h_phip(0,0), sizeof(double), 2*V, f_conf); 
-        #ifdef TIMER
-        double time1=timer.seconds()-time;
-        printf("time to read on Host %f\n",time1);
-        #endif
-    }
-    if (layout_value==1){
-        Viewphi::HostMirror r_phip("r_phip",V,2);
-        i+=fread(&r_phip(0,0), sizeof(double), 2*V, f_conf);
-        /*
-        for (size_t x=0;x<V;x++){
-            //phi (c,x ) is stored in the device with the order i=c+x*2
-            // I want to save it on the disk with order i1=x+c*V
-            // so we need the coordinate c1 and x1 of  i1=c1+x1*2
-            for(size_t c=0; c<2;c++){
-                //size_t i1=c+x*2;
-                //size_t c1=i1/V;
-                //size_t x1=i1%V;
-                r_phip(x,c)=h_phip(c,x);
-            }
-        }*/
-        for (size_t x=0;x<V;x++)
-            for(size_t c=0; c<2;c++)
-                h_phip(c,x)=r_phip(x,c);
-        
-    }
-    Kokkos::deep_copy(phip,h_phip);
-    
-    #ifdef TIMER
-    double time2=timer.seconds()-time-time1;
-    printf("time to copy on device %f\n",time2);
-    #endif
-    
-}
-
-////////////////////////////////////////////////////
-// write conf after the FT, only a sublattice is written. 
-////////////////////////////////////////////////////
 
 
 void bswap_Kokkos_complex(Kokkos::complex<double> &a){
@@ -379,18 +273,10 @@ void bswap_Kokkos_complex(Kokkos::complex<double> &a){
     
 }
 
-void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , manyphi::HostMirror h_phip ){
-    
-    #ifdef TIMER
-    Kokkos::Timer timer;
-    #endif
-    write_header(f_conf, params, iconf);
-    #ifdef TIMER
-    double time=timer.seconds();
-    printf("time to write the header %f\n",time);
-    #endif
+void write_single_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf,  manyphi::HostMirror &h_phip ){
     size_t V=params.data.L[0]*Vp; 
-    
+    fwrite(&iconf, sizeof(int), 1, f_conf); 
+
     if(endian==BIG_ENDIAN){
         for(size_t x=0; x<V;x++) 
             for(size_t c=0; c<2;c++)
@@ -398,9 +284,9 @@ void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params par
                 bswap_Kokkos_complex( h_phip(n,c,x) );
     }
     
-    if (layout_value==1){
-        
+    if (layout_value==1){  
         manyphi::HostMirror w_phip("w_phi",V/2,2,Npfileds);
+        // Kokkos::View<Kokkos::complex<double> ***,Kokkos::LayoutLeft> w_phip("w_phi",V/2,2,Npfileds);
         for(int n=0; n<Npfileds;n++){
             for (size_t x=0;x<V/2;x++){
                 for(size_t c=0; c<2;c++){
@@ -408,7 +294,6 @@ void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params par
                 }
             }
         }
-        
         // Deep copy device views to host views.
         //Kokkos::deep_copy( h_phi, w_phi );
         fwrite(&w_phip(0,0,0), sizeof(double), 2*V*Npfileds, f_conf); 
@@ -426,6 +311,22 @@ void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params par
                 for(int n=0; n<Npfileds;n++)
                     bswap_Kokkos_complex( h_phip(n,c,x) );
     }
+
+}
+
+
+void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , manyphi::HostMirror h_phip ){
+    
+    #ifdef TIMER
+    Kokkos::Timer timer;
+    #endif
+    write_header(f_conf, params);
+    #ifdef TIMER
+    double time=timer.seconds();
+    printf("time to write the header %f\n",time);
+    #endif
+    write_single_conf_FT_complex(f_conf, layout_value,  params, iconf, h_phip );
+
     #ifdef TIMER
     double time2=timer.seconds()-time;
     printf("time of fwrite %f\n",time2);
@@ -433,17 +334,9 @@ void write_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params par
     
 }
 
-
-void read_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , manyphi::HostMirror &h_phip ){
-    #ifdef TIMER
-    Kokkos::Timer timer;
-    #endif
-    check_header(f_conf, params, iconf);
-    #ifdef TIMER
-    double time=timer.seconds();
-    printf("time to check header %f\n",time);
-    #endif
-    size_t V=params.data.L[0]*Vp; 
+void read_single_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , manyphi::HostMirror &h_phip ){
+    error_header(f_conf,iconf,"iconf" ); 
+size_t V=params.data.L[0]*Vp; 
     int i=0;
     //manyphi::HostMirror h_phip("h_phip",Npfileds,2,V/2);
     
@@ -456,6 +349,7 @@ void read_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params para
     }
     if (layout_value==1){
         manyphi::HostMirror r_phip("r_phip",V/2,2,Npfileds);
+        // Kokkos::View<Kokkos::complex<double> ***,Kokkos::LayoutLeft> r_phip("r_phi",V/2,2,Npfileds);
         i+=fread(&r_phip(0,0,0), sizeof(double), 2*V*Npfileds, f_conf);
         
         for(int n=0; n<Npfileds;n++)
@@ -465,6 +359,21 @@ void read_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params para
             
     }
     //Kokkkos:deep_copy(phip,h_phip);
+    
+
+
+}
+
+void read_conf_FT_complex(FILE *f_conf,int layout_value, cluster::IO_params params, int iconf  , manyphi::HostMirror &h_phip ){
+    #ifdef TIMER
+    Kokkos::Timer timer;
+    #endif
+    check_header(f_conf, params);
+    read_single_conf_FT_complex(f_conf, layout_value, params,  iconf, h_phip );
+    #ifdef TIMER
+    double time=timer.seconds();
+    printf("time to check header %f\n",time);
+    #endif
     
     #ifdef TIMER
     double time2=timer.seconds()-time-time1;

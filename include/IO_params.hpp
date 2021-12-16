@@ -49,6 +49,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   int measure_every_X_updates;
   std::string save_config;
   std::string save_config_FT;
+  std::string save_config_FT_bundle;
   std::string compute_contractions;
   int save_config_every_X_updates;
   std::string outpath;
@@ -57,6 +58,7 @@ struct LatticeDataContainer { // Just the thing that holds all variables
   std::string smearing;
   std::string FT_phin;
   std::string smearing3FT;
+
   
 };
 // -----------------------------------------------------------------------------
@@ -467,6 +469,8 @@ private:
     read_par_int(newfile, "measure_every_X_updates", data_in.measure_every_X_updates);
     read_par_string(newfile, "save_config", data_in.save_config);
     read_par_string(newfile, "save_config_FT", data_in.save_config_FT);
+    data_in.save_config_FT_bundle="no";
+    read_par_string(newfile, "save_config_FT_bundle", data_in.save_config_FT_bundle,false);
     read_par_string(newfile, "compute_contractions", data_in.compute_contractions);
 
 

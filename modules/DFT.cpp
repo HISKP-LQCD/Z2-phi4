@@ -143,7 +143,7 @@ void compute_FT_complex(manyphi &phip, int i,  const Viewphi phi, cluster::IO_pa
         phip(i,comp,xp)=0;
         
         //	for (size_t x=0;x<Vs;x++){	
-        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, Kokkos::complex<double> &inner) {
+        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const int x, Kokkos::complex<double> &inner) {
             
             size_t i0= x+t*Vs;
             int ix=x%L1;
@@ -214,7 +214,7 @@ void compute_smearing3FT(manyphi &phip, int i,  const Viewphi phi, cluster::IO_p
         phip(i,comp,xp)=0;
         
         //	for (size_t x=0;x<Vs;x++){	
-        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const size_t x, Kokkos::complex<double> &inner) {
+        Kokkos::parallel_reduce( Kokkos::TeamThreadRange( teamMember, Vs ), [&] ( const int x, Kokkos::complex<double> &inner) {
             
             size_t i0= x+t*Vs;
             int ix=x%L1;

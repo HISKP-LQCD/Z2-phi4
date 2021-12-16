@@ -94,7 +94,8 @@ int main(int argc, char** argv) {
         Npfileds=4;
     if( params.data.smearing3FT == "yes")
         Npfileds=5;
-    
+    std::cout<< "Npfileds = " << Npfileds<< std::endl;
+
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
     if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
@@ -153,6 +154,27 @@ int main(int argc, char** argv) {
     }    
     write_header_measuraments(f_G2t, params ); 
     
+    FILE *f_conf_bundle;
+    if( params.data.save_config_FT_bundle == "yes") {
+        std::string conf_file = params.data.outpath + 
+                "/T" + std::to_string(params.data.L[0])     +  "_L" + std::to_string(params.data.L[1]) +
+                "_msq0" + std::to_string(params.data.msq0)  +  "_msq1" + std::to_string(params.data.msq1)+
+                "_l0" + std::to_string(params.data.lambdaC0)+  "_l1" + std::to_string(params.data.lambdaC1)+
+                "_mu" + std::to_string(params.data.muC)     +  "_g" + std::to_string(params.data.gC)  + 
+                "_rep" + std::to_string(params.data.replica) + 
+                "_conf_FT_bundle";
+        f_conf_bundle = fopen(conf_file.c_str(), "r"); 
+        if (f_conf_bundle == NULL) {  
+            printf("Error opening file %s!\n", conf_file.c_str());
+            Kokkos::abort("opening file");   
+        }
+        cout << "reading all the FT config  from: " << conf_file.c_str() << endl;
+        check_header(f_conf_bundle,  params );
+        int Nmeas=params.data.total_measure/params.data.measure_every_X_updates;
+        error_header(f_conf_bundle,Nmeas,"Nmeas" ); 
+    }
+
+
     double time_mes=0,time_writing=0;
     double ave_acc=0;
     
@@ -164,14 +186,16 @@ int main(int argc, char** argv) {
         // bool condition in the infile 
         bool measure =(ii >= params.data.start_measure && (ii-params.data.start_measure)%params.data.measure_every_X_updates == 0 );
         bool read_FT=     (measure &&   params.data.save_config_FT == "yes");
+        bool read_FT_bundle=     (measure &&   params.data.save_config_FT_bundle == "yes");
         //bool read=        (measure &&   params.data.save_config == "yes");
         
         if(measure){
-            
-            if(read_FT){
-                Kokkos::Timer timer3;
-
-                
+            if(read_FT_bundle){
+                read_single_conf_FT_complex(f_conf_bundle, layout_value, params , ii , h_mphip );
+                Kokkos::deep_copy(mphip, h_mphip);
+            }
+            else if(read_FT){
+                Kokkos::Timer timer3;                
                 std::string conf_file = params.data.outpath + 
                     "/T" + std::to_string(params.data.L[0]) +
                     "_L" + std::to_string(params.data.L[1]) +
@@ -262,6 +286,7 @@ int main(int argc, char** argv) {
 
     fclose(f_G2t);
     fclose(f_mes);
+    if (params.data.save_config_FT_bundle== "yes") fclose(f_conf_bundle);
     if (params.data.checks== "yes")  fclose(f_checks);
     }
     Kokkos::finalize();
