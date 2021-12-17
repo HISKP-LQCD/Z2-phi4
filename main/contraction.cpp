@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
 
     manyphi mphip("manyphi",Npfileds ,2,params.data.L[0]*Vp/2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
     manyphi::HostMirror h_mphip;
-    if (params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
+    if (params.data.save_config_FT_bundle == "yes" || params.data.save_config_FT == "yes" || params.data.checks== "yes")  h_mphip=Kokkos::create_mirror_view( mphip ); 
     
     ViewLatt    hop("hop",V,2*dim_spacetime);
     ViewLatt    even_odd("even_odd",2,V/2);

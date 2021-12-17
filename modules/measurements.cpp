@@ -1003,6 +1003,18 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                               phi1[0][0]  * phi1_t[0][0]
                              +phi1[0][1]  * phi1_t[0][1]
                              +phi1[0][2]  * phi1_t[0][2])*phip(1,tpt1)*phip(1,tpt1)).real()/3.;   //phi0p --> 001p      
+            
+            // A1 6x6 GEVP
+            to_write(261,t)+=(phip(1,t) *phip(1,t) *A1_t[0]).real();
+            to_write(262,t)+=(phip(0,t) *phip(1,t)* A1_t[0]).real();                   
+        
+            to_write(263,t)+=(phip(0,t) *phip(0,t) *A1_t[1]).real();// o20 A1 // two_to_two_o20A1
+            to_write(264,t)+=(phip(0,t) *phip(1,t)* A1_t[1]).real();                   
+        
+            to_write(265,t)+=(phip(0,t) *phip(0,t) *A1_t[2]).real();// o20 A1 // two_to_two_o20A1
+            to_write(266,t)+=(phip(1,t) *phip(1,t) *A1_t[2]).real();
+        
+          
         }// end loop t1
         for(int c=0; c<Ncorr; c++) 
             to_write(c,t)/=((double) T);

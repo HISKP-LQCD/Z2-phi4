@@ -32,15 +32,13 @@ double metropolis_update(Viewphi &phi, cluster::IO_params params, RandPoolType &
   
   #ifdef DEBUG
       static int init_hop=0;
-      ViewLatt    eo_debug;
       ViewLatt    hop;
-      ViewLatt    ipt;
       if (init_hop==0){        
           ViewLatt    eo_debug("even_odd",2,V/2);
           ViewLatt  tmp1("hop",V,2*dim_spacetime);
           hop=tmp1;
           ViewLatt    ipt("ipt",V,dim_spacetime);
-          hopping( params.data.L, hop,even_odd,ipt);    
+          hopping( params.data.L, hop,eo_debug,ipt);    
           init_hop=1;
       } 
       else init_hop=2;
