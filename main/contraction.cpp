@@ -191,8 +191,11 @@ int main(int argc, char** argv) {
         
         if(measure){
             if(read_FT_bundle){
+                Kokkos::Timer timer3;                
                 read_single_conf_FT_complex(f_conf_bundle, layout_value, params , ii , h_mphip );
                 Kokkos::deep_copy(mphip, h_mphip);
+                time = timer3.seconds();
+                time_writing+=time;
             }
             else if(read_FT){
                 Kokkos::Timer timer3;                

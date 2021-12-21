@@ -480,45 +480,51 @@ int main(int argc, char **argv){
       
    char namefile[10000];
    vector<cluster::IO_params> params(argc-1);
-  
    
-   sprintf(namefile,"%s",argv[1]);
-   FILE **infiles=NULL;
-   infiles=(FILE**) malloc(sizeof(FILE*)*(argc-1));
-   infiles[0]=NULL;
-   infiles[0]=fopen(namefile,"r+");
-   if (infiles[0]==NULL) {printf("can not open contraction file: \n %s\n",namefile); exit(1);}
-   read_header(infiles[0],params[0]); 
-   confs.emplace_back( read_nconfs( infiles[0],  params[0])  ); 
-    printf("argc=%d\n",argc);
+   printf("argc=%d\n",argc);
 
-   
-   for (int r=1 ;r < (argc-1);r++){
-      infiles[r]=NULL;
-      infiles[r]=fopen(argv[1+r],"r+");
-      printf("considering file:  %s\n",argv[1+r] );
-      if (infiles[r]==NULL) {printf("can not open contraction file: \n\n"); exit(1);}
-      read_header(infiles[r],params[r]); 
-      compare_headers(params[r],params[0]);
-      confs.emplace_back( read_nconfs( infiles[r],  params[r])  ); 
-      
-      //check_header(infiles[r],params  )  ;
-      //confs.emplace_back( read_nconfs( infiles[r],  params)  );    
-   }
-   
+   FILE *infiles=NULL;
+//    infiles=(FILE*) malloc(sizeof(FILE)*(argc-1));
+   printf("considering file:  %s\n",argv[1] );
+
    sprintf(namefile,"%s_merged",argv[1]);
+   printf("writing output %s\n",namefile);
    FILE *outfile = fopen(namefile, "w+"); 
    if (outfile==NULL) {printf("can not open output file:  \n %s\n",namefile); exit(1);}  
+   
+   sprintf(namefile,"%s",argv[1]);
+   infiles=fopen(namefile,"r+");
+   if (infiles==NULL) {printf("can not open contraction file: \n %s\n",namefile); exit(1);}
+   read_header(infiles,params[0]); 
+   confs.emplace_back( read_nconfs( infiles,  params[0])  ); 
+//    fclose(infiles);
+   
+//    for (int r=1 ;r < (argc-1);r++){
+      
+//       //check_header(infiles[r],params  )  ;
+//       //confs.emplace_back( read_nconfs( infiles[r],  params)  );    
+//    }
    
    write_header_measuraments(outfile,params[0]);
    
    int iii;
    int fi=0;
+   double *data=(double*) malloc(sizeof(double)*(params[0].data.size));
+
    for (int r=0 ;r < (argc-1);r++){
-       double *data=(double*) malloc(sizeof(double)*(params[r].data.size));
+       if (r>0){
+           infiles=NULL;
+           infiles=fopen(argv[1+r],"r+");
+           printf("considering file:  %s\n",argv[1+r] );
+           if (infiles==NULL) {printf("can not open contraction file: \n\n"); exit(1);}
+           read_header(infiles,params[r]); 
+           compare_headers(params[r],params[0]);
+           confs.emplace_back( read_nconfs( infiles,  params[r])  ); 
+           }
+       
        for(int iconf=0; iconf < confs[r];iconf++){
-           fi+=fread(&iii,sizeof(int),1,infiles[r]);
-           fi+=fread(data,sizeof(double),params[r].data.size, infiles[r]);
+           fi+=fread(&iii,sizeof(int),1,infiles);
+           fi+=fread(data,sizeof(double),params[r].data.size, infiles);
            fwrite(&iii,sizeof(int),1,outfile);
            if ( params[r].data.size == params[0].data.size ){
                fwrite(data,sizeof(double),params[0].data.size,outfile);
@@ -533,11 +539,15 @@ int main(int argc, char **argv){
            }
             
        }
-       free(data);
-       fclose(infiles[r]);
+       fclose(infiles);
    }
+   free(data);
+
    fclose(outfile);
   
+   sprintf(namefile,"%s_merged",argv[1]);
+   printf("output written in: %s\n",namefile);
+   
    
        
 }
