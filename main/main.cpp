@@ -116,11 +116,12 @@ int main(int argc, char** argv) {
     Kokkos::parallel_for( "init_phi", V/2, KOKKOS_LAMBDA( size_t x) { 
         // get a random generatro from the pool
         gen_type rgen = rand_pool.get_state(x);
-        phi(0,x)=(rgen.drand()*2.-1.);
-        phi(1,x)=(rgen.drand()*2.-1.);
+        
+        phi(0,x)=(rgen.urand(0,2)*2.-1.);
+        phi(1,x)=(rgen.urand(0,2)*2.-1.);
 
-        phi(0,x+V/2)=(rgen.drand()*2.-1.);
-        phi(1,x+V/2)=(rgen.drand()*2.-1.);
+        phi(0,x+V/2)=(rgen.urand(0,2)*2.-1.);
+        phi(1,x+V/2)=(rgen.urand(0,2)*2.-1.);
         // Give the state back, which will allow another thread to aquire it
         rand_pool.free_state(rgen);
     }); 
