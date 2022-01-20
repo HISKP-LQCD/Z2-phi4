@@ -295,7 +295,7 @@ private:
         
         if(match==0){  printf("could not find line %s = \n",name.c_str());exit(-10);} 
         if(match>1){  printf("multiple line %s = \n",name.c_str());exit(-10);} 
-        std::cout << name << " = "<< p  << endl;
+        // std::cout << name << " = "<< p  << endl;
 
         //rewind
         newfile.clear();
@@ -323,7 +323,7 @@ private:
         
         if(match==0){  printf("could not find line %s = \n",name.c_str());exit(-10);} 
         if(match>1){  printf("multiple line %s = \n",name.c_str());exit(-10);} 
-        std::cout << name << " = "<< p  << endl;
+        // std::cout << name << " = "<< p  << endl;
         //rewind
         newfile.clear();
         newfile.seekg(0);
@@ -354,7 +354,7 @@ private:
                std::cout << "could not find param: " << name << "\n default falue: "<< name << " = "<<  s << "" << endl;
         } 
         if(match>1 ){  printf("multiple line %s = \n",name.c_str());exit(-10);} 
-        std::cout << name << " = "<< s  << endl;
+        // std::cout << name << " = "<< s  << endl;
         //rewind
         newfile.clear();
         newfile.seekg(0);
@@ -402,9 +402,13 @@ private:
     // kappa and lambda
     read_par_double(newfile,"msq0",data_in.msq0);
     read_par_double(newfile,"msq1",data_in.msq1);
-    read_par_double(newfile,"lambdaC0",data_in.lambdaC0);
-    read_par_double(newfile,"lambdaC1",data_in.lambdaC1);
-    read_par_double(newfile,"muC",data_in.muC);
+    // read_par_double(newfile,"lambdaC0",data_in.lambdaC0);
+    // read_par_double(newfile,"lambdaC1",data_in.lambdaC1);
+    // read_par_double(newfile,"muC",data_in.muC);
+    printf("ignoring lambdaC0, lambdaC1, muC,  resetting the to zero \n");
+    data_in.lambdaC0=0;
+    data_in.lambdaC1=0;
+    data_in.muC=0;
     read_par_double(newfile,"gC",data_in.gC);
     
     if (data_in.formulation.size()>99){
@@ -436,22 +440,28 @@ private:
     printf("parameters:\n");
     printf( "msq0 = %.6f     -> kappa0   = %.6f\n", data_in.msq0, data_in.kappa0);
     printf( "msq1 = %.6f     -> kappa1   = %.6f\n", data_in.msq1, data_in.kappa1);
-    printf( "lambdaC0 = %.6f -> lambda0  = %.6f\n", data_in.lambdaC0, data_in.lambda0);
-    printf( "lambdaC1 = %.6f -> lambda1  = %.6f\n", data_in.lambdaC1, data_in.lambda1);
-    printf( "muC = %.6f      -> mu       = %.6f\n", data_in.muC, data_in.mu);
+    // printf( "lambdaC0 = %.6f -> lambda0  = %.6f\n", data_in.lambdaC0, data_in.lambda0);
+    // printf( "lambdaC1 = %.6f -> lambda1  = %.6f\n", data_in.lambdaC1, data_in.lambda1);
+    // printf( "muC = %.6f      -> mu       = %.6f\n", data_in.muC, data_in.mu);
     printf( "gC = %.6f       -> g        = %.6f\n",  data_in.gC, data_in.g);
 
     // metropolis 
-    read_par_int(newfile, "metropolis_local_hits", data_in.metropolis_local_hits);
+    // read_par_int(newfile, "metropolis_local_hits", data_in.metropolis_local_hits);
+    data_in.metropolis_local_hits=1;
     read_par_int(newfile, "metropolis_global_hits", data_in.metropolis_global_hits);
-    read_par_double(newfile, "metropolis_delta", data_in.metropolis_delta);
+    // read_par_double(newfile, "metropolis_delta", data_in.metropolis_delta);
+    data_in.metropolis_delta=1;
     // cluster
-    read_par_int(newfile, "cluster_hits", data_in.cluster_hits);
-    read_par_double(newfile, "cluster_min_size", data_in.cluster_min_size);
+    // read_par_int(newfile, "cluster_hits", data_in.cluster_hits);
+    // read_par_double(newfile, "cluster_min_size", data_in.cluster_min_size);
+    data_in.cluster_hits=0;
+    data_in.cluster_min_size=0;
     // configs
     read_par_int(newfile, "seed", data_in.seed);
-    read_par_int(newfile, "level", data_in.level);
-    read_par_int(newfile, "append", data_in.append);
+    // read_par_int(newfile, "level", data_in.level);
+    // read_par_int(newfile, "append", data_in.append);
+    data_in.level=1;
+    data_in.append=0;
     read_par_int(newfile, "replica", data_in.replica);
     read_par_int(newfile, "start_measure", data_in.start_measure);
 

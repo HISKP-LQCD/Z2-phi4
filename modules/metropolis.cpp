@@ -102,40 +102,28 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             }
 #endif
 
-            // doing the multihit
-            for (size_t hit = 0; hit < nb_of_hits; hit++) {
-                // delta  =0  if phi-->phi
-                // delta  =-2phi  if phi-->-phi
-                double d = (rgen.urand(0, 2) * 2 * phi(0, x));
-                double dPhi = d * phi(0, x);
-                double dd = d * d;
+           
+            // if spin flip phi0
+            if (rgen.urand(0, 2) ){
                 // change of action
-                double dS = -2. * kappa[0] * d * neighbourSum[0];
-                dS += g * d * phi(1, x) * neighbourSum[0] * neighbourSum[0];
-
+                double dS = 4. * kappa[0] * phi(0,x) * neighbourSum[0];
+                dS -= 2 * g * neighbourSum[0] * neighbourSum[0] * phi(0, x) * phi(1, x);
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
-                    phi(0, x) += d;
-                    // update++;
+                    phi(0, x) =-phi(0, x);
                 }
-            } // multi hit ends here
-              // doing the multihit
-            for (size_t hit = 0; hit < nb_of_hits; hit++) {
-                // delta  =0  if phi-->phi
-                // delta  =-2phi  if phi-->-phi
-                double d = (rgen.urand(0, 2) * 2 * phi(1, x));
-                double dPhi = d * phi(1, x);
-                double dd = d * d;
+            }
+            // if spin flip phi1
+            if (rgen.urand(0, 2)){
                 // change of action
-                double dS = -2. * kappa[1] * d * neighbourSum[1];
-                dS += g * neighbourSum[0] * neighbourSum[0] * phi(0, x) * d;
-
+                double dS = 4. * kappa[1] * phi(1,x) * neighbourSum[1];
+                dS -= 2 * g * neighbourSum[0] * neighbourSum[0] * phi(0, x) * phi(1, x);
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
-                    phi(1, x) += d;
-                    // update++;
+                    phi(1, x) =-phi(1, x);
                 }
-            } // multi hit ends here
+            }
+            
 
             // Give the state back, which will allow another thread to aquire it
             rand_pool.free_state(rgen);
