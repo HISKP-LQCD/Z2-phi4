@@ -18,3 +18,4 @@ test/data/mes_T8_L4_msq0-4.900000_msq1-4.900000_l02.500000_l12.500000_mu5.000000
 test/Makefile
 test/do_cmake_qbig_kepler.sh
 test/CMakeCache.txt
+!.github/*
