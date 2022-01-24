@@ -12,7 +12,7 @@
 #ifdef cuFFT
 #include <cufft.h>
 #endif
-/*
+
 //#ifndef cuFFT
 void compute_FT(const Viewphi phi, cluster::IO_params params , Viewphi &phip){
     int T=params.data.L[0];
@@ -101,7 +101,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params , Viewphi &phip){
 
 }
 
-*/
+
 
 
 //void compute_FT_complex(const Viewphi phi, cluster::IO_params params ,  int iconf, complexphi &phip){
@@ -152,7 +152,7 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi phi, cluster::IO_par
             int iy = (x - iz * L1 * L2) / L1;
 #ifdef DEBUG
             if (x != ix + iy * L1 + iz * L1 * L2) {
-                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
+                printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
                 Kokkos::abort("DFT index x re");
             }
 #endif
@@ -225,7 +225,7 @@ void compute_smearing3FT(manyphi& phip, int i, const Viewphi phi, cluster::IO_pa
             int iy = (x - iz * L1 * L2) / L1;
 #ifdef DEBUG
             if (x != ix + iy * L1 + iz * L1 * L2) {
-                printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
+                printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
                 Kokkos::abort("DFT index x re");
             }
 #endif
