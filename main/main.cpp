@@ -276,7 +276,6 @@ int main(int argc, char** argv) {
             if (contractions) {
                 Kokkos::Timer timer_2;
 
-
                 double* m = compute_magnetisations(phi, params);
                 fprintf(f_mes, "%.15g   %.15g \n", m[0], m[1]);
                 free(m);
@@ -347,7 +346,7 @@ int main(int argc, char** argv) {
         printf("  time updating = %f s (%f per single operation)\n", time_update, time_update / (params.data.start_measure + params.data.total_measure));
         printf("  time FT       = %f s (%f per single operation)\n", time_FT, time_FT / (params.data.total_measure / params.data.measure_every_X_updates));
         printf("  time mesuring = %f s (%f per single operation)\n", time_mes, time_mes / (params.data.total_measure / params.data.measure_every_X_updates));
-        printf("  time writing  = %f s (%f per single opertion)\n", time_writing, time_writing / (params.data.total_measure / params.data.measure_every_X_updates));
+        printf("  time writing  = %f s (%f per single operation)\n", time_writing, time_writing / (params.data.total_measure / params.data.measure_every_X_updates));
 
         printf("sum time = %f s\n", time_writing + time_mes + time_update + time_FT);
 

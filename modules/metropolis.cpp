@@ -105,7 +105,8 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
            
             // if spin flip phi0
             if (rgen.urand(0, 2) ){
-                // change of action
+                // change of action   S= - 2 kappa phi \sum phi 
+                // S[new]-S[old]= - 2 kappa (-phi) \sum phi + 2 kappa phi \sum phi = 4 kappa phi \sum phi
                 double dS = 4. * kappa[0] * phi(0,x) * neighbourSum[0];
                 dS -= 2 * g * neighbourSum[0] * neighbourSum[0] * phi(0, x) * phi(1, x);
                 //  accept reject step -------------------------------------
