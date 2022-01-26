@@ -48,7 +48,7 @@ void check_spin(Viewphi phi, cluster::IO_params params) {
     for (int comp = 0; comp < 2;comp++) {
         Kokkos::parallel_for("check spin", V, KOKKOS_LAMBDA(const size_t x) {
             if (phi(comp, x) != -1 && phi(comp, x) != 1) {
-                printf("field is not +-1 at phi(comp=%i,x=%ld)=%g\n", comp, x, phi(comp, x));
+                printf("field is not +-1 at phi(comp=%i,x=%ld)=%g\n", comp, x, (double) phi(comp, x));
                 Kokkos::abort("");
             }
         });

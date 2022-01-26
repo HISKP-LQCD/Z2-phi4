@@ -57,7 +57,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
         phip(comp, xp) = 0;
         if (reim == 0) {
             //	for (size_t x=0;x<Vs;x++){
-            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const size_t x, double& inner) {
+            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, double& inner) {
 
                 size_t i0 = x + t * Vs;
                 int ix = x % L1;
@@ -65,7 +65,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
                 int iy = (x - iz * L1 * L2) / L1;
 #ifdef DEBUG
                 if (x != ix + iy * L1 + iz * L1 * L2) {
-                    printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
+                    printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
                     Kokkos::abort("DFT index x re");
                 }
 #endif
@@ -78,14 +78,14 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
 
         }
         else if (reim == 1) {
-            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const size_t x, double& inner) {
+            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, double& inner) {
                 size_t i0 = x + t * Vs;
                 int ix = x % L1;
                 int iz = x / (L1 * L2);
                 int iy = (x - iz * L1 * L2) / L1;
 #ifdef DEBUG
                 if (x != ix + iy * L1 + iz * L1 * L2) {
-                    printf("error   %ld   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
+                    printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
                     Kokkos::abort("DFT index x im");
                 }
 #endif
@@ -425,11 +425,6 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
 #endif // SCRATCHPAD
 
 
-
-
-
-    //#endif
-
 #ifdef DEBUG
     void test_FT(cluster::IO_params params) {
         size_t V = params.data.V;
@@ -440,33 +435,38 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
         double kappa1 = params.data.kappa1;
 
         Kokkos::parallel_for("init_const_phi", V, KOKKOS_LAMBDA(size_t x) {
-            phi(0, x) = sqrt(2. * kappa0);// the FT routines convert in to phisical phi 
-            phi(1, x) = sqrt(2. * kappa1);
+            phi(0, x) = 1;// the FT routines convert in to phisical phi 
+            phi(1, x) = 1;
         });
-        Viewphi  phip_test("phip_test", 2, params.data.L[0] * Vp);
-        Viewphi::HostMirror h_phip_test("h_phip_test", 2, params.data.L[0] * Vp);
+        Viewphip  phip_test("phip_test", 2, params.data.L[0] * Vp);
+        Viewphip::HostMirror h_phip_test("h_phip_test", 2, params.data.L[0] * Vp);
 
         compute_FT(phi, params, phip_test);
+
+        Kokkos::parallel_for("init_const_phi", params.data.L[0] * Vp, KOKKOS_LAMBDA(size_t x) {
+            phip_test(0, x) *= sqrt(2. * kappa0);// the FT routines convert in to phisical phi 
+            phip_test(1, x) *= sqrt(2. * kappa1);
+        });
         // Deep copy device views to host views.
         Kokkos::deep_copy(h_phip_test, phip_test);
 
         int T = params.data.L[0];
-        for (size_t t = 0; t < T; t++) {
-            for (size_t x = 1; x < Vp; x++) {
-                size_t id = t + x * T;
+        for (int t = 0; t < T; t++) {
+            for (int x = 1; x < Vp; x++) {
+                int id = t + x * T;
                 if (fabs(h_phip_test(0, id)) > 1e-11 || fabs(h_phip_test(1, id)) > 1e-11) {
                     printf("error FT of a constant field do not gives delta_{p,0}: \n");
-                    printf("h_phip_test(0,%ld)=%.12g \n", x, h_phip_test(0, id));
-                    printf("h_phip_test(1,%ld)=%.12g \n", x, h_phip_test(1, id));
-                    printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ", id, t, x);
+                    printf("h_phip_test(0,%d)=%.12g \n", x, h_phip_test(0, id));
+                    printf("h_phip_test(1,%d)=%.12g \n", x, h_phip_test(1, id));
+                    printf("id=t+T*p    id=%d   t=%d  p=%d\n ", id, t, x);
                     // exit(1);
                 }
             }
             if (fabs(h_phip_test(0, t) - 1) > 1e-11 || fabs(h_phip_test(1, t) - 1) > 1e-11) {
                 printf("error FT of a constant field do not gives delta_{p,0}: \n");
-                printf("h_phip_test(0,%ld)=%.12g \n", t, h_phip_test(0, t));
-                printf("h_phip_test(1,%ld)=%.12g \n", t, h_phip_test(1, t));
-                printf("id=t+T*p    id=%ld   t=%ld  p=0\n ", t, t);
+                printf("h_phip_test(0,%d)=%.12g \n", t, h_phip_test(0, t));
+                printf("h_phip_test(1,%d)=%.12g \n", t, h_phip_test(1, t));
+                printf("id=t+T*p    id=%d   t=%d  p=0\n ", t, t);
                 // exit(1);
             }
         }
@@ -474,8 +474,8 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
         printf("checking FT of delta_x,0 field:\n");
         Kokkos::parallel_for("init_phi", V, KOKKOS_LAMBDA(size_t x) {
             if (x == 0) {
-                phi(0, x) = Vs * sqrt(2. * kappa0);// the FT routines convert in to phisical phi 
-                phi(1, x) = Vs * sqrt(2. * kappa1);
+                phi(0, x) = 1;
+                phi(1, x) = 1;
             }
             else {
                 phi(0, x) = 0;// the FT routines convert in to phisical phi 
@@ -483,6 +483,10 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
             }
         });
         compute_FT(phi, params, phip_test);
+        Kokkos::parallel_for("init_phi", params.data.L[0] * Vp, KOKKOS_LAMBDA(size_t x) {
+            phip_test(0, x) *= Vs * sqrt(2. * kappa0);// the FT routines convert in to phisical phi 
+            phip_test(1, x) *= Vs * sqrt(2. * kappa1);
+        });
         // Deep copy device views to host views.
         Kokkos::deep_copy(h_phip_test, phip_test);
         for (size_t t = 0; t < 1; t++) {
