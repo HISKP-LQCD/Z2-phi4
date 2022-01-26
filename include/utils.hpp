@@ -70,6 +70,7 @@ extern int print_cnum(FILE *out,char *x,cnum_t *cn);
 extern int endianness(void);
 extern void bswap_int(int n,void *a);
 extern void bswap_double(int n,void *a);
+void bswap_scalartype(int n,void *a, int size);
 
 /* MUTILS_C */
 extern int find_opt(int argc,char *argv[],char *opt);

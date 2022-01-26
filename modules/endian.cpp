@@ -109,3 +109,22 @@ void bswap_double(int n,void *a)
    }
 }
 
+
+
+void bswap_scalartype(int n,void *a, int size)
+{
+   unsigned char *ba,*bam,bas;
+
+   ba=(unsigned char*)(a);
+   bam=ba+size*n;
+
+   for (;ba<bam;ba+=size)
+   {
+      for (int i=0;i<size/2;i++){
+         bas=ba[size-1-i];
+         ba[size-1-i]=ba[i];
+         ba[i]=bas;
+      }
+      
+   }
+}

@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         cout << "hopping initialised" << endl;
 
         Viewphi  phi("phi", 2, V);
-        Viewphi  s_phi("s_phi", 2, V);
+        Viewphip  s_phi("s_phi", 2, V);
 #ifdef DEBUG
         test_FT(params);
 #ifdef FFTW
@@ -248,7 +248,7 @@ int main(int argc, char** argv) {
                 compute_FT_complex(mphip, 0, phi, params, 1);
                 if (params.data.smearing == "yes") {
                     smearing_field(s_phi, phi, params);
-                    compute_FT_complex(mphip, 1, s_phi, params, 1);
+                    compute_FT_complex_smearing(mphip, 1, s_phi, params, 1);
                 }
                 if (params.data.FT_phin == "yes") {
                     compute_FT_complex(mphip, 2, phi, params, 2);

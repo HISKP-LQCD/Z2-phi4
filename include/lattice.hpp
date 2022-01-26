@@ -29,13 +29,15 @@
 
 
 using namespace std;
+typedef  signed short int	scalartype;
 // kokkos viever for the field 
-typedef Kokkos::View<double **>  Viewphi;
+typedef Kokkos::View<scalartype**>  Viewphi;
+typedef Kokkos::View<double**>  Viewphip;
 //typedef Kokkos::View<double**, Kokkos::LayoutLeft>  writingphi;
-typedef Kokkos::View<size_t **>  ViewLatt;
+typedef Kokkos::View<size_t**>  ViewLatt;
 
-typedef Kokkos::View<Kokkos::complex<double> **>  complexphi;
-typedef Kokkos::View<Kokkos::complex<double> ***>  manyphi;
+typedef Kokkos::View<Kokkos::complex<double>**>  complexphi;
+typedef Kokkos::View<Kokkos::complex<double>***>  manyphi;
 
 typedef typename Kokkos::Random_XorShift64_Pool<> RandPoolType;
 typedef typename RandPoolType::generator_type gen_type;

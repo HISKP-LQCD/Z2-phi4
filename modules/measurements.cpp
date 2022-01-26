@@ -30,12 +30,12 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
 
     for (int comp = 0; comp < 2;comp++) {
         Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, double& inner) {
-            inner += sqrt(phi(comp, x) * phi(comp, x));
+            inner += phi(comp, x);
         }, mr[comp]);
     }
 
-    mr[0] *= sqrt(2 * params.data.kappa0) / ((double)params.data.V);
-    mr[1] *= sqrt(2 * params.data.kappa1) / ((double)params.data.V);
+    mr[0] = fabs(mr[0]) * sqrt(2 * params.data.kappa0) / ((double)params.data.V);
+    mr[1] = fabs(mr[1]) * sqrt(2 * params.data.kappa1) / ((double)params.data.V);
 
     return mr;
 }
@@ -247,7 +247,7 @@ void compute_FT_good(const Viewphi phi, cluster::IO_params params, Viewphi::Host
     //    typedef Kokkos::TeamPolicy<>::member_type  member_type;
         //for(int t=0; t<T; t++) {
     Kokkos::parallel_for("FT_loop", T * Vp * 2, KOKKOS_LAMBDA(const size_t ii) {
-        //ii = comp+ 2*myt  
+        //ii = comp+ 2*myt
         //myt=  t +T*(reim+ p*2)
         //p=px+py*4+pz*16
         double norm[2] = { sqrt(2. * params.data.kappa0),sqrt(2. * params.data.kappa1) };// need to be inside the loop for cuda<10
@@ -381,7 +381,7 @@ KOKKOS_INLINE_FUNCTION int ctolex(int x3, int x2, int x1, int x0, int L, int L2,
     return x3 + x2 * L + x1 * L2 + x0 * L3;
 }
 
-void smearing_field(Viewphi& sphi, Viewphi& phi, cluster::IO_params params) {
+void smearing_field(Viewphip& sphi, Viewphi& phi, cluster::IO_params params) {
     size_t V = params.data.V;
     double rho = 0.5;
     int R = 3;
