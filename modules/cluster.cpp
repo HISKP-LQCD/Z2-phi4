@@ -150,11 +150,11 @@ inline void check_neighbour(const size_t x_look, const size_t y,
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-double cluster_update(Viewphi  &phi, cluster::IO_params params ,  std::mt19937_64 host_rand  ,ViewLatt &hop ){ 
+double cluster_update(Viewphi  &phi, cluster::IO_params params ,  std::mt19937_64 host_rand  ,Kokkos::View<size_t**> &hop ){ 
                       //std::vector<size_t>& look_1, std::vector<size_t>& look_2){
  
   Viewphi::HostMirror h_phi = Kokkos::create_mirror_view( phi );
-  ViewLatt::HostMirror h_hop = Kokkos::create_mirror_view( hop );
+  Kokkos::View<size_t**>::HostMirror h_hop = Kokkos::create_mirror_view( hop );
   // Deep copy device views to host views.
   Kokkos::deep_copy( h_phi, phi );
   Kokkos::deep_copy( h_hop, hop );

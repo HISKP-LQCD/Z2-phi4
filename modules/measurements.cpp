@@ -393,7 +393,7 @@ void smearing_field(Viewphip& sphi, Viewphi& phi, cluster::IO_params params) {
     }
 
 
-    Kokkos::parallel_for("smearing loop", V, KOKKOS_LAMBDA(size_t x) {
+    Kokkos::parallel_for("smearing loop", V, KOKKOS_LAMBDA(int x) {
         //x=x3+ x2*L3+x1*L2*L3 + x0*L1*L2*L3  
         int x0 = x / L3;
         int res = x - x0 * L3;
@@ -403,7 +403,7 @@ void smearing_field(Viewphip& sphi, Viewphi& phi, cluster::IO_params params) {
         int x3 = res - x2 * L;
 #ifdef DEBUG
         if (x != ctolex(x3, x2, x1, x0, L, L2, L3)) {
-            printf("error   %ld   = %d  + %d  L+ %d L^2 + %d L^3\n", x, x3, x2, x1, x0);
+            printf("error   %d   = %d  + %d  L+ %d L^2 + %d L^3\n", x, x3, x2, x1, x0);
             Kokkos::abort("DFT index p");
         }
 #endif
@@ -422,7 +422,7 @@ void smearing_field(Viewphip& sphi, Viewphi& phi, cluster::IO_params params) {
                     sphi(1, x) += w * (phi(1, xp) + phi(1, xm));
 #ifdef DEBUG
                     if (xp != (x3 + dx3 + L) % L + (x2 + dx2 + L) % L * L + (x1 + dx1 + L) % L * L2 + x0 * L3) {
-                        printf("error   %ld   = %d  + %d  L+ %d L^2 + %d L^3\n", x, x3, x2, x1, x0);
+                        printf("error   %d   = %d  + %d  L+ %d L^2 + %d L^3\n", x, x3, x2, x1, x0);
                         Kokkos::abort("DFT index p");
                     }
 #endif

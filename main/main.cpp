@@ -93,12 +93,12 @@ int main(int argc, char** argv) {
         std::mt19937_64 host_rand(params.data.seed);
 
 
-
-        ViewLatt    even_odd("even_odd", 2, V / 2);
+        ViewLatt    sectors(params.data.V /2);
         {
-            ViewLatt    hop("hop", V, 2 * dim_spacetime);
-            ViewLatt    ipt("ipt", V, dim_spacetime);
-            hopping(params.data.L, hop, even_odd, ipt);
+            Kokkos::View<size_t**>    hop("hop", V, 2 * dim_spacetime);
+            Kokkos::View<size_t**>    ipt("ipt", V, dim_spacetime);
+            hopping(params.data.L, hop, sectors, ipt);
+            printf("opp");
         }
         cout << "hopping initialised" << endl;
 
@@ -125,6 +125,17 @@ int main(int argc, char** argv) {
             // Give the state back, which will allow another thread to aquire it
             rand_pool.free_state(rgen);
         });
+        if (V%2==1){
+            Kokkos::parallel_for("init_phi", 1, KOKKOS_LAMBDA(size_t x) {
+                // get a random generatro from the pool
+                gen_type rgen = rand_pool.get_state(x);
+                phi(0, V -1) = (rgen.urand(0, 2) * 2. - 1.);
+                phi(1, V-1) = (rgen.urand(0, 2) * 2. - 1.);
+                // Give the state back, which will allow another thread to aquire it
+                rand_pool.free_state(rgen);
+            });
+        }
+
         /*
         Viewphi phip("phip",2,params.data.L[0]*Vp);
         Viewphi::HostMirror h_phip= Kokkos::create_mirror_view( phip );
@@ -224,7 +235,7 @@ int main(int argc, char** argv) {
             // metropolis update
             double acc = 0.0;
             for (int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits; global_metro_hits++) {
-                acc += metropolis_update(phi, params, rand_pool, even_odd);
+                acc += metropolis_update(phi, params, rand_pool, sectors);
             }
             acc /= (params.data.metropolis_global_hits);
             ave_acc += acc / ((double)V);

@@ -34,7 +34,21 @@ typedef  signed short int	scalartype;
 typedef Kokkos::View<scalartype**>  Viewphi;
 typedef Kokkos::View<double**>  Viewphip;
 //typedef Kokkos::View<double**, Kokkos::LayoutLeft>  writingphi;
-typedef Kokkos::View<size_t**>  ViewLatt;
+
+// typedef Kokkos::View<size_t**>  ViewLatt;
+class ViewLatt{
+public:
+    Kokkos::View<size_t**>  rbg;
+    int size[3];
+
+    ViewLatt() {};
+
+    ViewLatt(int N) : rbg("rgb", 3, N) {
+        size[0] = 0;
+        size[1] = 0;
+        size[2] = 0;
+        };
+} ;
 
 typedef Kokkos::View<Kokkos::complex<double>**>  complexphi;
 typedef Kokkos::View<Kokkos::complex<double>***>  manyphi;
