@@ -14,36 +14,37 @@ KOKKOS_INLINE_FUNCTION int ctolex(int x3, int x2, int x1, int x0, int L, int L2,
 }
 
 
-KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(double neighbourSum[2], Viewphi phi, size_t x, const int* L) {
+KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::View<Kokkos::complex<double>[2]> neighbourSum, Viewphi phi, size_t x, const int* L) {
     // x=x+ y*L1 + z*L1*L2 + t*L1*L2*L3
     const int V2 = L[1] * L[2];
     const int V3 = V2 * L[3];
+    Kokkos::complex<double> i(0, 1);
     // direction  0
     int xp = x / (V3);
     int xm = x + (-xp + (xp + L[0] - 1) % L[0]) * (V3);
     xp = x + (-xp + (xp + 1) % L[0]) * (V3);
-    neighbourSum[0] += phi(0, xp) + phi(0, xm);
-    neighbourSum[1] += phi(1, xp) + phi(1, xm);
+    neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
+    neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
     // direction z
     xp = (x % (V3)) / (V2);
     xm = x + (-xp + (xp + L[3] - 1) % L[3]) * (V2);
     xp = x + (-xp + (xp + 1) % L[3]) * (V2);
-    neighbourSum[0] += phi(0, xp) + phi(0, xm);
-    neighbourSum[1] += phi(1, xp) + phi(1, xm);
+    neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
+    neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
 
     // direction 1
     xp = (x % (L[1]));
     xm = x + (-xp + (xp + L[1] - 1) % L[1]);
     xp = x + (-xp + (xp + 1) % L[1]);
-    neighbourSum[0] += phi(0, xp) + phi(0, xm);
-    neighbourSum[1] += phi(1, xp) + phi(1, xm);
+    neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
+    neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
 
     // direction 2
     xp = (x % (V2)) / L[1];
     xm = x + (-xp + (xp + L[2] - 1) % L[2]) * L[1];
     xp = x + (-xp + (xp + 1) % L[2]) * L[1];
-    neighbourSum[0] += phi(0, xp) + phi(0, xm);
-    neighbourSum[1] += phi(1, xp) + phi(1, xm);
+    neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
+    neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
 }
 
 
@@ -54,6 +55,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
     // const double delta, const size_t nb_of_hits){
     const size_t V = params.data.V;
     double acc = .0;
+    const double delta = params.data.metropolis_delta;
     size_t nb_of_hits = params.data.metropolis_local_hits;
     const double g = params.data.g;
 
@@ -89,50 +91,53 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             // auto phiSqr = phi[0][x]*phi[0][x] + phi[1][x]*phi[1][x];
 
             // compute the neighbour sum
-            double neighbourSum[2] = { 0.0, 0.0 };
+            Kokkos::View<Kokkos::complex<double>[2]> neighbourSum("neighbourSum");
             compute_neibourgh_sum(neighbourSum, phi, x, params.data.L);
-
+            Kokkos::complex<double> i(0, 1);
 
 #ifdef DEBUG
             if (test == 1) {
-                double neighbourSum1[2] = { 0, 0 };
+
+                Kokkos::View<Kokkos::complex<double>[2]>neighbourSum1("neighbourSum1");
                 for (size_t dir = 0; dir < dim_spacetime; dir++) { // dir = direction
-                    neighbourSum1[0] += phi(0, hop(x, dir + dim_spacetime)) + phi(0, hop(x, dir));
-                    neighbourSum1[1] += phi(1, hop(x, dir + dim_spacetime)) + phi(1, hop(x, dir));
+                    neighbourSum1[0] += exp(i * phi(0, hop(x, dir + dim_spacetime))) + exp(i * phi(0, hop(x, dir)));
+                    neighbourSum1[1] += exp(i * phi(1, hop(x, dir + dim_spacetime))) + exp(i * phi(1, hop(x, dir)));
                 }
-                if (fabs(neighbourSum1[0] - neighbourSum[0]) > 1e-12) {
-                    printf("comp 0, pos=%ld with hop:   %.12g   manually: %.12g\n", x, neighbourSum[0], neighbourSum1[0]);
+                if ((neighbourSum1[0] - neighbourSum[0]).real() > 1e-12 || (neighbourSum1[0] - neighbourSum[0]).imag() > 1e-12) {
+                    printf("comp 0, pos=%ld with hop:   %.12g   manually: %.12g\n", x, neighbourSum[0].real(), neighbourSum1[0].real());
                     Kokkos::abort("error in computing the neighbourSum:\n");
                 }
-                if (fabs(neighbourSum1[1] - neighbourSum[1]) > 1e-12) {
-                    printf("comp 1, pos=%ld with hop:   %.12g   manually: %.12g\n", x, neighbourSum[1], neighbourSum1[1]);
+                if ((neighbourSum1[1] - neighbourSum[1]).real() > 1e-12 || (neighbourSum1[0] - neighbourSum[0]).imag() > 1e-12) {
+                    printf("comp 1, pos=%ld with hop:   %.12g   manually: %.12g\n", x, neighbourSum[1].real(), neighbourSum1[1].real());
                     Kokkos::abort("error in computing the neighbourSum:\n");
                 }
             }
 #endif
-
-
-            // if spin flip phi0
-            if (rgen.urand(0, 2)) {
-                // change of action   S= - 2 kappa phi \sum phi 
-                // S[new]-S[old]= - 2 kappa (-phi) \sum phi + 2 kappa phi \sum phi = 4 kappa phi \sum phi
-                double dS = 4. * kappa[0] * phi(0, x) * neighbourSum[0];
-                dS -= 2 * g * neighbourSum[0] * neighbourSum[0] * phi(0, x) * phi(1, x);
-                //  accept reject step -------------------------------------
-                if (rgen.drand() < exp(-dS)) {
-                    phi(0, x) = -phi(0, x);
-                }
-            }
-            // if spin flip phi1
-            if (rgen.urand(0, 2)) {
+            for (size_t hit = 0; hit < nb_of_hits; hit++) {
+                double d = (rgen.drand() * 2. - 1.) * delta;
                 // change of action
-                double dS = 4. * kappa[1] * phi(1, x) * neighbourSum[1];
-                dS -= 2 * g * neighbourSum[0] * neighbourSum[0] * phi(0, x) * phi(1, x);
+                double dS = (-2. * kappa[0] * exp(i * phi(0, x)) * neighbourSum[0] * (1. - exp(i * d))).real();
+                dS += (g * exp(i * 3 * phi(0, x)) * phi(1, x) * (1. - exp(i * 3 * d))).real();
+
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
-                    phi(1, x) = -phi(1, x);
+                    phi(0, x) += d;
+                    // update++; 
                 }
-            }
+            } // multi hit ends here
+            // doing the multihit
+            for (size_t hit = 0; hit < nb_of_hits; hit++) {
+                double d = (rgen.drand() * 2. - 1.) * delta;
+                double dS = (-2. * kappa[1] * exp(i * phi(1, x)) * neighbourSum[1] * (1. - exp(i * d))).real();
+                dS += (g * exp(i * 3 * phi(0, x)) * phi(1, x) * (1. - exp(i * d))).real();
+
+                //  accept reject step -------------------------------------
+                if (rgen.drand() < exp(-dS)) {
+                    phi(1, x) += d;
+                    // update++; 
+                }
+            } // multi hit ends here
+
 
 
             // Give the state back, which will allow another thread to aquire it
@@ -144,4 +149,9 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
     return acc / (2 * nb_of_hits); // the 2 accounts for updating the component indiv.
 }
 
-
+void modulo_2pi(Viewphi& phi, const int V) {
+    Kokkos::parallel_for("modulo_2pi", V, KOKKOS_LAMBDA(size_t x) {
+        phi(0, x) = phi(0, x) - twoPI * floor(phi(0, x) / twoPI);
+        phi(1, x) = phi(1, x) - twoPI * floor(phi(1, x) / twoPI);
+    });
+}

@@ -64,7 +64,6 @@
 
  //void hopping(const int *L, ViewLatt &hop, ViewLatt  &ipt ,ViewLatt &even_odd )
 void hopping(const int* L, Kokkos::View<size_t**> &hop, ViewLatt& sectors, Kokkos::View<size_t**> &ipt) {
-    int x, y, z, t;
     int L1 = L[1], L2 = L[2], L3 = L[3], L0 = L[0];
 
     Kokkos::View<size_t**>::HostMirror h_hop = Kokkos::create_mirror_view(hop);
@@ -80,10 +79,10 @@ void hopping(const int* L, Kokkos::View<size_t**> &hop, ViewLatt& sectors, Kokko
     if (L0%2==1 || L1%2==1 || L2%2==1 || L3%2==1) dtot=3;
     size_t eo = 0;
     // run in such a way that i+=1;
-    for (t = 0;t < L0;t++) {
-        for (z = 0;z < L3;z++) {
-            for (y = 0;y < L2;y++) {
-                for (x = 0;x < L1;x++) {
+    for (int t = 0;t < L0;t++) {
+        for (int z = 0;z < L3;z++) {
+            for (int y = 0;y < L2;y++) {
+                for (int x = 0;x < L1;x++) {
                     size_t i = x + y * L1 + z * L1 * L2 + t * L3 * L2 * L1;
                     h_hop(i, 0) = x + y * L1 + z * L1 * L2 + ((t + 1) % L0) * L3 * L2 * L1;
                     h_hop(i, 1) = x + y * L1 + ((z + 1) % L3) * L1 * L2 + t * L3 * L2 * L1;
@@ -132,10 +131,10 @@ void hopping(const int* L, Kokkos::View<size_t**> &hop, ViewLatt& sectors, Kokko
         for(int xx =0; xx< sectors.size[color];xx++){
             int x=h_rbg((color),xx);
             for(int d=0;d<8;d++){
-                int n=h_hop(x,d);
+                size_t n=h_hop(x,d);
                 for(int j =0; j< sectors.size[color];j++){
-                    if ( n== h_rbg(color,j)  ) {
-                        printf("x=%d  hopping=%d is in the same colored sector\n",x,n);
+                    if ( n == h_rbg(color,j)  ) {
+                        printf("x=%d  hopping=%ld is in the same colored sector\n",x,n);
                         exit(1);
                     }
                 }

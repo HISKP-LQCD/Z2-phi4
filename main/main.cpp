@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
         std::mt19937_64 host_rand(params.data.seed);
 
 
-        ViewLatt    sectors(params.data.V /2);
+        ViewLatt    sectors(params.data.V / 2);
         {
             Kokkos::View<size_t**>    hop("hop", V, 2 * dim_spacetime);
             Kokkos::View<size_t**>    ipt("ipt", V, dim_spacetime);
@@ -117,20 +117,20 @@ int main(int argc, char** argv) {
             // get a random generatro from the pool
             gen_type rgen = rand_pool.get_state(x);
 
-            phi(0, x) = (rgen.urand(0, 2) * 2. - 1.);
-            phi(1, x) = (rgen.urand(0, 2) * 2. - 1.);
+            phi(0, x) = (rgen.drand() * 2. - 1.);
+            phi(1, x) = (rgen.drand() * 2. - 1.);
 
-            phi(0, x + V / 2) = (rgen.urand(0, 2) * 2. - 1.);
-            phi(1, x + V / 2) = (rgen.urand(0, 2) * 2. - 1.);
+            phi(0, x + V / 2) = (rgen.drand() * 2. - 1.);
+            phi(1, x + V / 2) = (rgen.drand() * 2. - 1.);
             // Give the state back, which will allow another thread to aquire it
             rand_pool.free_state(rgen);
         });
-        if (V%2==1){
+        if (V % 2 == 1) {
             Kokkos::parallel_for("init_phi", 1, KOKKOS_LAMBDA(size_t x) {
                 // get a random generatro from the pool
                 gen_type rgen = rand_pool.get_state(x);
-                phi(0, V -1) = (rgen.urand(0, 2) * 2. - 1.);
-                phi(1, V-1) = (rgen.urand(0, 2) * 2. - 1.);
+                phi(0, V - 1) = (rgen.drand() * 2. - 1.);
+                phi(1, V - 1) = (rgen.drand() * 2. - 1.);
                 // Give the state back, which will allow another thread to aquire it
                 rand_pool.free_state(rgen);
             });
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
 
         std::cout << "Npfileds = " << Npfileds << std::endl;
 
-        manyphi mphip("manyphi", Npfileds, 2, params.data.L[0] * Vp / 2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
+        manyphi mphip("manyphi", Npfileds, 2, params.data.L[0] * Vp*2 ); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
         manyphi::HostMirror h_mphip;
         if (params.data.save_config_FT_bundle == "yes" || params.data.save_config_FT == "yes" || params.data.checks == "yes")  h_mphip = Kokkos::create_mirror_view(mphip);
 
@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
                 free(m);
 
                 parallel_measurement_complex(mphip, h_mphip, params, f_G2t, f_checks, ii);
-                check_spin(phi, params);
+                // check_spin(phi, params);
                 time = timer_2.seconds();
                 time_mes += time;
             }

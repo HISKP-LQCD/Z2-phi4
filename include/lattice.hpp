@@ -12,7 +12,7 @@
 /* Dimension of the lattice */
 #define dim_spacetime 4
 #define Lp 2
-#define Vp Lp*Lp*Lp*2
+#define Vp Lp*Lp*Lp
 #define Ncorr 267
 
 /* spatial extend of the lattice */
@@ -29,10 +29,10 @@
 
 
 using namespace std;
-typedef  signed short int	scalartype;
+typedef  double	scalartype;
 // kokkos viever for the field 
 typedef Kokkos::View<scalartype**>  Viewphi;
-typedef Kokkos::View<double**>  Viewphip;
+typedef Kokkos::View<Kokkos::complex<double>**>  Viewphip;
 //typedef Kokkos::View<double**, Kokkos::LayoutLeft>  writingphi;
 
 // typedef Kokkos::View<size_t**>  ViewLatt;
@@ -60,6 +60,8 @@ typedef typename RandPoolType::generator_type gen_type;
 EXTERN double  rand_max;
 EXTERN int endian;
 EXTERN int Npfileds;
+constexpr double PI  =3.141592653589793238463;
+constexpr double twoPI  = 2.0*PI;
 //EXTERN int    hop[V][2*D];
 //EXTERN int    ipt[V][D];
 

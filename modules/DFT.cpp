@@ -25,7 +25,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
 
     typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
-
+    Kokkos::complex<double> I(0,1);
 
     Kokkos::parallel_for("FT_loop", team_policy(T * Vp * 2, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
         const int ii = teamMember.league_rank();
@@ -57,7 +57,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
         phip(comp, xp) = 0;
         if (reim == 0) {
             //	for (size_t x=0;x<Vs;x++){
-            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, double& inner) {
+            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, Kokkos::complex<double>& inner) {
 
                 size_t i0 = x + t * Vs;
                 int ix = x % L1;
@@ -73,12 +73,12 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
                 wr = cos(wr);
 
 
-                inner += phi(comp, i0) * wr;
+                inner += exp(I*phi(comp, i0)) * wr;
                 }, phip(comp, xp));
 
         }
         else if (reim == 1) {
-            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, double& inner) {
+            Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, Kokkos::complex<double>& inner) {
                 size_t i0 = x + t * Vs;
                 int ix = x % L1;
                 int iz = x / (L1 * L2);
@@ -92,7 +92,7 @@ void compute_FT(const Viewphi phi, cluster::IO_params params, Viewphip& phip) {
                 double wr = 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
                 wr = sin(wr);
 
-                inner += phi(comp, i0) * wr;
+                inner += exp(I*phi(comp, i0)) * wr;
                 }, phip(comp, xp));
         }
 
@@ -119,22 +119,24 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
 
 
-    Kokkos::parallel_for("FT_loop", team_policy(T * Vp, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
+    Kokkos::parallel_for("FT_loop", team_policy(T * Vp * 2, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
         const int ii = teamMember.league_rank();
         //ii = comp+ 2*t+ 2*T*p  
-        //p=px+py*4+pz*16
+        //p=px+py*Lp+pz*Lp*Lp+  sign*Vp
         double norm[2] = { norm0,norm1 };// need to be inside the loop for cuda<10
         const int p = ii / (2 * T);
         int res = ii - p * 2 * T;
         const int t = res / 2;
         const int comp = res - 2 * t;
 
-        const int px = p % Lp;
-        const int pz = p / (Lp * Lp);
-        const int py = (p - pz * Lp * Lp) / Lp;
+        const int sign = (p / Vp) * 2 - 1; //map (p / Vp)=0,1 --> -1,+1
+        const int pp = p - sign * Vp;
+        const int px = pp % Lp;
+        const int pz = pp / (Lp * Lp);
+        const int py = (pp - pz * Lp * Lp) / Lp;
 #ifdef DEBUG
-        if (p != px + py * Lp + pz * Lp * Lp) {
-            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", p, px, py, Lp, pz, Lp, Lp);
+        if (pp != px + py * Lp + pz * Lp * Lp) {
+            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", pp, px, py, Lp, pz, Lp, Lp);
             Kokkos::abort("DFT index p");
         }
         if (ii != comp + 2 * (t + T * (p))) {
@@ -158,12 +160,10 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
                 Kokkos::abort("DFT index x re");
             }
 #endif
-            double wr = 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
+            double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
             Kokkos::complex<double> ewr(0, 1);
-            ewr = exp(-ewr * wr);
-            for (int n = 0; n < pow_n;n++) {
-                ewr *= phi(comp, i0);
-            }
+            ewr = exp(-ewr * (wr + pow_n * phi(comp, i0)));
+
 
             inner += ewr;
             }, phip(i, comp, xp));
@@ -191,22 +191,24 @@ void compute_FT_complex_smearing(manyphi& phip, int i, const Viewphip& phi, clus
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
 
 
-    Kokkos::parallel_for("FT_loop", team_policy(T * Vp, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
+    Kokkos::parallel_for("FT_loop", team_policy(T * Vp * 2, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
         const int ii = teamMember.league_rank();
-        //ii = comp+ 2*t+ 2*T*p  
-        //p=px+py*4+pz*16
+        //ii = comp+ 2*t+ 2*T*p 
+        //p=px+py*Lp+pz*Lp*Lp+  minus_sign*Lp*Lp*
         double norm[2] = { norm0,norm1 };// need to be inside the loop for cuda<10
-        const int p = ii / (2 * T);
+        int p = ii / (2 * T);
         int res = ii - p * 2 * T;
         const int t = res / 2;
         const int comp = res - 2 * t;
 
-        const int px = p % Lp;
-        const int pz = p / (Lp * Lp);
-        const int py = (p - pz * Lp * Lp) / Lp;
+        const int sign = (p / Vp) * 2 - 1; //map (p / Vp)=0,1 --> -1,+1
+        const int pp = p - sign * Vp;
+        const int px = pp % Lp;
+        const int pz = pp / (Lp * Lp);
+        const int py = (pp - pz * Lp * Lp) / Lp;
 #ifdef DEBUG
-        if (p != px + py * Lp + pz * Lp * Lp) {
-            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", p, px, py, Lp, pz, Lp, Lp);
+        if (pp != px + py * Lp + pz * Lp * Lp) {
+            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", pp, px, py, Lp, pz, Lp, Lp);
             Kokkos::abort("DFT index p");
         }
         if (ii != comp + 2 * (t + T * (p))) {
@@ -230,12 +232,9 @@ void compute_FT_complex_smearing(manyphi& phip, int i, const Viewphip& phi, clus
                 Kokkos::abort("DFT index x re");
             }
 #endif
-            double wr = 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
+            double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
             Kokkos::complex<double> ewr(0, 1);
-            ewr = exp(-ewr * wr);
-            for (int n = 0; n < pow_n;n++) {
-                ewr *= phi(comp, i0);
-            }
+            ewr = exp(-ewr * (wr + pow_n * phi(comp, i0)));
 
             inner += ewr;
             }, phip(i, comp, xp));
@@ -259,25 +258,27 @@ void compute_smearing3FT(manyphi& phip, int i, const Viewphi phi, cluster::IO_pa
 
     typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
+    Kokkos::complex<double> I(0, 1);
 
-
-    Kokkos::parallel_for("FT_loop", team_policy(T * Vp, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
+    Kokkos::parallel_for("FT_loop", team_policy(T * Vp * 2, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
         const int ii = teamMember.league_rank();
         //ii = comp+ 2*myt  
         //myt=  t +T*(reim+ p*2)
         //p=px+py*4+pz*16
         double norm[2] = { norm0,norm1 };// need to be inside the loop for cuda<10
-        const int p = ii / (2 * T);
+        int p = ii / (2 * T);
         int res = ii - p * 2 * T;
         const int t = res / 2;
         const int comp = res - 2 * t;
 
-        const int px = p % Lp;
-        const int pz = p / (Lp * Lp);
-        const int py = (p - pz * Lp * Lp) / Lp;
+        const int sign = (p / Vp) * 2 - 1; //map (p / Vp)=0,1 --> -1,+1
+        const int pp = p - sign * Vp;
+        const int px = pp % Lp;
+        const int pz = pp / (Lp * Lp);
+        const int py = (pp - pz * Lp * Lp) / Lp;
 #ifdef DEBUG
-        if (p != px + py * Lp + pz * Lp * Lp) {
-            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", p, px, py, Lp, pz, Lp, Lp);
+        if (pp != px + py * Lp + pz * Lp * Lp) {
+            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", pp, px, py, Lp, pz, Lp, Lp);
             Kokkos::abort("DFT index p");
         }
         if (ii != comp + 2 * (t + T * (p))) {
@@ -291,7 +292,6 @@ void compute_smearing3FT(manyphi& phip, int i, const Viewphi phi, cluster::IO_pa
         //	for (size_t x=0;x<Vs;x++){	
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, Vs), [&](const int x, Kokkos::complex<double>& inner) {
 
-            size_t i0 = x + t * Vs;
             int ix = x % L1;
             int iz = x / (L1 * L2);
             int iy = (x - iz * L1 * L2) / L1;
@@ -301,29 +301,29 @@ void compute_smearing3FT(manyphi& phip, int i, const Viewphi phi, cluster::IO_pa
                 Kokkos::abort("DFT index x re");
             }
 #endif
-            double wr = 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
+            double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
             Kokkos::complex<double> ewr;
             ewr.real() = 0; ewr.imag() = 1;
             ewr = exp(-ewr * wr);
 
-            double neighbourSum = 0;
+            Kokkos::complex<double> neighbourSum = 0;
             //x
             int xp1 = ((ix + 1) % L1) + iy * L1 + iz * L1 * L2 + t * Vs;
-            neighbourSum += phi(comp, xp1);
+            neighbourSum += exp(I * phi(comp, xp1));
             xp1 = ((ix + L1 - 1) % L1) + iy * L1 + iz * L1 * L2 + t * Vs;
-            neighbourSum += phi(comp, xp1);
+            neighbourSum += exp(I * phi(comp, xp1));
             //y 
             xp1 = ix + ((iy + 1) % L2) * L1 + iz * L1 * L2 + t * Vs;
-            neighbourSum += phi(comp, xp1);
+            neighbourSum += exp(I * phi(comp, xp1));
             xp1 = ix + ((iy + L2 - 1) % L2) * L1 + iz * L1 * L2 + t * Vs;
-            neighbourSum += phi(comp, xp1);
+            neighbourSum += exp(I * phi(comp, xp1));
             //z
             xp1 = ix + iy * L1 + ((iz + 1) % L3) * L1 * L2 + t * Vs;
-            neighbourSum += phi(comp, xp1);
+            neighbourSum += exp(I * phi(comp, xp1));
             xp1 = ix + iy * L1 + ((iz + L3 - 1) % L3) * L1 * L2 + t * Vs;
-            neighbourSum += phi(comp, xp1);
+            neighbourSum += exp(I * phi(comp, xp1));
             // sum also the center
-            neighbourSum += phi(comp, i0);
+            neighbourSum += exp(I * phi(comp, xp1));
 
             ewr *= neighbourSum * neighbourSum * neighbourSum;
 
@@ -454,18 +454,18 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
         for (int t = 0; t < T; t++) {
             for (int x = 1; x < Vp; x++) {
                 int id = t + x * T;
-                if (fabs(h_phip_test(0, id)) > 1e-11 || fabs(h_phip_test(1, id)) > 1e-11) {
+                if (fabs(h_phip_test(0, id).real()) > 1e-11 || fabs(h_phip_test(1, id).real()) > 1e-11) {
                     printf("error FT of a constant field do not gives delta_{p,0}: \n");
-                    printf("h_phip_test(0,%d)=%.12g \n", x, h_phip_test(0, id));
-                    printf("h_phip_test(1,%d)=%.12g \n", x, h_phip_test(1, id));
+                    printf("h_phip_test(0,%d)=%.12g \n", x, h_phip_test(0, id).real());
+                    printf("h_phip_test(1,%d)=%.12g \n", x, h_phip_test(1, id).real());
                     printf("id=t+T*p    id=%d   t=%d  p=%d\n ", id, t, x);
                     // exit(1);
                 }
             }
-            if (fabs(h_phip_test(0, t) - 1) > 1e-11 || fabs(h_phip_test(1, t) - 1) > 1e-11) {
+            if (fabs(h_phip_test(0, t).real() - 1) > 1e-11 || fabs(h_phip_test(1, t).real() - 1) > 1e-11) {
                 printf("error FT of a constant field do not gives delta_{p,0}: \n");
-                printf("h_phip_test(0,%d)=%.12g \n", t, h_phip_test(0, t));
-                printf("h_phip_test(1,%d)=%.12g \n", t, h_phip_test(1, t));
+                printf("h_phip_test(0,%d)=%.12g \n", t, h_phip_test(0, t).real());
+                printf("h_phip_test(1,%d)=%.12g \n", t, h_phip_test(1, t).real());
                 printf("id=t+T*p    id=%d   t=%d  p=0\n ", t, t);
                 // exit(1);
             }
@@ -493,19 +493,19 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
             for (size_t x = 0; x < Vp; x++) {
                 size_t id = t + x * T;
                 if (x % 2 == 0) {//real part
-                    if (fabs(h_phip_test(0, id) - 1) > 1e-11 || fabs(h_phip_test(1, id) - 1) > 1e-11) {
+                    if (fabs(h_phip_test(0, id).real() - 1) > 1e-11 || fabs(h_phip_test(1, id).real() - 1) > 1e-11) {
                         printf("error FT of a delta_{x,0} field do not gives const: \n");
-                        printf("h_phip_test(0,%ld)=%.12g \n", x, h_phip_test(0, id));
-                        printf("h_phip_test(1,%ld)=%.12g \n", x, h_phip_test(1, id));
+                        printf("h_phip_test(0,%ld)=%.12g \n", x, h_phip_test(0, id).real());
+                        printf("h_phip_test(1,%ld)=%.12g \n", x, h_phip_test(1, id).real());
                         printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ", id, t, x);
                         //       exit(1);
                     }
                 }
                 if (x % 2 == 1) {//imag part
-                    if (fabs(h_phip_test(0, id)) > 1e-11 || fabs(h_phip_test(1, id)) > 1e-11) {
+                    if (fabs(h_phip_test(0, id).real()) > 1e-11 || fabs(h_phip_test(1, id).real()) > 1e-11) {
                         printf("error FT of a delta_{x,0} field do not gives const: \n");
-                        printf("h_phip_test(0,%ld)=%.12g \n", x, h_phip_test(0, id));
-                        printf("h_phip_test(1,%ld)=%.12g \n", x, h_phip_test(1, id));
+                        printf("h_phip_test(0,%ld)=%.12g \n", x, h_phip_test(0, id).real());
+                        printf("h_phip_test(1,%ld)=%.12g \n", x, h_phip_test(1, id).real());
                         printf("id=t+T*p    id=%ld   t=%ld  p=%ld\n ", id, t, x);
                         //     exit(1);
                     }
