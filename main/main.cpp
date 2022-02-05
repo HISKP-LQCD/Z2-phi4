@@ -98,7 +98,6 @@ int main(int argc, char** argv) {
             Kokkos::View<size_t**>    hop("hop", V, 2 * dim_spacetime);
             Kokkos::View<size_t**>    ipt("ipt", V, dim_spacetime);
             hopping(params.data.L, hop, sectors, ipt);
-            printf("opp");
         }
         cout << "hopping initialised" << endl;
 
@@ -231,7 +230,6 @@ int main(int argc, char** argv) {
 
             time = timer1.seconds();
             //printf("time cluster (%g  s)   size=%g\n",time,cluster_size);
-
             // metropolis update
             double acc = 0.0;
             for (int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits; global_metro_hits++) {
@@ -290,7 +288,7 @@ int main(int argc, char** argv) {
                 double* m = compute_magnetisations(phi, params);
                 fprintf(f_mes, "%.15g   %.15g \n", m[0], m[1]);
                 free(m);
-
+                
                 parallel_measurement_complex(mphip, h_mphip, params, f_G2t, f_checks, ii);
                 // check_spin(phi, params);
                 time = timer_2.seconds();

@@ -27,7 +27,9 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
 
     size_t V = params.data.V; //you can not use params.data.X  on the device
     double* mr = (double*)calloc(2, sizeof(double));
-    Kokkos::View<Kokkos::complex<double>[2]>  mrc;
+    Kokkos::complex<double>  mrc[2];
+    mrc[0].real() = 0; mrc[0].imag() = 0;
+    mrc[1].real() = 0; mrc[1].imag() = 0;
     Kokkos::complex<double> I(0, 1);
     for (int comp = 0; comp < 2;comp++) {
         Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, Kokkos::complex<double>&inner) {

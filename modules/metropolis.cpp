@@ -14,17 +14,18 @@ KOKKOS_INLINE_FUNCTION int ctolex(int x3, int x2, int x1, int x0, int L, int L2,
 }
 
 
-KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::View<Kokkos::complex<double>[2]> neighbourSum, Viewphi phi, size_t x, const int* L) {
+KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighbourSum[2], Viewphi phi, size_t x, const int* L) {
     // x=x+ y*L1 + z*L1*L2 + t*L1*L2*L3
     const int V2 = L[1] * L[2];
     const int V3 = V2 * L[3];
     Kokkos::complex<double> i(0, 1);
+
     // direction  0
     int xp = x / (V3);
     int xm = x + (-xp + (xp + L[0] - 1) % L[0]) * (V3);
     xp = x + (-xp + (xp + 1) % L[0]) * (V3);
-    neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
-    neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
+    neighbourSum[0] = exp(i * phi(0, xp)) + exp(i * phi(0, xm));
+    neighbourSum[1] = exp(i * phi(1, xp)) + exp(i * phi(1, xm));
     // direction z
     xp = (x % (V3)) / (V2);
     xm = x + (-xp + (xp + L[3] - 1) % L[3]) * (V2);
@@ -71,6 +72,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
         Kokkos::View<size_t**> ipt("ipt", V, dim_spacetime);
         hopping(params.data.L, hop, eo_debug, ipt);
         init_hop = 1;
+        printf("initialised hopping for test\n");
     }
     else
         init_hop = 2;
@@ -87,18 +89,19 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
 
             // getting a generator from the pool
             gen_type rgen = rand_pool.get_state(xx);
-            // computing phi^2 on x
-            // auto phiSqr = phi[0][x]*phi[0][x] + phi[1][x]*phi[1][x];
 
             // compute the neighbour sum
-            Kokkos::View<Kokkos::complex<double>[2]> neighbourSum("neighbourSum");
+            Kokkos::complex<double> neighbourSum[2];
             compute_neibourgh_sum(neighbourSum, phi, x, params.data.L);
             Kokkos::complex<double> i(0, 1);
 
 #ifdef DEBUG
             if (test == 1) {
+                if (x == 0) printf("neighbourSum test start\n");
+                Kokkos::complex<double> neighbourSum1[2];
+                neighbourSum1[0].real() = 0; neighbourSum1[0].imag() = 0;
+                neighbourSum1[1].real() = 0; neighbourSum1[1].imag() = 0;
 
-                Kokkos::View<Kokkos::complex<double>[2]>neighbourSum1("neighbourSum1");
                 for (size_t dir = 0; dir < dim_spacetime; dir++) { // dir = direction
                     neighbourSum1[0] += exp(i * phi(0, hop(x, dir + dim_spacetime))) + exp(i * phi(0, hop(x, dir)));
                     neighbourSum1[1] += exp(i * phi(1, hop(x, dir + dim_spacetime))) + exp(i * phi(1, hop(x, dir)));
@@ -111,13 +114,15 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
                     printf("comp 1, pos=%ld with hop:   %.12g   manually: %.12g\n", x, neighbourSum[1].real(), neighbourSum1[1].real());
                     Kokkos::abort("error in computing the neighbourSum:\n");
                 }
+                if (x == 0) printf("neighbourSum test passed\n");
             }
+
 #endif
             for (size_t hit = 0; hit < nb_of_hits; hit++) {
                 double d = (rgen.drand() * 2. - 1.) * delta;
                 // change of action
                 double dS = (-2. * kappa[0] * exp(i * phi(0, x)) * neighbourSum[0] * (1. - exp(i * d))).real();
-                dS += (g * exp(i * 3 * phi(0, x)) * phi(1, x) * (1. - exp(i * 3 * d))).real();
+                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (1. - exp(i * 3 * d))).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
@@ -129,7 +134,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             for (size_t hit = 0; hit < nb_of_hits; hit++) {
                 double d = (rgen.drand() * 2. - 1.) * delta;
                 double dS = (-2. * kappa[1] * exp(i * phi(1, x)) * neighbourSum[1] * (1. - exp(i * d))).real();
-                dS += (g * exp(i * 3 * phi(0, x)) * phi(1, x) * (1. - exp(i * d))).real();
+                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (1. - exp(i * d))).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
