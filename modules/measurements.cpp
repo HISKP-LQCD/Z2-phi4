@@ -37,8 +37,8 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
         }, mrc[comp]);
     }
 
-    mr[0] = (mrc[0] * conj(mrc[0])).real() * sqrt(2 * params.data.kappa0) / ((double)params.data.V);
-    mr[1] = (mrc[1] * conj(mrc[0])).real() * sqrt(2 * params.data.kappa1) / ((double)params.data.V);
+    mr[0] = sqrt((mrc[0] * conj(mrc[0])).real() ) / ((double)params.data.V);
+    mr[1] = sqrt((mrc[1] * conj(mrc[1])).real() ) / ((double)params.data.V);
 
     return mr;
 }
@@ -509,8 +509,8 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             int t16 = (16 + t1) % T;
             int t20 = (20 + t1) % T;
 
-            double pp0 = (phip(0, t1) * phip(0, tpt1)).real();
-            double pp1 = (phip(1, t1) * phip(1, tpt1)).real();
+            double pp0 = (phip(0, t1) * conj(phip(0, tpt1))).real();
+            double pp1 = (phip(1, t1) * conj(phip(1, tpt1))).real();
 
             Kokkos::complex<double> p0;
             p0.real() = phip(0, t1).real();   p0.imag() = phip(1, t1).real();
