@@ -37,8 +37,8 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
         }, mrc[comp]);
     }
 
-    mr[0] = sqrt((mrc[0] * conj(mrc[0])).real() ) / ((double)params.data.V);
-    mr[1] = sqrt((mrc[1] * conj(mrc[1])).real() ) / ((double)params.data.V);
+    mr[0] = sqrt((mrc[0] * conj(mrc[0])).real()) / ((double)params.data.V);
+    mr[1] = sqrt((mrc[1] * conj(mrc[1])).real()) / ((double)params.data.V);
 
     return mr;
 }
@@ -581,11 +581,10 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
 
 
                     phi1[comp][i] = phip(comp, t1_p);
-                    phi1_t[comp][i] = phip(comp, tpt1_mp);
-
+                    phi1_t[comp][i] = phip(comp, tpt1_p);
 
                     phi11[comp][i] = phip(comp, t1_p11);
-                    phi11_t[comp][i] = phip(comp, tpt1_mp11);
+                    phi11_t[comp][i] = phip(comp, tpt1_p11);
 
 
                     bb[comp][i] = (phip(comp, t1_p) * phip(comp, t1_mp));
@@ -608,7 +607,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
 
 
                 phi111[comp] = phip(comp, t1_p111);
-                phi111_t[comp] = phip(comp, tpt1_mp111);
+                phi111_t[comp] = phip(comp, tpt1_p111);
 
                 o2p111[comp] = (phi111[comp] * phip(comp, t1));
                 o2p111_t[comp] = (phi111_t[comp] * phip(comp, tpt1));
@@ -618,9 +617,11 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 // int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
                 int tpt1_p = t1 + (p1[i]) * T;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                int tpt1_mp11 = tpt1 + (p11[i]) * T + T * Vp;   //    
 
                 bb[2][i] = (phi1[0][i] * phip(1, t1_mp) + phi1[1][i] * phip(0, t1_mp)) / 1.41421356237;//sqrt(2);
-                bb_t[2][i] = (phi1_t[0][i] * phip(1, tpt1_p) + phi1_t[1][i] * phip(0, tpt1_p)) / 1.41421356237;//sqrt(2);
+                bb_t[2][i] = (phi1_t[0][i] * phip(1, tpt1_mp) + phi1_t[1][i] * phip(0, tpt1_mp)) / 1.41421356237;//sqrt(2);
                 o2p1[2][i] = phi1[0][i] * phip(1, t1);//  +  phi[1][i]*h_phip(0,t1) ;
                 o2p1_t[2][i] = phi1_t[0][i] * phip(1, tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
                 o2p1[3][i] = phi1[1][i] * phip(0, t1);//  +  phi[1][i]*h_phip(0,t1) ;
@@ -1078,9 +1079,12 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
         double two0_to_two0[3] = { 0,0,0 };
         double two0pmp_to_two0[3] = { 0,0,0 };
         double twopmpx_to_twopmpy[3] = { 0,0,0 };
+        double one_to_one_im[2] = { 0,0 };
+        double two_to_two_im[2] = { 0,0 };
+        double three_to_three_im[2] = { 0,0 };
 
         for (int t1 = 0; t1 < T; t1++) {
-
+            int tpt1 = (t + t1) % T;
 
             for (int comp = 0; comp < 2;comp++) {
                 for (int i = 0;i < 3;i++) {
@@ -1094,8 +1098,6 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
 
                     bb[comp][i] = phi[comp][i] * conj(phi[comp][i]);
                     bb_t[comp][i] = phi_t[comp][i] * conj(phi_t[comp][i]);
-                    //cout<< "p-p    " << t <<phi[comp][i] *conj(phi[comp][i])*phi_t[comp][i] *conj(phi_t[comp][i])   <<endl;
-                    //cout<< "p p    " << t <<phi[comp][i] *(phi[comp][i])*conj(phi_t[comp][i] * phi_t[comp][i])   <<endl;
 
                 }
 
@@ -1105,10 +1107,15 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
                 bb_t[2][i] = (phi_t[0][i] * conj(phi_t[1][i]) + phi_t[1][i] * conj(phi_t[0][i])) / sqrt(2);
             }
             for (int i = 0; i < 3;i++) {
-
                 two0_to_two0[i] += (bb[0][i] * bb_t[0][i]).real();
                 two0pmp_to_two0[i] += (bb[0][i] * h_phip(0, (t + t1) % T) * h_phip(0, (t + t1) % T)).real();
                 twopmpx_to_twopmpy[i] += (bb[0][i] * bb_t[0][(i + 1) % 3]).real();
+            }
+            for (int i = 0; i < 2;i++) {
+                one_to_one_im[i] += (h_phip(i, t1) * h_phip(i, tpt1)).imag();
+                two_to_two_im[i] += (h_phip(i, t1) * h_phip(i, t1) * h_phip(i, tpt1) * h_phip(i, tpt1)).imag();
+                three_to_three_im[i] += (h_phip(i, t1) * h_phip(i, t1) * h_phip(i, t1)
+                    * h_phip(i, tpt1) * h_phip(i, tpt1) * h_phip(i, tpt1)).imag();
             }
 
 
@@ -1132,6 +1139,10 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
         fwrite(&twopmpx_to_twopmpy[0], sizeof(double), 1, f); // 6 c++  || 7 R   00 (px -px)(py -py)
         fwrite(&twopmpx_to_twopmpy[1], sizeof(double), 1, f); // 7 c++  || 8 R   00 (py -py)(pz -pz)
         fwrite(&twopmpx_to_twopmpy[2], sizeof(double), 1, f); // 8 c++  || 9 R   00 (pz -pz)(px -px)
+
+        fwrite(one_to_one_im, sizeof(double), 2, f);
+        fwrite(two_to_two_im, sizeof(double), 2, f);
+        fwrite(three_to_three_im, sizeof(double), 2, f);
 
     }
 
