@@ -1140,9 +1140,9 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
         fwrite(&twopmpx_to_twopmpy[1], sizeof(double), 1, f); // 7 c++  || 8 R   00 (py -py)(pz -pz)
         fwrite(&twopmpx_to_twopmpy[2], sizeof(double), 1, f); // 8 c++  || 9 R   00 (pz -pz)(px -px)
 
-        fwrite(one_to_one_im, sizeof(double), 2, f);
-        fwrite(two_to_two_im, sizeof(double), 2, f);
-        fwrite(three_to_three_im, sizeof(double), 2, f);
+        fwrite(one_to_one_im, sizeof(double), 2, f); //9,10
+        fwrite(two_to_two_im, sizeof(double), 2, f); //11,12
+        fwrite(three_to_three_im, sizeof(double), 2, f); //13,14
 
     }
 

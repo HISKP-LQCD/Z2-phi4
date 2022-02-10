@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
                 printf("Error opening file %s  \n", checks_file.c_str());
                 exit(1);
             }
-            write_header_measuraments(f_checks, params, 12);
+            write_header_measuraments(f_checks, params, 15);
         }
 
         cout << "Writing magnetization to: " << mes_file << endl;
