@@ -572,7 +572,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                     int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                     int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                     int t1_p11 = t1 + (p11[i]) * T;   //     
-                    // int tpt1_p11 = tpt1 + (p11[i]) * T;   //   
+                    int tpt1_p11 = tpt1 + (p11[i]) * T;   //   
 
                     int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
                     int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
@@ -601,7 +601,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
 
                 }
                 int t1_p111 = t1 + (p111)*T;
-                // int tpt1_p111 = tpt1 + (p111)*T;
+                int tpt1_p111 = tpt1 + (p111)*T;
                 // int t1_mp111 = t1 + (p111)*T + T * Vp;
                 int tpt1_mp111 = tpt1 + (p111)*T + T * Vp;
 
