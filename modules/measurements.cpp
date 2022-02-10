@@ -439,6 +439,7 @@ void smearing_field(Viewphip& sphi, Viewphi& phi, cluster::IO_params params) {
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
 void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f_G2t, FILE* f_checks, int iconf) {
     int T = params.data.L[0];
     fwrite(&iconf, sizeof(int), 1, f_G2t);
@@ -1063,7 +1064,6 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
 
     fwrite(&lh_write(0, 0), sizeof(double), Ncorr * T, f_G2t);
 }
-
 void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f, int iconf) {
     int T = params.data.L[0];
     fwrite(&iconf, sizeof(int), 1, f);
@@ -1148,3 +1148,85 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
 
 
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+#ifdef NOTCOMPILE
+void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f_G2t, FILE* f_checks, int iconf) {
+    int T = params.data.L[0];
+    fwrite(&iconf, sizeof(int), 1, f_G2t);
+    bool smeared_contractions = (params.data.smearing == "yes");
+    bool FT_phin_contractions = (params.data.FT_phin == "yes");
+    bool smearing3FT = (params.data.smearing3FT == "yes");
+    //Viewphi phip("phip",2,params.data.L[0]*Vp);
+    // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
+    Kokkos::View<double**, Kokkos::LayoutRight > to_write("to_write", Ncorr, T);
+    Kokkos::View<double**, Kokkos::LayoutRight>::HostMirror h_write = Kokkos::create_mirror_view(to_write);
+
+    auto phip = Kokkos::subview(mphip, 0, Kokkos::ALL, Kokkos::ALL);
+
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> s_phip;
+    if (smeared_contractions) {
+        s_phip = Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride>(mphip, 1, Kokkos::ALL, Kokkos::ALL);
+    }
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phi2p;
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phi3p;
+    if (FT_phin_contractions) {
+        phi2p = Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride>(mphip, 2, Kokkos::ALL, Kokkos::ALL);
+        phi3p = Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride>(mphip, 3, Kokkos::ALL, Kokkos::ALL);
+
+    }
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phi_s3p;
+    if (smearing3FT) {
+        phi_s3p = Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride>(mphip, 4, Kokkos::ALL, Kokkos::ALL);
+    }
+    typedef Kokkos::TeamPolicy<>               team_policy;//team_policy ( number of teams , team size)
+    typedef Kokkos::TeamPolicy<>::member_type  member_type;
+
+    Kokkos::parallel_for("measurement_t_loop", team_policy(T, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
+        const int t = teamMember.league_rank();
+        const int  p1[3] = { 1,Lp,Lp * Lp };
+        const int  p11[3] = { 1 + Lp,Lp + Lp * Lp,1 + Lp * Lp };// (1,1,0),(0,1,1),(1,0,1)
+        const int p111 = 1 + Lp + Lp * Lp;
+        
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(0, t1) * conj(phip(0, tpt1))).real();;
+            }, to_write(0, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+
+                A1 += phip(0, t1_p) * phip(0, t1_mp);
+                A1_t += phip(0, tpt1_p) * phip(0, tpt1_mp);
+            }
+
+            inner += (A1 * conj(A1_t)).real()/3.0;
+            }, to_write(39, t));
+
+        for (int c = 0; c < Ncorr; c++)
+            to_write(c, t) /= ((double)T);
+    });
+
+    if (params.data.checks == "yes") {
+        compute_checks_complex(h_mphip, params, f_checks, iconf);
+    }
+    // Deep copy device views to host views.
+    Kokkos::deep_copy(h_write, to_write);
+    Kokkos::View<double**, Kokkos::LayoutLeft >::HostMirror lh_write("lh_write", Ncorr, T);
+    for (int c = 0; c < Ncorr; c++)
+        for (int t = 0; t < T; t++)
+            lh_write(c, t) = h_write(c, t);
+
+    fwrite(&lh_write(0, 0), sizeof(double), Ncorr * T, f_G2t);
+}
+#endif // NOTCOMPILE

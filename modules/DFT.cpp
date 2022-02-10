@@ -119,33 +119,33 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
     typedef Kokkos::TeamPolicy<>::member_type  member_type;
 
 
-    Kokkos::parallel_for("FT_loop", team_policy(T * Vp * 2, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
+    Kokkos::parallel_for("FT_loop", team_policy(T * Vp * 2 *2, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember) {
         const int ii = teamMember.league_rank();
         //ii = comp+ 2*t+ 2*T*p  
         //p=px+py*Lp+pz*Lp*Lp+  sign*Vp
         double norm[2] = { norm0,norm1 };// need to be inside the loop for cuda<10
-        const int p = ii / (2 * T);
-        int res = ii - p * 2 * T;
-        const int t = res / 2;
-        const int comp = res - 2 * t;
+        const int s = ii / (2 * T * Vp);
+        int res = ii - s * (2 * T * Vp);
+        const int p = res / (2 * T);
+        res = res - p * (2 * T);
+        const int t = res / (2);
+        const int comp = res - t * (2);
+        const int sign = s * 2 - 1;
 
-        int sign = (p /((int) Vp)) ; // (p / Vp)=0,1 
-        const int pp = p - sign * Vp;
-        sign = sign * 2 - 1; //map (p / Vp)=0,1 --> -1,+1
-        const int px = pp % Lp;
-        const int pz = pp / (Lp * Lp);
-        const int py = (pp - pz * Lp * Lp) / Lp;
+        const int px = p % Lp;
+        const int pz = p / (Lp * Lp);
+        const int py = (p - pz * Lp * Lp) / Lp;
 #ifdef DEBUG
-        if (pp != px + py * Lp + pz * Lp * Lp) {
-            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", pp, px, py, Lp, pz, Lp, Lp);
+        if (p != px + py * Lp + pz * Lp * Lp) {
+            printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", p, px, py, Lp, pz, Lp, Lp);
             Kokkos::abort("DFT index p");
         }
-        if (ii != comp + 2 * (t + T * (p))) {
+        if (ii != comp + 2 * (t + T * (p + s * Vp))) {
             printf("error   in the FT\n");
             Kokkos::abort("DFT index comp");
         }
 #endif
-        const int xp = t + T * (p);
+        const int xp = t + T * (p + s * Vp);
         phip(i, comp, xp) = 0;
 
         //	for (size_t x=0;x<Vs;x++){	
@@ -164,17 +164,13 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
             double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
             Kokkos::complex<double> ewr(0, 1);
             ewr = exp(-ewr * (wr + pow_n * phi(comp, i0)));
-
-
             inner += ewr;
             }, phip(i, comp, xp));
-
-
 
         phip(i, comp, xp) = phip(i, comp, xp) / ((double)Vs * norm[comp]);
 
     });
-
+   
 
 }
 
@@ -440,12 +436,12 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
         });
         // Viewphip  phip_test("phip_test", 2, params.data.L[0] * Vp);
         // Viewphip::HostMirror h_phip_test("h_phip_test", 2, params.data.L[0] * Vp);
-        manyphi phip_test("phip_test", 1, 2, params.data.L[0] * Vp*2);
-        manyphi::HostMirror h_phip_test("h_phip_test", 1,2, params.data.L[0] * Vp*2);
+        manyphi phip_test("phip_test", 1, 2, params.data.L[0] * Vp * 2);
+        manyphi::HostMirror h_phip_test("h_phip_test", 1, 2, params.data.L[0] * Vp * 2);
         // compute_FT(phi, params, phip_test);
         compute_FT_complex(phip_test, 0, phi, params, 1);
 
-        Kokkos::parallel_for("init_const_phi", params.data.L[0] * Vp*2, KOKKOS_LAMBDA(size_t x) {
+        Kokkos::parallel_for("init_const_phi", params.data.L[0] * Vp * 2, KOKKOS_LAMBDA(size_t x) {
             phip_test(0, 0, x) *= sqrt(2. * kappa0);// the FT routines convert in to phisical phi 
             phip_test(0, 1, x) *= sqrt(2. * kappa1);
         });
@@ -454,7 +450,7 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
 
         int T = params.data.L[0];
         for (int t = 0; t < T; t++) {
-            for (int x = 1; x < Vp*2; x++) {
+            for (int x = 1; x < Vp * 2; x++) {
                 int id = t + x * T;
                 if (fabs(h_phip_test(0, 0, id).real()) > 1e-11 || fabs(h_phip_test(0, 1, id).real()) > 1e-11) {
                     printf("error FT of a constant field do not gives delta_{p,0}: \n");
