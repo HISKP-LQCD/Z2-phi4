@@ -130,7 +130,7 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
         res = res - p * (2 * T);
         const int t = res / (2);
         const int comp = res - t * (2);
-        const int sign = s * 2 - 1;
+        const int sign = -s * 2 + 1;// 0-->+ and  1-->-1
 
         const int px = p % Lp;
         const int pz = p / (Lp * Lp);
@@ -163,7 +163,7 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
 #endif
             double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
             Kokkos::complex<double> ewr(0, 1);
-            ewr = exp(-ewr * (wr + pow_n * phi(comp, i0)));
+            ewr = exp( ewr * (-wr + pow_n * phi(comp, i0)));
             inner += ewr;
             }, phip(i, comp, xp));
 

@@ -121,8 +121,8 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             for (size_t hit = 0; hit < nb_of_hits; hit++) {
                 double d = (rgen.drand() * 2. - 1.) * delta;
                 // change of action
-                double dS = (-2. * kappa[0] * exp(i * phi(0, x)) * neighbourSum[0] * (1. - exp(i * d))).real();
-                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (1. - exp(i * 3 * d))).real();
+                double dS = (-2. * kappa[0] * exp(i * phi(0, x)) * neighbourSum[0] * (exp(i * d) - 1.)).real();
+                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (exp(i * 3 * d) - 1.)).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
@@ -133,8 +133,8 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             // doing the multihit
             for (size_t hit = 0; hit < nb_of_hits; hit++) {
                 double d = (rgen.drand() * 2. - 1.) * delta;
-                double dS = (-2. * kappa[1] * exp(i * phi(1, x)) * neighbourSum[1] * (1. - exp(i * d))).real();
-                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (1. - exp(i * d))).real();
+                double dS = (-2. * kappa[1] * exp(i * phi(1, x)) * neighbourSum[1] * (exp(i * d) - 1.)).real();
+                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (exp(i * 3 * d) - 1.)).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
