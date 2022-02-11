@@ -1151,8 +1151,7 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef NOTCOMPILE
-void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f_G2t, FILE* f_checks, int iconf) {
+void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f_G2t, FILE* f_checks, int iconf) {
     int T = params.data.L[0];
     fwrite(&iconf, sizeof(int), 1, f_G2t);
     bool smeared_contractions = (params.data.smearing == "yes");
@@ -1188,16 +1187,219 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
         const int  p1[3] = { 1,Lp,Lp * Lp };
         const int  p11[3] = { 1 + Lp,Lp + Lp * Lp,1 + Lp * Lp };// (1,1,0),(0,1,1),(1,0,1)
         const int p111 = 1 + Lp + Lp * Lp;
-        
+
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
             int tpt1 = (t + t1) % T;
-            inner += (phip(0, t1) * conj(phip(0, tpt1))).real();;
+            inner += (phip(0, t1) * conj(phip(0, tpt1))).real();
             }, to_write(0, t));
 
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(1, t1) * conj(phip(1, tpt1))).real();
+            }, to_write(1, t));
 
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
             int tpt1 = (t + t1) % T;
+            inner += (phip(0, t1) * phip(0, t1) * conj(phip(0, tpt1) * phip(0, tpt1))).real();
+            }, to_write(2, t));
 
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(1, t1) * phip(1, t1) * conj(phip(1, tpt1) * phip(1, tpt1))).real();
+            }, to_write(3, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            double pp0 = (phip(0, t1) * conj(phip(0, tpt1))).real();
+            double pp1 = (phip(1, t1) * conj(phip(1, tpt1))).real();
+            inner += (pp0 * pp0 + pp1 * pp1 + 4 * pp0 * pp1
+                - phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)
+                - phip(1, t1) * phip(1, t1) * phip(0, tpt1) * phip(0, tpt1)).real();
+            }, to_write(4, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            double pp0 = (phip(0, t1) * conj(phip(0, tpt1))).real();
+            inner += pp0 * pp0 * pp0;
+            }, to_write(5, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            double pp1 = (phip(1, t1) * conj(phip(1, tpt1))).real();
+            inner += pp1 * pp1 * pp1;
+            }, to_write(6, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> p0;
+            p0.real() = phip(0, t1).real();   p0.imag() = phip(1, t1).real();
+            Kokkos::complex<double> cpt;
+            cpt.real() = phip(0, tpt1).real();   cpt.imag() = -phip(1, tpt1).real();
+            inner += real(p0 * cpt * p0 * cpt * p0 * cpt);
+            }, to_write(7, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t_8 = (T / 8 + t1) % T;
+            int t_2 = (T / 2 + t1) % T;
+            inner += (phip(0, t1) * phip(0, t_8) * phip(0, tpt1) * phip(0, t_2)).real();
+            }, to_write(8, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t_8 = (T / 8 + t1) % T;
+            int t_2 = (T / 2 + t1) % T;
+            inner += (phip(1, t1) * phip(1, t_8) * phip(1, tpt1) * phip(1, t_2)).real();
+            }, to_write(9, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t_8 = (T / 8 + t1) % T;
+            int t_2 = (T / 2 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t_8) * phip(1, tpt1) * phip(0, t_2)).real();
+            }, to_write(10, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(0, t1) * phip(1, t1) * phip(0, tpt1) * phip(1, tpt1)).real();
+            }, to_write(11, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)).real();
+            }, to_write(12, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)).real();
+            }, to_write(13, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            inner += (phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(0, tpt1) * phip(0, tpt1)).real();
+            }, to_write(14, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(0, t1) * phip(0, t3) * phip(0, tpt1) * phip(0, t16)).real();
+            }, to_write(15, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(1, t1) * phip(1, t3) * phip(1, tpt1) * phip(1, t16)).real();
+            }, to_write(16, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t3) * phip(1, tpt1) * phip(0, t16)).real();
+            }, to_write(17, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(0, t1) * phip(0, t4) * phip(0, tpt1) * phip(0, t16)).real();
+            }, to_write(18, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(1, t1) * phip(1, t4) * phip(1, tpt1) * phip(1, t16)).real();
+            }, to_write(19, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t4) * phip(1, tpt1) * phip(0, t16)).real();
+            }, to_write(20, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(0, t1) * phip(0, t3) * phip(0, tpt1) * phip(0, t20)).real();
+            }, to_write(21, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(1, t1) * phip(1, t3) * phip(1, tpt1) * phip(1, t20)).real();
+            }, to_write(22, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t3) * phip(1, tpt1) * phip(0, t20)).real();
+            }, to_write(23, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(0, t1) * phip(0, t4) * phip(0, tpt1) * phip(0, t20)).real();
+            }, to_write(24, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(1, t1) * phip(1, t4) * phip(1, tpt1) * phip(1, t20)).real();
+            }, to_write(25, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t4) * phip(1, tpt1) * phip(0, t20)).real();
+            }, to_write(26, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t5 = (5 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(0, t1) * phip(0, t5) * phip(0, tpt1) * phip(0, t20)).real();
+            }, to_write(27, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t5 = (5 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(1, t1) * phip(1, t5) * phip(1, tpt1) * phip(1, t20)).real();
+            }, to_write(28, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t5 = (5 + t1) % T;
+            int t20 = (20 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t5) * phip(1, tpt1) * phip(0, t20)).real();
+            }, to_write(29, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            inner += (phip(1, t1) * phip(0, t3) * phip(0, tpt1) * phip(1, t16)).real();
+            }, to_write(30, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t2 = (2 + t1) % T;
+            int t10 = (10 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t10)).real();
+            }, to_write(31, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            int t2 = (2 + t1) % T;
+            int t12 = (12 + t1) % T;
+            inner += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t12)).real();
+            }, to_write(32, t));
+        for (int i = 0;i < 3;i++) {
+            for (int comp = 0;comp < 2;comp++) {
+                Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+                    int tpt1 = (t + t1) % T;
+                    int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                    int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                    inner += (phip(comp, t1_p) * conj(phip(comp, tpt1_p))).real();
+                    }, to_write(33 + comp + 2 * i, t));
+            }
+        }
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
             for (int i = 0;i < 3;i++) {
@@ -1205,16 +1407,231 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
                 int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
-
                 A1 += phip(0, t1_p) * phip(0, t1_mp);
                 A1_t += phip(0, tpt1_p) * phip(0, tpt1_mp);
             }
-
-            inner += (A1 * conj(A1_t)).real()/3.0;
+            inner += (A1 * conj(A1_t)).real() / 3.0;
             }, to_write(39, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += phip(1, t1_p) * phip(1, t1_mp);
+                A1_t += phip(1, tpt1_p) * phip(1, tpt1_mp);
+            }
+            inner += (A1 * conj(A1_t)).real() / 3.0;
+            }, to_write(40, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += phip(0, t1_p) * phip(1, t1_mp) + phip(0, t1_mp) * phip(1, t1_p);
+                A1_t += phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(0, tpt1_mp) * phip(1, tpt1_p);
+            }
+            inner += (A1 * conj(A1_t)).real() / 6.0;
+            }, to_write(41, t));
 
-        for (int c = 0; c < Ncorr; c++)
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E1(0, 0);
+            Kokkos::complex<double> E1_t(0, 0);
+            for (int i = 0;i < 2;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E1 += (1 - i * 2) * phip(0, t1_p) * phip(0, t1_mp);
+                E1_t += (1 - i * 2) * phip(0, tpt1_p) * phip(0, tpt1_mp);
+            }
+            inner += (E1 * conj(E1_t)).real() / 2.0;
+            }, to_write(42, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E1(0, 0);
+            Kokkos::complex<double> E1_t(0, 0);
+            for (int i = 0;i < 2;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E1 += (1 - i * 2) * phip(1, t1_p) * phip(1, t1_mp);
+                E1_t += (1 - i * 2) * phip(1, tpt1_p) * phip(1, tpt1_mp);
+            }
+            inner += (E1 * conj(E1_t)).real() / 2.0;
+            }, to_write(43, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E1(0, 0);
+            Kokkos::complex<double> E1_t(0, 0);
+            for (int i = 0;i < 2;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E1 += (1 - i * 2) * (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                E1_t += (1 - i * 2) * (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (E1 * conj(E1_t)).real() / 4.0;
+            }, to_write(44, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E2(0, 0);
+            Kokkos::complex<double> E2_t(0, 0);
+            double c[3] = { 1,1,-2 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E2 += c[i] * phip(0, t1_p) * phip(0, t1_mp);
+                E2_t += c[i] * phip(0, tpt1_p) * phip(0, tpt1_mp);
+            }
+            inner += (E2 * conj(E2_t)).real() / 6.0;
+            }, to_write(45, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E2(0, 0);
+            Kokkos::complex<double> E2_t(0, 0);
+            double c[3] = { 1,1,-2 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E2 += c[i] * phip(1, t1_p) * phip(1, t1_mp);
+                E2_t += c[i] * phip(1, tpt1_p) * phip(1, tpt1_mp);
+            }
+            inner += (E2 * conj(E2_t)).real() / 6.0;
+            }, to_write(46, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E2(0, 0);
+            Kokkos::complex<double> E2_t(0, 0);
+            double c[3] = { 1,1,-2 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E2 += c[i] * (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                E2_t += c[i] * (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (E2 * conj(E2_t)).real() / 12.0;
+            }, to_write(47, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> E1_t(0, 0);
+            double c[3] = { 1,-1,0 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += (phip(0, t1_p) * phip(0, t1_mp));
+                E1_t += c[i] * (phip(0, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (A1 * conj(E1_t)).real() / 2.44948974278;// sqrt(6);
+            }, to_write(48, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> E1_t(0, 0);
+            double c[3] = { 1,-1,0 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += (phip(1, t1_p) * phip(1, t1_mp));
+                E1_t += c[i] * (phip(1, tpt1_p) * phip(1, tpt1_mp));
+            }
+            inner += (A1 * conj(E1_t)).real() / 2.44948974278;// sqrt(6);
+            }, to_write(49, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> E1_t(0, 0);
+            double c[3] = { 1,-1,0 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                E1_t += c[i] * (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (A1 * conj(E1_t)).real() / 4.89897948557;// sqrt(3*8);
+            }, to_write(50, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E1(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            double c[3] = { 1,-1,0 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E1 += c[i] * (phip(0, t1_p) * phip(0, t1_mp));
+                A1_t += (phip(0, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (E1 * conj(A1_t)).real() / 2.44948974278;// sqrt(6);
+            }, to_write(51, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E1(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            double c[3] = { 1,-1,0 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E1 += c[i] * (phip(1, t1_p) * phip(1, t1_mp));
+                A1_t += (phip(1, tpt1_p) * phip(1, tpt1_mp));
+            }
+            inner += (E1 * conj(A1_t)).real() / 2.44948974278;// sqrt(6);
+            }, to_write(52, t));
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E1(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            double c[3] = { 1,-1,0 };
+            for (int i = 0;i < 3;i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E1 += c[i] * (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                A1_t += (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (E1 * conj(A1_t)).real() / 4.89897948557;// sqrt(8*2);
+            }, to_write(53, t));
+
+        
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, Ncorr), [&](const int c) {
             to_write(c, t) /= ((double)T);
+        });
     });
 
     if (params.data.checks == "yes") {
@@ -1229,4 +1646,3 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
 
     fwrite(&lh_write(0, 0), sizeof(double), Ncorr * T, f_G2t);
 }
-#endif // NOTCOMPILE
