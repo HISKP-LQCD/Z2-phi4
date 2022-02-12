@@ -475,8 +475,8 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
     }
 
     Kokkos::parallel_for("measurement_t_loop", T, KOKKOS_LAMBDA(size_t t) {
-        for (int c = 0; c < Ncorr; c++)
-            to_write(c, t) = 0;
+        // for (int c = 0; c < Ncorr; c++)
+        //     to_write(c, t) = 0;
         const int  p1[3] = { 1,Lp,Lp * Lp };
         const int  p11[3] = { 1 + Lp,Lp + Lp * Lp,1 + Lp * Lp };// (1,1,0),(0,1,1),(1,0,1)
         const int p111 = 1 + Lp + Lp * Lp;
@@ -510,24 +510,24 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             int t16 = (16 + t1) % T;
             int t20 = (20 + t1) % T;
 
-            double pp0 = (phip(0, t1) * conj(phip(0, tpt1))).real();
-            double pp1 = (phip(1, t1) * conj(phip(1, tpt1))).real();
+            Kokkos::complex<double> pp0 = (phip(0, t1) * conj(phip(0, tpt1)));
+            Kokkos::complex<double> pp1 = (phip(1, t1) * conj(phip(1, tpt1)));
 
             Kokkos::complex<double> p0;
             p0.real() = phip(0, t1).real();   p0.imag() = phip(1, t1).real();
             Kokkos::complex<double> cpt;
             cpt.real() = phip(0, tpt1).real();   cpt.imag() = -phip(1, tpt1).real();
 
-            to_write(0, t) += pp0;
-            to_write(1, t) += pp1;
-            to_write(2, t) += pp0 * pp0;
-            to_write(3, t) += pp1 * pp1;
+            to_write(0, t) += pp0.real();
+            to_write(1, t) += pp1.real();
+            to_write(2, t) += (pp0 * pp0).real();
+            to_write(3, t) += (pp1 * pp1).real();
             to_write(4, t) += (pp0 * pp0 + pp1 * pp1 + 4 * pp0 * pp1
                 - phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)
                 - phip(1, t1) * phip(1, t1) * phip(0, tpt1) * phip(0, tpt1)).real();
 
-            to_write(5, t) += pp0 * pp0 * pp0;
-            to_write(6, t) += pp1 * pp1 * pp1;
+            to_write(5, t) += (pp0 * pp0 * pp0).real();
+            to_write(6, t) += (pp1 * pp1 * pp1).real();
             to_write(7, t) += real(p0 * cpt * p0 * cpt * p0 * cpt);
 
             to_write(8, t) += (phip(0, t1) * phip(0, t_8) * phip(0, tpt1) * phip(0, t_2)).real();
@@ -1210,8 +1210,8 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
 
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
             int tpt1 = (t + t1) % T;
-            double pp0 = (phip(0, t1) * conj(phip(0, tpt1))).real();
-            double pp1 = (phip(1, t1) * conj(phip(1, tpt1))).real();
+            Kokkos::complex<double> pp0 = (phip(0, t1) * conj(phip(0, tpt1)));
+            Kokkos::complex<double> pp1 = (phip(1, t1) * conj(phip(1, tpt1)));
             inner += (pp0 * pp0 + pp1 * pp1 + 4 * pp0 * pp1
                 - phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)
                 - phip(1, t1) * phip(1, t1) * phip(0, tpt1) * phip(0, tpt1)).real();
@@ -1219,14 +1219,14 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
 
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
             int tpt1 = (t + t1) % T;
-            double pp0 = (phip(0, t1) * conj(phip(0, tpt1))).real();
-            inner += pp0 * pp0 * pp0;
+            Kokkos::complex<double> pp0 = (phip(0, t1) * conj(phip(0, tpt1)));
+            inner += (pp0 * pp0 * pp0).real();
             }, to_write(5, t));
 
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
             int tpt1 = (t + t1) % T;
-            double pp1 = (phip(1, t1) * conj(phip(1, tpt1))).real();
-            inner += pp1 * pp1 * pp1;
+            Kokkos::complex<double> pp1 = (phip(1, t1) * conj(phip(1, tpt1)));
+            inner += (pp1 * pp1 * pp1).real();
             }, to_write(6, t));
 
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
