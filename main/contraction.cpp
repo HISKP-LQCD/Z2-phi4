@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
         }
     write_header_measuraments(f_G2t, params);
 
-    FILE* f_conf_bundle;
+    FILE* f_conf_bundle=NULL;
     if (params.data.save_config_FT_bundle == "yes") {
         std::string conf_file = params.data.outpath +
             "/T" + std::to_string(params.data.L[0]) + "_L" + std::to_string(params.data.L[1]) +

@@ -31,7 +31,7 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
     mrc[0].real() = 0; mrc[0].imag() = 0;
     mrc[1].real() = 0; mrc[1].imag() = 0;
     Kokkos::complex<double> I(0, 1);
-    for (int comp = 0; comp < 2;comp++) {
+    for (int comp = 0; comp < 2; comp++) {
         Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, Kokkos::complex<double>&inner) {
             inner += exp(I * phi(comp, x));
         }, mrc[comp]);
@@ -48,7 +48,7 @@ void check_spin(Viewphi phi, cluster::IO_params params) {
 
     size_t V = params.data.V; //you can not use params.data.X  on the device
 
-    for (int comp = 0; comp < 2;comp++) {
+    for (int comp = 0; comp < 2; comp++) {
         Kokkos::parallel_for("check spin", V, KOKKOS_LAMBDA(const size_t x) {
             if (phi(comp, x) != -1 && phi(comp, x) != 1) {
                 printf("field is not +-1 at phi(comp=%i,x=%ld)=%g\n", comp, x, (double)phi(comp, x));
@@ -415,9 +415,9 @@ void smearing_field(Viewphip& sphi, Viewphi& phi, cluster::IO_params params) {
         sphi(1, x) = -phi(1, x);
         double w;
         Kokkos::complex<double> I(0, 1);
-        for (int dx3 = 0;dx3 < R;dx3++) {
-            for (int dx2 = 0;dx2 < R;dx2++) {
-                for (int dx1 = 0;dx1 < R;dx1++) {
+        for (int dx3 = 0; dx3 < R; dx3++) {
+            for (int dx2 = 0; dx2 < R; dx2++) {
+                for (int dx1 = 0; dx1 < R; dx1++) {
                     w = exp(-rho * (dx3 * dx3 + dx2 * dx2 + dx1 * dx1));
                     int xp = ctolex((x3 + dx3) % L, (x2 + dx2) % L, (x1 + dx1) % L, x0, L, L2, L3);
                     int xm = ctolex((x3 - dx3 + L) % L, (x2 - dx2 + L) % L, (x1 - dx1 + L) % L, x0, L, L2, L3);
@@ -567,9 +567,9 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(31, t) += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t10)).real();
             to_write(32, t) += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t12)).real();
 
-            for (int comp = 0; comp < 2;comp++) {
+            for (int comp = 0; comp < 2; comp++) {
 
-                for (int i = 0;i < 3;i++) {  // i = x,y,z
+                for (int i = 0; i < 3; i++) {  // i = x,y,z
                     int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                     int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                     int t1_p11 = t1 + (p11[i]) * T;   //     
@@ -614,7 +614,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 o2p111_t[comp] = (phi111_t[comp] * phip(comp, tpt1));
 
             }
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 // int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
                 int tpt1_p = t1 + (p1[i]) * T;   // 2,4 6   
@@ -640,7 +640,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             o2p111[3] = phi111[0] * phip(1, t1);//  +  phi[1][i]*h_phip(0,t1) ;
             o2p111_t[3] = (phi111_t[0]) * phip(1, tpt1);//   +   conj(phi_t[1][i])*h_phip(0,(t1+t)%T)   ;
 
-            for (int comp = 0; comp < 3;comp++) {
+            for (int comp = 0; comp < 3; comp++) {
                 A1[comp] = (bb[comp][0] + bb[comp][1] + bb[comp][2]) / 1.73205080757;//sqrt(3);
                 A1_t[comp] = (bb_t[comp][0] + bb_t[comp][1] + bb_t[comp][2]) / 1.73205080757;//sqrt(3);
                 E1[comp] = (bb[comp][0] - bb[comp][1]) / 1.41421356237;//sqrt(2);
@@ -693,17 +693,17 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(64, t) += (phip(1, t) * phip(1, t) * conj(A1_t[1])).real();
             to_write(65, t) += (phip(0, t) * phip(1, t) * conj(A1_t[2])).real();
 
-            for (int comp = 0; comp < 3;comp++)
-                for (int i = 0;i < 3;i++)
+            for (int comp = 0; comp < 3; comp++)
+                for (int i = 0; i < 3; i++)
                     to_write(66 + i + comp * 3, t) += (o2p1[comp][i] * conj(o2p1_t[comp][i])).real();  //two_to_two_o2p1o2p1 
 
-            for (int comp = 0; comp < 2;comp++)
-                for (int i = 0;i < 3;i++)
+            for (int comp = 0; comp < 2; comp++)
+                for (int i = 0; i < 3; i++)
                     to_write(75 + comp + i * 2, t) += (phi11[comp][i] * conj(phi11_t[comp][i])).real();//one_to_one_p11
                     ///+  conj(phi11[comp][i])*phi11_t[comp][i] no need to add the conj because we are taking the real part
 
-            for (int comp = 0; comp < 3;comp++)
-                for (int i = 0;i < 3;i++)
+            for (int comp = 0; comp < 3; comp++)
+                for (int i = 0; i < 3; i++)
                     to_write(81 + i + comp * 3, t) += (o2p11[comp][i] * conj(o2p11_t[comp][i])).real();//two_to_two_o2p11o2p11
 
 
@@ -714,12 +714,12 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(93, t) += (o2p111[1] * conj(o2p111_t[1])).real();
             to_write(94, t) += (o2p111[2] * conj(o2p111_t[2])).real();
 
-            for (int comp = 0; comp < 3;comp++)
-                for (int i = 0;i < 3;i++)
+            for (int comp = 0; comp < 3; comp++)
+                for (int i = 0; i < 3; i++)
                     to_write(95 + i + comp * 3, t) += (phip(comp % 2, t1) * o2p1[comp][i] * conj(phip(comp % 2, tpt1) * o2p1_t[comp][i])).real();  //three_to_three_o3p1o3p1 
 
-            for (int comp = 0; comp < 3;comp++)
-                for (int i = 0;i < 3;i++)
+            for (int comp = 0; comp < 3; comp++)
+                for (int i = 0; i < 3; i++)
                     to_write(104 + i + comp * 3, t) += (phip(comp % 2, t1) * o2p11[comp][i] * conj(phip(comp % 2, tpt1) * o2p11_t[comp][i])).real();//three_to_three_o3p11o3p11
 
             to_write(113, t) += (phip(0, t1) * o2p111[0] * conj(phip(0, tpt1) * o2p111_t[0])).real();//three_to_three_o3p111o3p111
@@ -750,19 +750,19 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(128, t) += (phip(0, t1) * phip(0, t1) * phip(0, t1) * conj(phip(1, tpt1))).real();   //phi0^3 --> phi1 
             to_write(129, t) += (phip(0, t1) * phip(0, t1) * phip(0, t1) * conj(phip(0, tpt1))).real();   //phi0^3 --> phi0
 
-            for (int i = 0;i < 3;i++)// i=x,y,z
+            for (int i = 0; i < 3; i++)// i=x,y,z
                 to_write(130 + i, t) += (phi1[0][i] * conj(phi1_t[1][i])).real();   //phi0[px] phi1[px]  
-            for (int i = 0;i < 3;i++)
+            for (int i = 0; i < 3; i++)
                 to_write(133 + i, t) += (phip(0, t1) * o2p1[0][i] * conj(phi1_t[1][i])).real();   //3phi0 [px] --> phi1[px]
-            for (int i = 0;i < 3;i++)// i=x,y,z
+            for (int i = 0; i < 3; i++)// i=x,y,z
                 to_write(136 + i, t) += (phip(0, t1) * o2p1[0][i] * conj(phi1_t[0][i])).real();   //3phi0 [px] --> phi0[px]
 
 
-            for (int i = 0;i < 3;i++)// i=x,y,z
+            for (int i = 0; i < 3; i++)// i=x,y,z
                 to_write(139 + i, t) += (phi11[0][i] * conj(phi11_t[1][i])).real();   //phi0[pxy] phi1[pxy]  
-            for (int i = 0;i < 3;i++)
+            for (int i = 0; i < 3; i++)
                 to_write(142 + i, t) += (phip(0, t1) * o2p11[0][i] * conj(phi11_t[1][i])).real();   //3phi0 [pxy] --> phi1[pxy]
-            for (int i = 0;i < 3;i++)
+            for (int i = 0; i < 3; i++)
                 to_write(145 + i, t) += (phip(0, t1) * o2p11[0][i] * conj(phi11_t[0][i])).real();   //3phi0 [pxy] --> phi0[pxy]
 
             to_write(148, t) += (phi111[0] * conj(phi111_t[1])).real();   //phi0[pxyz] phi1[pxyz]  
@@ -783,7 +783,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 to_write(159, t) += (s_phip(0, t1) * s_phip(0, t1) * s_phip(0, t1) * conj(phip(1, tpt1))).real();
 
                 to_write(160, t) += (s_phip(0, t1) * s_phip(0, t1) * s_phip(0, t1) * conj(s_phip(0, tpt1))).real();// phi0^3-->phi0  smear-smear
-                for (int i = 0;i < 3;i++) {  // i = x,y,z
+                for (int i = 0; i < 3; i++) {  // i = x,y,z
                     int t1_p = t1 + (p1[i]) * T;   // 2,4 6    real part
                     int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    real part
                     to_write(161, t) += (s_phip(0, t1_p) * conj(s_phip(0, tpt1_p))).real();// phi0(p1)-->phi0(p1)  smear-smear
@@ -798,7 +798,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(165, t) += (phip(0, t1) * A1[0] * conj(phip(0, tpt1) * phip(0, tpt1) * phip(0, tpt1))).real();  //phi0^3 p-p A1 --> phi0^3
 
             // GEVP row:< (phi0^3 p1-A1)   O  >
-            for (int i = 0; i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 to_write(166, t) += (phi1[0][i] * A1[0] * conj(phi1_t[0][i] * A1_t[0])).real(); //phi0^3 p1 A1 --> phi0^3 p1 A1
                 to_write(167, t) += (phi1[0][i] * A1[0] * conj(phi1_t[0][i])).real();   //phi0^3 p1 A1 --> phi0 p1
                 to_write(168, t) += (phi1[0][i] * A1[0] * conj(phi1_t[1][i])).real();   //phi0^3 p1 A1 --> phi1 p1
@@ -1086,8 +1086,8 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
         for (int t1 = 0; t1 < T; t1++) {
             int tpt1 = (t + t1) % T;
 
-            for (int comp = 0; comp < 2;comp++) {
-                for (int i = 0;i < 3;i++) {
+            for (int comp = 0; comp < 2; comp++) {
+                for (int i = 0; i < 3; i++) {
                     int t1_p = t1 + (p1[i]) * T;   // 2,4 6    real part
                     int tpt1_p = (t + t1) % T + (p1[i]) * T;   //2,4 6    real part
 
@@ -1102,16 +1102,16 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
                 }
 
             }
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 bb[2][i] = (phi[0][i] * conj(phi[1][i]) + phi[1][i] * conj(phi[0][i])) / sqrt(2);
                 bb_t[2][i] = (phi_t[0][i] * conj(phi_t[1][i]) + phi_t[1][i] * conj(phi_t[0][i])) / sqrt(2);
             }
-            for (int i = 0; i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 two0_to_two0[i] += (bb[0][i] * bb_t[0][i]).real();
                 two0pmp_to_two0[i] += (bb[0][i] * h_phip(0, (t + t1) % T) * h_phip(0, (t + t1) % T)).real();
                 twopmpx_to_twopmpy[i] += (bb[0][i] * bb_t[0][(i + 1) % 3]).real();
             }
-            for (int i = 0; i < 2;i++) {
+            for (int i = 0; i < 2; i++) {
                 one_to_one_im[i] += (h_phip(i, t1) * h_phip(i, tpt1)).imag();
                 two_to_two_im[i] += (h_phip(i, t1) * h_phip(i, t1) * h_phip(i, tpt1) * h_phip(i, tpt1)).imag();
                 three_to_three_im[i] += (h_phip(i, t1) * h_phip(i, t1) * h_phip(i, t1)
@@ -1121,7 +1121,7 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
 
         }
 
-        for (int comp = 0; comp < 3;comp++) {
+        for (int comp = 0; comp < 3; comp++) {
             two0_to_two0[comp] /= ((double)T);
             two0pmp_to_two0[comp] /= ((double)T);
             twopmpx_to_twopmpy[comp] /= ((double)T);
@@ -1387,8 +1387,8 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int t12 = (12 + t1) % T;
             inner += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t12)).real();
             }, to_write(32, t));
-        for (int i = 0;i < 3;i++) {
-            for (int comp = 0;comp < 2;comp++) {
+        for (int i = 0; i < 3; i++) {
+            for (int comp = 0; comp < 2; comp++) {
                 Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
                     int tpt1 = (t + t1) % T;
                     int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
@@ -1402,7 +1402,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int tpt1 = (t + t1) % T;
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1416,7 +1416,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int tpt1 = (t + t1) % T;
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1430,7 +1430,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int tpt1 = (t + t1) % T;
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1445,7 +1445,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int tpt1 = (t + t1) % T;
             Kokkos::complex<double> E1(0, 0);
             Kokkos::complex<double> E1_t(0, 0);
-            for (int i = 0;i < 2;i++) {
+            for (int i = 0; i < 2; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1461,7 +1461,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int tpt1 = (t + t1) % T;
             Kokkos::complex<double> E1(0, 0);
             Kokkos::complex<double> E1_t(0, 0);
-            for (int i = 0;i < 2;i++) {
+            for (int i = 0; i < 2; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1476,7 +1476,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             int tpt1 = (t + t1) % T;
             Kokkos::complex<double> E1(0, 0);
             Kokkos::complex<double> E1_t(0, 0);
-            for (int i = 0;i < 2;i++) {
+            for (int i = 0; i < 2; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1492,7 +1492,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> E2(0, 0);
             Kokkos::complex<double> E2_t(0, 0);
             double c[3] = { 1,1,-2 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1509,7 +1509,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> E2(0, 0);
             Kokkos::complex<double> E2_t(0, 0);
             double c[3] = { 1,1,-2 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1524,7 +1524,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> E2(0, 0);
             Kokkos::complex<double> E2_t(0, 0);
             double c[3] = { 1,1,-2 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1539,7 +1539,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> E1_t(0, 0);
             double c[3] = { 1,-1,0 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1554,7 +1554,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> E1_t(0, 0);
             double c[3] = { 1,-1,0 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1570,7 +1570,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> A1(0, 0);
             Kokkos::complex<double> E1_t(0, 0);
             double c[3] = { 1,-1,0 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1587,7 +1587,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> E1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
             double c[3] = { 1,-1,0 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1602,7 +1602,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> E1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
             double c[3] = { 1,-1,0 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1617,7 +1617,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             Kokkos::complex<double> E1(0, 0);
             Kokkos::complex<double> A1_t(0, 0);
             double c[3] = { 1,-1,0 };
-            for (int i = 0;i < 3;i++) {
+            for (int i = 0; i < 3; i++) {
                 int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
@@ -1628,10 +1628,145 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             inner += (E1 * conj(A1_t)).real() / 4.89897948557;// sqrt(8*2);
             }, to_write(53, t));
 
-        
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> E2_t(0, 0);
+            double c[3] = { 1, 1, -2 };
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += (phip(0, t1_p) * phip(0, t1_mp));
+                E2_t += c[i] * (phip(0, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (A1 * conj(E2_t)).real() / 4.24264068712;// sqrt(6*3);
+            }, to_write(54, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> E2_t(0, 0);
+            double c[3] = { 1, 1, -2 };
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += (phip(1, t1_p) * phip(1, t1_mp));
+                E2_t += c[i] * (phip(1, tpt1_p) * phip(1, tpt1_mp));
+            }
+            inner += (A1 * conj(E2_t)).real() / 4.24264068712;// sqrt(6*3);
+            }, to_write(55, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            Kokkos::complex<double> E2_t(0, 0);
+            double c[3] = { 1,1,-2 };
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                A1 += (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                E2_t += c[i] * (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+            }
+            inner += (A1 * conj(E2_t)).real() / 8.48528137424;// sqrt(6*3*4);
+            }, to_write(56, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E2(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            double c[3] = { 1,1,-2 };
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E2 += c[i] * (phip(0, t1_p) * phip(0, t1_mp));
+                A1_t += (phip(0, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (E2 * conj(A1_t)).real() / 4.24264068712;// sqrt(6*3);
+            }, to_write(57, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E2(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            double c[3] = { 1,1,-2 };
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E2 += c[i] * (phip(1, t1_p) * phip(1, t1_mp));
+                A1_t += (phip(1, tpt1_p) * phip(1, tpt1_mp));
+            }
+            inner += (E2 * conj(A1_t)).real() / 4.24264068712;// sqrt(6*3);
+            }, to_write(58, t));
+
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> E2(0, 0);
+            Kokkos::complex<double> A1_t(0, 0);
+            double c[3] = { 1, 1, -2 };
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int tpt1_p = tpt1 + (p1[i]) * T;   //2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
+                E2 += c[i] * (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                A1_t += (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, tpt1_p) * phip(0, tpt1_mp));
+            }
+            inner += (E2 * conj(A1_t)).real() / 8.48528137424;// sqrt(6*3*4);
+            }, to_write(59, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                A1 += (phip(0, t1_p) * phip(0, t1_mp));
+            }
+            inner += (A1 * conj(phip(0, tpt1) * phip(0, tpt1))).real() / 1.73205080757;// sqrt(3);
+            }, to_write(60, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                A1 += (phip(1, t1_p) * phip(1, t1_mp));
+            }
+            inner += (A1 * conj(phip(1, tpt1) * phip(1, tpt1))).real() / 1.73205080757;// sqrt(3);
+            }, to_write(61, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1(0, 0);
+            for (int i = 0; i < 3; i++) {
+                int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+                int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                A1 += (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+            }
+            inner += (A1 * conj(phip(0, tpt1) * phip(1, tpt1))).real() / 2.44948974278;// sqrt(3*2);
+            }, to_write(62, t));
+
+
+
         Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, Ncorr), [&](const int c) {
             to_write(c, t) /= ((double)T);
-        });
+            });
     });
 
     if (params.data.checks == "yes") {

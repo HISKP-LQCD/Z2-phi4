@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
 
         std::cout << "Npfileds = " << Npfileds << std::endl;
 
-        manyphi mphip("manyphi", Npfileds, 2, params.data.L[0] * Vp*2 ); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
+        manyphi mphip("manyphi", Npfileds, 2, params.data.L[0] * Vp * 2); // ( " phi, smeared, phi2, phi3" , comp, "t+p*T") 
         manyphi::HostMirror h_mphip;
         if (params.data.save_config_FT_bundle == "yes" || params.data.save_config_FT == "yes" || params.data.checks == "yes")  h_mphip = Kokkos::create_mirror_view(mphip);
 
@@ -193,7 +193,7 @@ int main(int argc, char** argv) {
         }
         write_header_measuraments(f_G2t, params);
 
-        FILE* f_conf_bundle;
+        FILE* f_conf_bundle = NULL;
         if (params.data.save_config_FT_bundle == "yes") {
             std::string conf_file = params.data.outpath +
                 "/T" + std::to_string(params.data.L[0]) + "_L" + std::to_string(params.data.L[1]) +
@@ -234,6 +234,7 @@ int main(int argc, char** argv) {
             double acc = 0.0;
             for (int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits; global_metro_hits++) {
                 acc += metropolis_update(phi, params, rand_pool, sectors);
+                modulo_2pi(phi, params.data.V);
             }
             acc /= (params.data.metropolis_global_hits);
             ave_acc += acc / ((double)V);
@@ -288,7 +289,7 @@ int main(int argc, char** argv) {
                 double* m = compute_magnetisations(phi, params);
                 fprintf(f_mes, "%.15g   %.15g \n", m[0], m[1]);
                 free(m);
-                
+
                 parallel_measurement_complex(mphip, h_mphip, params, f_G2t, f_checks, ii);
                 // check_spin(phi, params);
                 time = timer_2.seconds();
