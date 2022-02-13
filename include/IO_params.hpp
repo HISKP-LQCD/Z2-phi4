@@ -446,11 +446,10 @@ private:
     printf( "gC = %.6f       -> g        = %.6f\n",  data_in.gC, data_in.g);
 
     // metropolis 
-    // read_par_int(newfile, "metropolis_local_hits", data_in.metropolis_local_hits);
-    data_in.metropolis_local_hits=1;
+    read_par_int(newfile, "metropolis_local_hits", data_in.metropolis_local_hits);
     read_par_int(newfile, "metropolis_global_hits", data_in.metropolis_global_hits);
-    // read_par_double(newfile, "metropolis_delta", data_in.metropolis_delta);
-    data_in.metropolis_delta=1;
+    read_par_double(newfile, "metropolis_delta", data_in.metropolis_delta);
+    
     // cluster
     // read_par_int(newfile, "cluster_hits", data_in.cluster_hits);
     // read_par_double(newfile, "cluster_min_size", data_in.cluster_min_size);

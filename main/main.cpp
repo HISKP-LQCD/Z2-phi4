@@ -116,11 +116,11 @@ int main(int argc, char** argv) {
             // get a random generatro from the pool
             gen_type rgen = rand_pool.get_state(x);
 
-            phi(0, x) = (rgen.drand() * 2. - 1.);
-            phi(1, x) = (rgen.drand() * 2. - 1.);
+            phi(0, x) = (rgen.drand() * 2.-1. );
+            phi(1, x) = (rgen.drand() * 2.-1. );
 
-            phi(0, x + V / 2) = (rgen.drand() * 2. - 1.);
-            phi(1, x + V / 2) = (rgen.drand() * 2. - 1.);
+            phi(0, x + V / 2) = (rgen.drand() * 2.-1. );
+            phi(1, x + V / 2) = (rgen.drand() * 2.-1. );
             // Give the state back, which will allow another thread to aquire it
             rand_pool.free_state(rgen);
         });
@@ -128,8 +128,8 @@ int main(int argc, char** argv) {
             Kokkos::parallel_for("init_phi", 1, KOKKOS_LAMBDA(size_t x) {
                 // get a random generatro from the pool
                 gen_type rgen = rand_pool.get_state(x);
-                phi(0, V - 1) = (rgen.drand() * 2. - 1.);
-                phi(1, V - 1) = (rgen.drand() * 2. - 1.);
+                phi(0, V - 1) = (rgen.drand() * 2.-1. );
+                phi(1, V - 1) = (rgen.drand() * 2.-1. );
                 // Give the state back, which will allow another thread to aquire it
                 rand_pool.free_state(rgen);
             });
@@ -233,9 +233,9 @@ int main(int argc, char** argv) {
             // metropolis update
             double acc = 0.0;
             for (int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits; global_metro_hits++) {
-                acc += metropolis_update(phi, params, rand_pool, sectors);
-                modulo_2pi(phi, params.data.V);
+                acc += metropolis_update(phi, params, rand_pool, sectors);    
             }
+            modulo_2pi(phi, params.data.V);
             acc /= (params.data.metropolis_global_hits);
             ave_acc += acc / ((double)V);
             // cout << "Metropolis.acc=" << acc/V << endl ;

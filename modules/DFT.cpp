@@ -160,6 +160,10 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
                 printf("error   %d   = %d  + %d  *%d+ %d*%d*%d\n", x, ix, iy, L1, iz, L1, L2);
                 Kokkos::abort("DFT index x re");
             }
+            if (sign !=-1 && sign!=1 ) {
+                printf("sign =%d\n",sign);
+                Kokkos::abort("DFT sign  +p -p\n");
+            }
 #endif
             double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
             Kokkos::complex<double> ewr(0, 1);
@@ -451,13 +455,15 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
         int T = params.data.L[0];
         for (int t = 0; t < T; t++) {
             for (int x = 1; x < Vp * 2; x++) {
-                int id = t + x * T;
-                if (fabs(h_phip_test(0, 0, id).real()) > 1e-11 || fabs(h_phip_test(0, 1, id).real()) > 1e-11) {
-                    printf("error FT of a constant field do not gives delta_{p,0}: \n");
-                    printf("h_phip_test(0,%d)=%.12g \n", x, h_phip_test(0, 0, id).real());
-                    printf("h_phip_test(1,%d)=%.12g \n", x, h_phip_test(0, 1, id).real());
-                    printf("id=t+T*p    id=%d   t=%d  p=%d\n ", id, t, x);
-                    // exit(1);
+                if(x!=Vp){
+                    int id = t + x * T;
+                    if (fabs(h_phip_test(0, 0, id).real()) > 1e-11 || fabs(h_phip_test(0, 1, id).real()) > 1e-11) {
+                        printf("error FT of a constant field do not gives delta_{p,0}: \n");
+                        printf("h_phip_test(0,%d)=%.12g \n", x, h_phip_test(0, 0, id).real());
+                        printf("h_phip_test(1,%d)=%.12g \n", x, h_phip_test(0, 1, id).real());
+                        printf("id=t+T*p    id=%d   t=%d  p=%d\n ", id, t, x);
+                        // exit(1);
+                    }
                 }
             }
             if (fabs(h_phip_test(0, 0, t).real() - 1) > 1e-11 || fabs(h_phip_test(0, 1, t).real() - 1) > 1e-11) {
@@ -465,6 +471,13 @@ void compute_FT_scratchpad(manyphi& phip, int i, const Viewphi phi, cluster::IO_
                 printf("h_phip_test(0,%d)=%.12g \n", t, h_phip_test(0, 0, t).real());
                 printf("h_phip_test(1,%d)=%.12g \n", t, h_phip_test(0, 1, t).real());
                 printf("id=t+T*p    id=%d   t=%d  p=0\n ", t, t);
+                // exit(1);
+            }
+            if (fabs(h_phip_test(0, 0, t+T * Vp ).real() - 1) > 1e-11 || fabs(h_phip_test(0, 1, t+T * Vp).real() - 1) > 1e-11) {
+                printf("error FT of a constant field do not gives delta_{p,0}: \n");
+                printf("h_phip_test(0,%d)=%.12g \n", t, h_phip_test(0, 0, t+T * Vp).real());
+                printf("h_phip_test(1,%d)=%.12g \n", t, h_phip_test(0, 1, t+T * Vp).real());
+                printf("id=t+T*p    id=%d   t=%d  p=0\n ", t+T * Vp, t);
                 // exit(1);
             }
         }

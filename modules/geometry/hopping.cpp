@@ -63,7 +63,7 @@
  */
 
  //void hopping(const int *L, ViewLatt &hop, ViewLatt  &ipt ,ViewLatt &even_odd )
-void hopping(const int* L, Kokkos::View<size_t**> &hop, ViewLatt& sectors, Kokkos::View<size_t**> &ipt) {
+void hopping(const int* L, Kokkos::View<size_t**>& hop, ViewLatt& sectors, Kokkos::View<size_t**>& ipt) {
     int L1 = L[1], L2 = L[2], L3 = L[3], L0 = L[0];
 
     Kokkos::View<size_t**>::HostMirror h_hop = Kokkos::create_mirror_view(hop);
@@ -75,14 +75,14 @@ void hopping(const int* L, Kokkos::View<size_t**> &hop, ViewLatt& sectors, Kokko
     int dy = L2 % 2 + 2;
     int dz = L3 % 2 + 2;
     int dt = L0 % 2 + 2;
-    int dtot= 2;
-    if (L0%2==1 || L1%2==1 || L2%2==1 || L3%2==1) dtot=3;
+    int dtot = 2;
+    if (L0 % 2 == 1 || L1 % 2 == 1 || L2 % 2 == 1 || L3 % 2 == 1) dtot = 3;
     size_t eo = 0;
     // run in such a way that i+=1;
-    for (int t = 0;t < L0;t++) {
-        for (int z = 0;z < L3;z++) {
-            for (int y = 0;y < L2;y++) {
-                for (int x = 0;x < L1;x++) {
+    for (int t = 0; t < L0; t++) {
+        for (int z = 0; z < L3; z++) {
+            for (int y = 0; y < L2; y++) {
+                for (int x = 0; x < L1; x++) {
                     size_t i = x + y * L1 + z * L1 * L2 + t * L3 * L2 * L1;
                     h_hop(i, 0) = x + y * L1 + z * L1 * L2 + ((t + 1) % L0) * L3 * L2 * L1;
                     h_hop(i, 1) = x + y * L1 + ((z + 1) % L3) * L1 * L2 + t * L3 * L2 * L1;
@@ -123,29 +123,29 @@ void hopping(const int* L, Kokkos::View<size_t**> &hop, ViewLatt& sectors, Kokko
         eo = (eo + 1) % 2;
     }
     printf("sizes of the sectors:\n");
-    printf("color=%d size=%d\n",0, sectors.size[0]);
-    printf("color=%d size=%d\n",1, sectors.size[1]);
-    printf("color=%d size=%d\n",2, sectors.size[2]);
+    printf("color=%d size=%d\n", 0, sectors.size[0]);
+    printf("color=%d size=%d\n", 1, sectors.size[1]);
+    printf("color=%d size=%d\n", 2, sectors.size[2]);
+    // Deep copy host views to device views.
+    Kokkos::deep_copy(hop, h_hop);
+    Kokkos::deep_copy(ipt, h_ipt);
+    Kokkos::deep_copy(sectors.rbg, h_rbg);
 #ifdef DEBUG
-    for(int color=0;color<3;color++){
-        for(int xx =0; xx< sectors.size[color];xx++){
-            int x=h_rbg((color),xx);
-            for(int d=0;d<8;d++){
-                size_t n=h_hop(x,d);
-                for(int j =0; j< sectors.size[color];j++){
-                    if ( n == h_rbg(color,j)  ) {
-                        printf("x=%d  hopping=%ld is in the same colored sector\n",x,n);
+    for (int color = 0; color < 3; color++) {
+        Kokkos::parallel_for("check_sectors", sectors.size[color], KOKKOS_LAMBDA(int xx){
+            int x = sectors.rbg((color), xx);
+            for (int d = 0; d < 8; d++) {
+                size_t n = hop(x, d);
+                for (int j = 0; j < sectors.size[color]; j++) {
+                    if (n == sectors.rbg(color, j)) {
+                        printf("x=%d  hopping=%ld is in the same colored sector\n", x, n);
                         exit(1);
                     }
                 }
             }
-        }
+        });
     }
 #endif
-    // Deep copy host views to device views.
-    Kokkos::deep_copy(hop, h_hop);           
-    Kokkos::deep_copy(ipt, h_ipt);           
-    Kokkos::deep_copy(sectors.rbg, h_rbg);   
 
 
 }
