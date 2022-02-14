@@ -81,9 +81,12 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
 
     for (int color = 0; color < 3; color++) {
         // for(int x=0; x< V; x++) {
-        // Kokkos::parallel_reduce( "lattice loop", V/2, KOKKOS_LAMBDA( size_t xx , double &update) {
-        Kokkos::parallel_for(
-            "lattice metropolis loop", sectors.size[color], KOKKOS_LAMBDA(size_t xx) {
+#ifdef DEBUG
+        int acc_color=0; // this should not be necessary
+        Kokkos::parallel_reduce("lattice metropolis loop", sectors.size[color], KOKKOS_LAMBDA(size_t xx, int& update) {
+#else
+        Kokkos::parallel_for("lattice metropolis loop", sectors.size[color], KOKKOS_LAMBDA(size_t xx) {
+#endif
             size_t x = sectors.rbg(color, xx);
             double kappa[2] = { params.data.kappa0, params.data.kappa1 };
 
@@ -93,7 +96,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             // compute the neighbour sum
             Kokkos::complex<double> neighbourSum[2];
             compute_neibourgh_sum(neighbourSum, phi, x, params.data.L);
-            Kokkos::complex<double> i(0, 1);
+            Kokkos::complex<double> I(0, 1);
 
 #ifdef DEBUG
             if (test == 1) {
@@ -103,8 +106,8 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
                 neighbourSum1[1].real() = 0; neighbourSum1[1].imag() = 0;
 
                 for (size_t dir = 0; dir < dim_spacetime; dir++) { // dir = direction
-                    neighbourSum1[0] += exp(i * phi(0, hop(x, dir + dim_spacetime))) + exp(i * phi(0, hop(x, dir)));
-                    neighbourSum1[1] += exp(i * phi(1, hop(x, dir + dim_spacetime))) + exp(i * phi(1, hop(x, dir)));
+                    neighbourSum1[0] += exp(I * phi(0, hop(x, dir + dim_spacetime))) + exp(I * phi(0, hop(x, dir)));
+                    neighbourSum1[1] += exp(I * phi(1, hop(x, dir + dim_spacetime))) + exp(I * phi(1, hop(x, dir)));
                 }
                 if ((neighbourSum1[0] - neighbourSum[0]).real() > 1e-12 || (neighbourSum1[0] - neighbourSum[0]).imag() > 1e-12) {
                     printf("comp 0, pos=%ld with hop:   %.12g   manually: %.12g\n", x, neighbourSum[0].real(), neighbourSum1[0].real());
@@ -119,27 +122,33 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
 
 #endif
             for (size_t hit = 0; hit < nb_of_hits; hit++) {
+                // exp(I phi) --> exp(I (phi+d))
                 double d = (rgen.drand() * 2. - 1.) * delta;
                 // change of action
-                double dS = (-2. * kappa[0] * exp(i * phi(0, x)) * neighbourSum[0] * (exp(i * d) - 1.)).real();
-                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (exp(i * 3 * d) - 1.)).real();
+                // S0= -2k Re{  phi1^dag(x) \sum_mu phi1(x+mu) } 
+                // S1= -2k Re{  phi1^dag(x) \sum_mu phi1(x+mu) }
+                // Sg=  g Re{ \phi1^dag  phi_0^3 }
+                double dS = (-2. * kappa[0] * exp(-I * phi(0, x)) * neighbourSum[0] * (exp(-I * d) - 1.)).real();
+                dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(I * 3 * d) - 1.)).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
                     phi(0, x) += d;
-                    // update++; 
+#ifdef DEBUG
+                    update++;
+#endif
                 }
-            } // multi hit ends here
-            // doing the multihit
-            for (size_t hit = 0; hit < nb_of_hits; hit++) {
-                double d = (rgen.drand() * 2. - 1.) * delta;
-                double dS = (-2. * kappa[1] * exp(i * phi(1, x)) * neighbourSum[1] * (exp(i * d) - 1.)).real();
-                dS += (g * exp(i * (3 * phi(0, x) + phi(1, x))) * (exp(i * 3 * d) - 1.)).real();
+                // second component
+                d = (rgen.drand() * 2. - 1.) * delta;
+                dS = (-2. * kappa[1] * exp(-I * phi(1, x)) * neighbourSum[1] * (exp(-I * d) - 1.)).real();
+                dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
                     phi(1, x) += d;
-                    // update++; 
+#ifdef DEBUG
+                    update++;
+#endif
                 }
             } // multi hit ends here
 
@@ -147,11 +156,15 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
 
             // Give the state back, which will allow another thread to aquire it
             rand_pool.free_state(rgen);
-        }); // end lattice_sectors.color loop in parallel
+#ifdef DEBUG
+        }, acc_color);
+        acc+=acc_color;    
+#else
+        }); // end parallel loop over lattice site of the same color
+#endif // if DEBUG compute acc
+    } // end loop over sectors
 
-    } // end loop parity
-
-    return acc / (2 * nb_of_hits); // the 2 accounts for updating the component indiv.
+    return acc / ((double) 2. * nb_of_hits); // the 2 accounts for updating the component indiv.
 }
 
 void modulo_2pi(Viewphi& phi, const int V) {

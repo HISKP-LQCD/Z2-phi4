@@ -578,7 +578,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                     int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
                     int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
                     //int t1_mp11 = t1 + (p11[i]) * T + T * Vp;   //    
-                    int tpt1_mp11 = tpt1 + (p11[i]) * T + T * Vp;   //    
+                    // int tpt1_mp11 = tpt1 + (p11[i]) * T + T * Vp;   //    
 
 
                     phi1[comp][i] = phip(comp, t1_p);
@@ -604,7 +604,7 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
                 int t1_p111 = t1 + (p111)*T;
                 int tpt1_p111 = tpt1 + (p111)*T;
                 // int t1_mp111 = t1 + (p111)*T + T * Vp;
-                int tpt1_mp111 = tpt1 + (p111)*T + T * Vp;
+                // int tpt1_mp111 = tpt1 + (p111)*T + T * Vp;
 
 
                 phi111[comp] = phip(comp, t1_p111);
@@ -617,9 +617,9 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             for (int i = 0; i < 3; i++) {
                 // int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
-                int tpt1_p = t1 + (p1[i]) * T;   // 2,4 6   
+                // int tpt1_p = t1 + (p1[i]) * T;   // 2,4 6   
                 int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
-                int tpt1_mp11 = tpt1 + (p11[i]) * T + T * Vp;   //    
+                // int tpt1_mp11 = tpt1 + (p11[i]) * T + T * Vp;   //    
 
                 bb[2][i] = (phi1[0][i] * phip(1, t1_mp) + phi1[1][i] * phip(0, t1_mp)) / 1.41421356237;//sqrt(2);
                 bb_t[2][i] = (phi1_t[0][i] * phip(1, tpt1_mp) + phi1_t[1][i] * phip(0, tpt1_mp)) / 1.41421356237;//sqrt(2);
@@ -689,9 +689,9 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(61, t) += (A1[1] * conj(phip(1, tpt1) * phip(1, tpt1))).real();
             to_write(62, t) += (A1[2] * conj(phip(0, tpt1) * phip(1, tpt1))).real();
 
-            to_write(63, t) += (phip(0, t) * phip(0, t) * conj(A1_t[0])).real();// o20 A1 // two_to_two_o20A1
-            to_write(64, t) += (phip(1, t) * phip(1, t) * conj(A1_t[1])).real();
-            to_write(65, t) += (phip(0, t) * phip(1, t) * conj(A1_t[2])).real();
+            to_write(63, t) += (phip(0, t1) * phip(0, t1) * conj(A1_t[0])).real();// o20 A1 // two_to_two_o20A1
+            to_write(64, t) += (phip(1, t1) * phip(1, t1) * conj(A1_t[1])).real();
+            to_write(65, t) += (phip(0, t1) * phip(1, t1) * conj(A1_t[2])).real();
 
             for (int comp = 0; comp < 3; comp++)
                 for (int i = 0; i < 3; i++)
@@ -1151,6 +1151,26 @@ void  compute_checks_complex(manyphi::HostMirror h_mphip, cluster::IO_params par
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+
+
+KOKKOS_FUNCTION Kokkos::complex<double> compute_o2p1(Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phip,
+    const int& t1, const int T, const int& comp, const int& i) {
+
+    Kokkos::complex<double> o2p1(0, 0);
+    const int  p1[3] = { 1, Lp, Lp * Lp };
+    int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+    if (comp < 2)
+        o2p1 += phip(comp, t1_p) * phip(comp, t1);
+    else
+        o2p1 += phip(0, t1_p) * phip(1, t1);
+
+    return o2p1;
+}
+
+
+
+
 void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f_G2t, FILE* f_checks, int iconf) {
     int T = params.data.L[0];
     fwrite(&iconf, sizeof(int), 1, f_G2t);
@@ -1186,7 +1206,7 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
         const int t = teamMember.league_rank();
         const int  p1[3] = { 1,Lp,Lp * Lp };
         const int  p11[3] = { 1 + Lp,Lp + Lp * Lp,1 + Lp * Lp };// (1,1,0),(0,1,1),(1,0,1)
-        const int p111 = 1 + Lp + Lp * Lp;
+        // const int p111 = 1 + Lp + Lp * Lp;
 
         Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
             int tpt1 = (t + t1) % T;
@@ -1673,9 +1693,9 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
                 int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
                 int tpt1_mp = tpt1 + (p1[i]) * T + T * Vp;   //2,4 6    
                 A1 += (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
-                E2_t += c[i] * (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+                E2_t += c[i] * (phip(0, tpt1_p) * phip(1, tpt1_mp) + phip(1, tpt1_p) * phip(0, tpt1_mp));
             }
-            inner += (A1 * conj(E2_t)).real() / 8.48528137424;// sqrt(6*3*4);
+            inner += (A1 * conj(E2_t)).real() / 8.48528137424;// 6*sqrt(2);
             }, to_write(56, t));
 
 
@@ -1762,7 +1782,59 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
             inner += (A1 * conj(phip(0, tpt1) * phip(1, tpt1))).real() / 2.44948974278;// sqrt(3*2);
             }, to_write(62, t));
 
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1_t(0, 0);
+            for (int i = 0; i < 3; i++) {
+                int t1_p = tpt1 + (p1[i]) * T;   // 2,4 6    
+                int t1_mp = tpt1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                A1_t += (phip(0, t1_p) * phip(0, t1_mp));
+            }
+            inner += (conj(A1_t) * (phip(0, t1) * phip(0, t1))).real() / 1.73205080757;// sqrt(3);
+            }, to_write(63, t));
 
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1_t(0, 0);
+            for (int i = 0; i < 3; i++) {
+                int t1_p = tpt1 + (p1[i]) * T;   // 2,4 6    
+                int t1_mp = tpt1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                A1_t += (phip(1, t1_p) * phip(1, t1_mp));
+            }
+            inner += (conj(A1_t) * (phip(1, t1) * phip(1, t1))).real() / 1.73205080757;// sqrt(3);
+            }, to_write(64, t));
+
+        Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1_t(0, 0);
+            for (int i = 0; i < 3; i++) {
+                int t1_p = tpt1 + (p1[i]) * T;   // 2,4 6    
+                int t1_mp = tpt1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+                A1_t += (phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp));
+            }
+            inner += (conj(A1_t) * (phip(0, t1) * phip(1, t1))).real() / 2.44948974278;// sqrt(3*2);
+            }, to_write(65, t));
+
+        for (int comp = 0; comp < 3; comp++) {
+            for (int i = 0; i < 3; i++) {
+                Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+                    int tpt1 = (t + t1) % T;
+                    Kokkos::complex<double> o2p1(compute_o2p1(phip, t1, T, comp, i));
+                    Kokkos::complex<double> o2p1_t(compute_o2p1(phip, tpt1, T, comp, i));
+                    inner += (o2p1 * conj(o2p1_t)).real();
+                    }, to_write(66 + i + comp * 3, t));
+            }
+        }
+        for (int comp = 0; comp < 2; comp++) {
+            for (int i = 0; i < 3; i++) {
+                Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
+                    int tpt1 = (t + t1) % T;
+                    int t1_p11 = t1 + (p11[i]) * T;   //     
+                    int tpt1_p11 = tpt1 + (p11[i]) * T; 
+                    inner += (phip(comp, t1_p11 ) * conj(phip(comp, tpt1_p11 ))).real();
+                    }, to_write(75 + i * 2 + comp, t));
+            }
+        }
 
         Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, Ncorr), [&](const int c) {
             to_write(c, t) /= ((double)T);
@@ -1781,3 +1853,736 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
 
     fwrite(&lh_write(0, 0), sizeof(double), Ncorr * T, f_G2t);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+#ifdef NOTCOMPILE
+
+template<int comp>
+KOKKOS_FUNCTION Kokkos::complex<double> compute_A1(Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phip, const int& t1, const int& T) {
+    Kokkos::complex<double> A1(0, 0);
+    const int  p1[3] = { 1,Lp,Lp * Lp };
+    for (int i = 0; i < 3; i++) {
+        int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+        int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+        A1 += phip(comp, t1_p) * phip(comp, t1_mp);
+    }
+    return A1 / 1.73205080757;
+}
+
+template<>           // explicit specialization for comp = 2
+KOKKOS_FUNCTION Kokkos::complex<double> compute_A1<2>(Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phip, const int& t1, const int& T) {
+    Kokkos::complex<double> A1(0, 0);
+    const int  p1[3] = { 1,Lp,Lp * Lp };
+    for (int i = 0; i < 3; i++) {
+        int t1_p = t1 + (p1[i]) * T;   // 2,4 6    
+        int t1_mp = t1 + (p1[i]) * T + T * Vp;   // 2,4 6   
+        A1 += phip(0, t1_p) * phip(1, t1_mp) + phip(1, t1_p) * phip(0, t1_mp);
+    }
+    return A1 / 2.44948974278;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, cluster::IO_params params, FILE* f_G2t, FILE* f_checks, int iconf) {
+
+
+    int T = params.data.L[0];
+    fwrite(&iconf, sizeof(int), 1, f_G2t);
+    bool smeared_contractions = (params.data.smearing == "yes");
+    bool FT_phin_contractions = (params.data.FT_phin == "yes");
+    bool smearing3FT = (params.data.smearing3FT == "yes");
+    //Viewphi phip("phip",2,params.data.L[0]*Vp);
+    // use layoutLeft   to_write(t,c) -> t+x*T; so that there is no need of reordering to write
+    Kokkos::View<double**, Kokkos::LayoutRight > to_write("to_write", Ncorr, T);
+    Kokkos::View<double**, Kokkos::LayoutRight>::HostMirror h_write = Kokkos::create_mirror_view(to_write);
+
+    auto phip = Kokkos::subview(mphip, 0, Kokkos::ALL, Kokkos::ALL);
+    //auto s_phip= Kokkos::subview( mphip, 1, Kokkos::ALL, Kokkos::ALL );
+    //auto phi2p = Kokkos::subview( mphip, 2, Kokkos::ALL, Kokkos::ALL );
+    //auto phi3p = Kokkos::subview( mphip, 3, Kokkos::ALL, Kokkos::ALL );
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> s_phip;
+    if (smeared_contractions) {
+        Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> tmp(mphip, 1, Kokkos::ALL, Kokkos::ALL);
+        s_phip = tmp;
+    }
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phi2p;
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phi3p;
+    if (FT_phin_contractions) {
+        Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> tmp(mphip, 2, Kokkos::ALL, Kokkos::ALL);
+        phi2p = tmp;
+        Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> tmp3(mphip, 3, Kokkos::ALL, Kokkos::ALL);
+        phi3p = tmp3;
+    }
+    Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> phi_s3p;
+    if (smearing3FT) {
+        Kokkos::View<Kokkos::complex<double>**, Kokkos::LayoutStride> tmp(mphip, 4, Kokkos::ALL, Kokkos::ALL);
+        phi_s3p = tmp;
+    }
+    using MDPolicyType_2D = Kokkos::MDRangePolicy<Kokkos::Rank<2> >;
+    MDPolicyType_2D mdpolicy_2d({ {0, 0} }, { {Ncorr , T} });
+    Kokkos::parallel_for("measurement_t_loop", mdpolicy_2d, KOKKOS_LAMBDA(int c, int t) {
+
+        const int  p1[3] = { 1,Lp,Lp * Lp };
+
+        switch (c) {
+        case 0: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(0, t1) * conj(phip(0, tpt1))).real();
+        } break;
+        case 1: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(1, t1) * conj(phip(1, tpt1))).real();
+        } break;
+        case 2: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t1) * conj(phip(0, tpt1) * phip(0, tpt1))).real();
+        } break;
+        case 3: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t1) * conj(phip(1, tpt1) * phip(1, tpt1))).real();
+        } break;
+        case 4: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> pp0 = (phip(0, t1) * conj(phip(0, tpt1)));
+            Kokkos::complex<double> pp1 = (phip(1, t1) * conj(phip(1, tpt1)));
+            to_write(c, t) += (pp0 * pp0 + pp1 * pp1 + 4 * pp0 * pp1
+                - phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)
+                - phip(1, t1) * phip(1, t1) * phip(0, tpt1) * phip(0, tpt1)).real();
+        } break;
+        case 5: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> pp0 = (phip(0, t1) * conj(phip(0, tpt1)));
+            to_write(c, t) += (pp0 * pp0 * pp0).real();
+        } break;
+        case 6: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> pp1 = (phip(1, t1) * conj(phip(1, tpt1)));
+            to_write(c, t) += (pp1 * pp1 * pp1).real();
+        } break;
+        case 7: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> p0;
+            p0.real() = phip(0, t1).real();   p0.imag() = phip(1, t1).real();
+            Kokkos::complex<double> cpt;
+            cpt.real() = phip(0, tpt1).real();   cpt.imag() = -phip(1, tpt1).real();
+            real(p0 * cpt * p0 * cpt * p0 * cpt);
+        } break;
+        case 8: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t_2 = (T / 2 + t1) % T;
+            int t_8 = (T / 8 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t_8) * phip(0, tpt1) * phip(0, t_2)).real();
+        } break;
+        case 9: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t_2 = (T / 2 + t1) % T;
+            int t_8 = (T / 8 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t_8) * phip(1, tpt1) * phip(1, t_2)).real();
+        } break;
+        case 10: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t_2 = (T / 2 + t1) % T;
+            int t_8 = (T / 8 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t_8) * phip(1, tpt1) * phip(0, t_2)).real();
+        } break;
+        case 11: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t1) * phip(0, tpt1) * phip(1, tpt1)).real();
+        } break;
+        case 12: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)).real();
+        } break;
+        case 13: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(1, tpt1) * phip(1, tpt1)).real();
+        } break;
+        case 14: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(0, t1) * phip(0, tpt1) * phip(0, tpt1)).real();
+        } break;
+        case 15: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t3) * phip(0, tpt1) * phip(0, t16)).real();
+        } break;
+        case 16: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t3) * phip(1, tpt1) * phip(1, t16)).real();
+        } break;
+        case 17: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t3) * phip(1, tpt1) * phip(0, t16)).real();
+        } break;
+        case 18: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t4) * phip(0, tpt1) * phip(0, t16)).real();
+        } break;
+        case 19: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t4) * phip(1, tpt1) * phip(1, t16)).real();
+        } break;
+
+        case 20: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t4) * phip(1, tpt1) * phip(0, t16)).real();
+        } break;
+        case 21: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t3) * phip(0, tpt1) * phip(0, t20)).real();
+
+        } break;
+        case 22: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t3) * phip(1, tpt1) * phip(1, t20)).real();
+        } break;
+        case 23: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t3) * phip(1, tpt1) * phip(0, t20)).real();
+        } break;
+        case 24: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t4) * phip(0, tpt1) * phip(0, t20)).real();
+        } break;
+        case 25: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t4) * phip(1, tpt1) * phip(1, t20)).real();
+        } break;
+        case 26: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t4 = (4 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t4) * phip(1, tpt1) * phip(0, t20)).real();
+        } break;
+        case 27: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t5 = (5 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(0, t5) * phip(0, tpt1) * phip(0, t20)).real();
+        } break;
+        case 28: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t5 = (5 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(1, t5) * phip(1, tpt1) * phip(1, t20)).real();
+        } break;
+        case 29: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t5 = (5 + t1) % T;
+            int t20 = (20 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t5) * phip(1, tpt1) * phip(0, t20)).real();
+        } break;
+
+        case 30: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t3 = (3 + t1) % T;
+            int t16 = (16 + t1) % T;
+            to_write(c, t) += (phip(1, t1) * phip(0, t3) * phip(0, tpt1) * phip(1, t16)).real();
+        } break;
+        case 31: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t2 = (2 + t1) % T;
+            int t10 = (10 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t10)).real();
+        } break;
+        case 32: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t2 = (2 + t1) % T;
+            int t12 = (12 + t1) % T;
+            to_write(c, t) += (phip(0, t1) * phip(1, t2) * phip(1, tpt1) * phip(0, t12)).real();
+        } break;
+        case 33: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t1_p = t1 + (p1[0]) * T;   // 2,4 6    
+            int tpt1_p = tpt1 + (p1[0]) * T;   //2,4 6    
+            to_write(c, t) += (phip(0, t1_p) * conj(phip(0, tpt1_p))).real();
+        } break;
+        case 34: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t1_p = t1 + (p1[0]) * T;   // 2,4 6    
+            int tpt1_p = tpt1 + (p1[0]) * T;   //2,4 6    
+            to_write(c, t) += (phip(1, t1_p) * conj(phip(1, tpt1_p))).real();
+        } break;
+        case 35: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t1_p = t1 + (p1[1]) * T;   // 2,4 6    
+            int tpt1_p = tpt1 + (p1[1]) * T;   //2,4 6    
+            to_write(c, t) += (phip(0, t1_p) * conj(phip(0, tpt1_p))).real();
+        } break;
+        case 36: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t1_p = t1 + (p1[1]) * T;   // 2,4 6    
+            int tpt1_p = tpt1 + (p1[1]) * T;   //2,4 6    
+            to_write(c, t) += (phip(1, t1_p) * conj(phip(1, tpt1_p))).real();
+        } break;
+        case 37: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t1_p = t1 + (p1[2]) * T;   // 2,4 6    
+            int tpt1_p = tpt1 + (p1[2]) * T;   //2,4 6    
+            to_write(c, t) += (phip(0, t1_p) * conj(phip(0, tpt1_p))).real();
+        } break;
+        case 38: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            int t1_p = t1 + (p1[2]) * T;   // 2,4 6    
+            int tpt1_p = tpt1 + (p1[2]) * T;   //2,4 6    
+            to_write(c, t) += (phip(1, t1_p) * conj(phip(1, tpt1_p))).real();
+        } break;
+        case 39: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1 = compute_A1<0>(phip, t1, T);
+            Kokkos::complex<double> A1_t = compute_A1<0>(phip, tpt1, T);
+            to_write(c, t) += (A1 * conj(A1_t)).real();
+        } break;
+
+        case 40: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1 = compute_A1<1>(phip, t1, T);
+            Kokkos::complex<double> A1_t = compute_A1<1>(phip, tpt1, T);
+            to_write(c, t) += (A1 * conj(A1_t)).real();
+        } break;
+        case 41: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+            Kokkos::complex<double> A1 = compute_A1<2>(phip, t1, T);
+            Kokkos::complex<double> A1_t = compute_A1<2>(phip, tpt1, T);
+            to_write(c, t) += (A1 * conj(A1_t)).real();
+        } break;
+        case 42: for (int t1 = 0; t1 < T; t1++) {
+
+
+        } break;
+        case 43: for (int t1 = 0; t1 < T; t1++) {
+
+
+        } break;
+        case 44: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+
+        } break;
+        case 45: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+
+        } break;
+        case 46: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+
+        } break;
+        case 47: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+
+        } break;
+        case 48: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+
+        } break;
+        case 49: for (int t1 = 0; t1 < T; t1++) {
+            int tpt1 = (t + t1) % T;
+
+        } break;
+
+
+        case 50: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 51: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 52: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 53: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 54: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 55: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 56: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 57: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 58: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 59: for (int t1 = 0; t1 < T; t1++) {} break;
+
+
+        case 60: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 61: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 62: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 63: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 64: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 65: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 66: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 67: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 68: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 69: for (int t1 = 0; t1 < T; t1++) {} break;
+
+
+        case 70: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 71: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 72: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 73: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 74: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 75: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 76: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 77: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 78: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 79: for (int t1 = 0; t1 < T; t1++) {} break;
+
+
+        case 80: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 81: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 82: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 83: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 84: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 85: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 86: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 87: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 88: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 89: for (int t1 = 0; t1 < T; t1++) {} break;
+
+
+        case 90: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 91: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 92: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 93: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 94: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 95: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 96: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 97: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 98: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 99: for (int t1 = 0; t1 < T; t1++) {} break;
+
+        case 100: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 101: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 102: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 103: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 104: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 105: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 106: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 107: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 108: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 109: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 110: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 111: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 112: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 113: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 114: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 115: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 116: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 117: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 118: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 119: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 120: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 121: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 122: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 123: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 124: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 125: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 126: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 127: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 128: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 129: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 130: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 131: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 132: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 133: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 134: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 135: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 136: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 137: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 138: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 139: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 140: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 141: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 142: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 143: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 144: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 145: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 146: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 147: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 148: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 149: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 150: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 151: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 152: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 153: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 154: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 155: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 156: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 157: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 158: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 159: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 160: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 161: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 162: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 163: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 164: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 165: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 166: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 167: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 168: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 169: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 170: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 171: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 172: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 173: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 174: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 175: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 176: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 177: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 178: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 179: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 180: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 181: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 182: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 183: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 184: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 185: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 186: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 187: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 188: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 189: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 190: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 191: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 192: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 193: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 194: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 195: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 196: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 197: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 198: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 199: for (int t1 = 0; t1 < T; t1++) {} break;
+
+        case 200: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 201: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 202: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 203: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 204: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 205: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 206: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 207: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 208: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 209: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 210: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 211: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 212: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 213: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 214: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 215: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 216: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 217: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 218: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 219: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 220: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 221: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 222: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 223: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 224: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 225: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 226: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 227: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 228: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 229: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 230: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 231: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 232: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 233: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 234: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 235: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 236: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 237: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 238: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 239: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 240: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 241: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 242: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 243: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 244: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 245: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 246: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 247: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 248: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 249: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 250: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 251: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 252: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 253: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 254: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 255: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 256: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 257: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 258: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 259: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 260: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 261: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 262: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 263: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 264: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 265: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 266: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 267: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 268: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 269: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 270: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 271: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 272: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 273: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 274: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 275: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 276: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 277: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 278: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 279: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 280: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 281: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 282: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 283: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 284: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 285: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 286: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 287: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 288: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 289: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 290: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 291: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 292: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 293: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 294: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 295: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 296: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 297: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 298: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 299: for (int t1 = 0; t1 < T; t1++) {} break;
+
+        case 300: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 301: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 302: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 303: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 304: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 305: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 306: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 307: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 308: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 309: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 310: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 311: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 312: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 313: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 314: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 315: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 316: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 317: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 318: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 319: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 320: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 321: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 322: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 323: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 324: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 325: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 326: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 327: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 328: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 329: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 330: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 331: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 332: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 333: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 334: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 335: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 336: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 337: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 338: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 339: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 340: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 341: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 342: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 343: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 344: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 345: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 346: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 347: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 348: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 349: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 350: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 351: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 352: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 353: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 354: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 355: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 356: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 357: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 358: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 359: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 360: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 361: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 362: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 363: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 364: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 365: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 366: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 367: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 368: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 369: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 370: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 371: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 372: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 373: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 374: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 375: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 376: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 377: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 378: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 379: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 380: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 381: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 382: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 383: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 384: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 385: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 386: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 387: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 388: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 389: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 390: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 391: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 392: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 393: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 394: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 395: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 396: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 397: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 398: for (int t1 = 0; t1 < T; t1++) {} break;
+        case 399: for (int t1 = 0; t1 < T; t1++) {} break;
+
+        }
+
+        for (int c = 0; c < Ncorr; c++)
+            to_write(c, t) /= ((double)T);
+    });
+
+    if (params.data.checks == "yes") {
+        compute_checks_complex(h_mphip, params, f_checks, iconf);
+    }
+    // Deep copy device views to host views.
+    Kokkos::deep_copy(h_write, to_write);
+    Kokkos::View<double**, Kokkos::LayoutLeft >::HostMirror lh_write("lh_write", Ncorr, T);
+    for (int c = 0; c < Ncorr; c++)
+        for (int t = 0; t < T; t++)
+            lh_write(c, t) = h_write(c, t);
+
+    fwrite(&lh_write(0, 0), sizeof(double), Ncorr * T, f_G2t);
+}
+
+#endif // NOTCOMPILE

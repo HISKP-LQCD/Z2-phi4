@@ -116,11 +116,11 @@ int main(int argc, char** argv) {
             // get a random generatro from the pool
             gen_type rgen = rand_pool.get_state(x);
 
-            phi(0, x) = (rgen.drand() * 2.-1. );
-            phi(1, x) = (rgen.drand() * 2.-1. );
+            phi(0, x) = (rgen.drand() * 2. - 1.);
+            phi(1, x) = (rgen.drand() * 2. - 1.);
 
-            phi(0, x + V / 2) = (rgen.drand() * 2.-1. );
-            phi(1, x + V / 2) = (rgen.drand() * 2.-1. );
+            phi(0, x + V / 2) = (rgen.drand() * 2. - 1.);
+            phi(1, x + V / 2) = (rgen.drand() * 2. - 1.);
             // Give the state back, which will allow another thread to aquire it
             rand_pool.free_state(rgen);
         });
@@ -128,8 +128,8 @@ int main(int argc, char** argv) {
             Kokkos::parallel_for("init_phi", 1, KOKKOS_LAMBDA(size_t x) {
                 // get a random generatro from the pool
                 gen_type rgen = rand_pool.get_state(x);
-                phi(0, V - 1) = (rgen.drand() * 2.-1. );
-                phi(1, V - 1) = (rgen.drand() * 2.-1. );
+                phi(0, V - 1) = (rgen.drand() * 2. - 1.);
+                phi(1, V - 1) = (rgen.drand() * 2. - 1.);
                 // Give the state back, which will allow another thread to aquire it
                 rand_pool.free_state(rgen);
             });
@@ -215,7 +215,9 @@ int main(int argc, char** argv) {
 
         double time_update = 0, time_mes = 0, time_writing = 0, time_FT = 0;
         int nFT = 0;
+#ifdef DEBUG
         double ave_acc = 0;
+#endif
         // The update ----------------------------------------------------------------
         for (int ii = 0; ii < params.data.start_measure + params.data.total_measure; ii++) {
             // Timer 
@@ -233,11 +235,13 @@ int main(int argc, char** argv) {
             // metropolis update
             double acc = 0.0;
             for (int global_metro_hits = 0; global_metro_hits < params.data.metropolis_global_hits; global_metro_hits++) {
-                acc += metropolis_update(phi, params, rand_pool, sectors);    
+                acc += metropolis_update(phi, params, rand_pool, sectors);
             }
             modulo_2pi(phi, params.data.V);
-            acc /= (params.data.metropolis_global_hits);
+#ifdef DEBUG
+            acc /= ((double) params.data.metropolis_global_hits);
             ave_acc += acc / ((double)V);
+#endif
             // cout << "Metropolis.acc=" << acc/V << endl ;
 
              // Calculate time of Metropolis update
@@ -350,9 +354,11 @@ int main(int argc, char** argv) {
         }
 
 
-
+#ifdef DEBUG
         printf("average acceptance rate= %g\n", ave_acc / (params.data.start_measure + params.data.total_measure));
-
+#else 
+        printf("average acceptance rate not computed\n");
+#endif
         printf("  time updating = %f s (%f per single operation)\n", time_update, time_update / (params.data.start_measure + params.data.total_measure));
         printf("  time FT       = %f s (%f per single operation)\n", time_FT, time_FT / (params.data.total_measure / params.data.measure_every_X_updates));
         printf("  time mesuring = %f s (%f per single operation)\n", time_mes, time_mes / (params.data.total_measure / params.data.measure_every_X_updates));
