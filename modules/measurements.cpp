@@ -44,6 +44,47 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+void compute_energy(Viewphi phi, cluster::IO_params params, FILE *file) {
+
+    size_t V = params.data.V; //better not use params.data.X  on the device since params.data contains std::string that do not exist in CUDA
+    double  E[2]={0,0};
+    
+    int L[4] = { params.data.L[0], params.data.L[1], params.data.L[2], params.data.L[3] };
+    const int V2 = L[1] * L[2];
+    const int V3 = V2 * L[3];
+
+    for (int comp = 0; comp < 2; comp++) {
+        Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, double& inner) {
+            Kokkos::complex<double> neighbourSum(0,0);
+            Kokkos::complex<double> I(0, 1);
+            // direction  0
+            int xp = x / (V3);
+            xp = x + (-xp + (xp + 1) % L[0]) * (V3);
+            neighbourSum = exp(I * phi(comp, xp));
+            // direction z
+            xp = (x % (V3)) / (V2);
+            xp = x + (-xp + (xp + 1) % L[3]) * (V2);
+            neighbourSum = exp(I * phi(comp, xp));
+            // direction 1
+            xp = (x % (L[1]));
+            xp = x + (-xp + (xp + 1) % L[1]);
+            neighbourSum = exp(I * phi(comp, xp));
+            // direction 2
+            xp = (x % (V2)) / L[1];
+            xp = x + (-xp + (xp + 1) % L[2]) * L[1];
+            neighbourSum = exp(I * phi(comp, xp));
+
+            inner += (exp(-I * phi(comp, x)) * neighbourSum).real();
+        }, E[comp]);
+        E[comp] = E[comp] / ((double)params.data.V);
+    }
+    fprintf(file, "%.15g   %.15g \n", E[0], E[1]);
+                
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void check_spin(Viewphi phi, cluster::IO_params params) {
 
     size_t V = params.data.V; //you can not use params.data.X  on the device
@@ -1830,8 +1871,8 @@ void  parallel_measurement_complex_1(manyphi mphip, manyphi::HostMirror h_mphip,
                 Kokkos::parallel_reduce(Kokkos::TeamThreadRange(teamMember, T), [&](const int t1, double& inner) {
                     int tpt1 = (t + t1) % T;
                     int t1_p11 = t1 + (p11[i]) * T;   //     
-                    int tpt1_p11 = tpt1 + (p11[i]) * T; 
-                    inner += (phip(comp, t1_p11 ) * conj(phip(comp, tpt1_p11 ))).real();
+                    int tpt1_p11 = tpt1 + (p11[i]) * T;
+                    inner += (phip(comp, t1_p11) * conj(phip(comp, tpt1_p11))).real();
                     }, to_write(75 + i * 2 + comp, t));
             }
         }

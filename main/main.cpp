@@ -170,8 +170,9 @@ int main(int argc, char** argv) {
             "_rep" + std::to_string(params.data.replica);
 
         std::string mes_file = params.data.outpath + "/mes" + suffix;
-
+        std::string E_file = params.data.outpath + "/E" + suffix;
         std::string G2t_file = params.data.outpath + "/G2t" + suffix;
+
         FILE* f_checks = NULL;
         if (params.data.checks == "yes") {
             std::string checks_file = params.data.outpath + "/checks" + suffix;
@@ -183,6 +184,12 @@ int main(int argc, char** argv) {
             write_header_measuraments(f_checks, params, 15);
         }
 
+        FILE* f_E = NULL;
+        if (params.data.compute_E) {
+            f_E = fopen(E_file.c_str(), "w+");
+            if (f_E == NULL) { printf("Error opening file %s", E_file.c_str()); Kokkos::abort("unable to open file\n"); }
+            cout << "Writing Energy to: " << E_file << endl;
+        }
         cout << "Writing magnetization to: " << mes_file << endl;
         cout << "Writing G2t       to: " << G2t_file << endl;
         FILE* f_mes = fopen(mes_file.c_str(), "w+");
@@ -239,7 +246,7 @@ int main(int argc, char** argv) {
             }
             modulo_2pi(phi, params.data.V);
 #ifdef DEBUG
-            acc /= ((double) params.data.metropolis_global_hits);
+            acc /= ((double)params.data.metropolis_global_hits);
             ave_acc += acc / ((double)V);
 #endif
             // cout << "Metropolis.acc=" << acc/V << endl ;
@@ -293,6 +300,10 @@ int main(int argc, char** argv) {
                 double* m = compute_magnetisations(phi, params);
                 fprintf(f_mes, "%.15g   %.15g \n", m[0], m[1]);
                 free(m);
+
+                if (params.data.compute_E) {
+                    compute_energy(phi, params, f_E);
+                }
 
                 parallel_measurement_complex(mphip, h_mphip, params, f_G2t, f_checks, ii);
                 // check_spin(phi, params);
@@ -369,6 +380,7 @@ int main(int argc, char** argv) {
 
         fclose(f_G2t);
         fclose(f_mes);
+        if (params.data.compute_E) fclose(f_E);
         if (params.data.save_config_FT_bundle == "yes") fclose(f_conf_bundle);
         if (params.data.checks == "yes")  fclose(f_checks);
         printf("total kokkos time = %f s\n", timer.seconds());
