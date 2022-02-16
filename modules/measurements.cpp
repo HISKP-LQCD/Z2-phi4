@@ -64,15 +64,15 @@ void compute_energy(Viewphi phi, cluster::IO_params params, FILE *file) {
             // direction z
             xp = (x % (V3)) / (V2);
             xp = x + (-xp + (xp + 1) % L[3]) * (V2);
-            neighbourSum = exp(I * phi(comp, xp));
+            neighbourSum += exp(I * phi(comp, xp));
             // direction 1
             xp = (x % (L[1]));
             xp = x + (-xp + (xp + 1) % L[1]);
-            neighbourSum = exp(I * phi(comp, xp));
+            neighbourSum += exp(I * phi(comp, xp));
             // direction 2
             xp = (x % (V2)) / L[1];
             xp = x + (-xp + (xp + 1) % L[2]) * L[1];
-            neighbourSum = exp(I * phi(comp, xp));
+            neighbourSum += exp(I * phi(comp, xp));
 
             inner += (exp(-I * phi(comp, x)) * neighbourSum).real();
         }, E[comp]);
