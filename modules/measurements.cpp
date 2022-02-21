@@ -44,18 +44,18 @@ double* compute_magnetisations(Viewphi phi, cluster::IO_params params) {
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void compute_energy(Viewphi phi, cluster::IO_params params, FILE *file) {
+void compute_energy(Viewphi phi, cluster::IO_params params, FILE* file) {
 
     size_t V = params.data.V; //better not use params.data.X  on the device since params.data contains std::string that do not exist in CUDA
-    double  E[2]={0,0};
-    
+    std::array<double, 3>  E = { 0,0,0 };
+
     int L[4] = { params.data.L[0], params.data.L[1], params.data.L[2], params.data.L[3] };
     const int V2 = L[1] * L[2];
     const int V3 = V2 * L[3];
 
     for (int comp = 0; comp < 2; comp++) {
         Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, double& inner) {
-            Kokkos::complex<double> neighbourSum(0,0);
+            Kokkos::complex<double> neighbourSum(0, 0);
             Kokkos::complex<double> I(0, 1);
             // direction  0
             int xp = x / (V3);
@@ -78,10 +78,16 @@ void compute_energy(Viewphi phi, cluster::IO_params params, FILE *file) {
         }, E[comp]);
         E[comp] = E[comp] / ((double)params.data.V);
     }
-    fprintf(file, "%.15g   %.15g \n", E[0], E[1]);
-                
-}
+    
+    Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, double& inner) {
+        Kokkos::complex<double> I(0, 1);
+        inner += (exp(-I * phi(1, x) + 3. * I * phi(0, x))).real();
+    }, E[2]);
+    E[2] = E[2] / ((double)params.data.V);
 
+    fprintf(file, "%.15g   %.15g  %.15g\n", E[0], E[1], E[2]);
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

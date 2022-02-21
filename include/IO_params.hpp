@@ -473,16 +473,28 @@ namespace cluster {
         data_in.muC = 2. * data_in.lambdaC0;
 
       }
+      
       //fill formulation with null char    
       for (int i = data_in.formulation.size(); i < 99; i++)
         data_in.formulation = data_in.formulation + '\0';
+      printf("formulation %s  \n", data_in.formulation.c_str());
+      printf("equal O2 %i  \n", data_in.formulation == "O2");
+      printf("equal lattice %i  \n", data_in.formulation == "lattice");
 
       data_in.kappa0 = comp_kappa(data_in.msq0, data_in.lambdaC0);
       data_in.kappa1 = comp_kappa(data_in.msq1, data_in.lambdaC1);
       data_in.lambda0 = data_in.lambdaC0 * 4. * data_in.kappa0 * data_in.kappa0;
       data_in.lambda1 = data_in.lambdaC1 * 4. * data_in.kappa1 * data_in.kappa1;
       data_in.mu = data_in.muC * (4. * data_in.kappa0 * data_in.kappa1);
-      data_in.g = data_in.gC * (4. * sqrt(data_in.kappa0 * data_in.kappa1 * data_in.kappa1 * data_in.kappa1));
+      
+      if (strcmp(data_in.formulation.c_str() , "lattice")==0) {
+        printf("using lattice formulation gC=g\n");
+        data_in.g= data_in.gC;
+      }
+      else {
+        printf("rescaling g=gC 4 sqrt(k0 k1^3)   ;  gC is the one in the input\n");
+        data_in.g = data_in.gC * (4. * sqrt(data_in.kappa0 * data_in.kappa1 * data_in.kappa1 * data_in.kappa1));
+      }
       printf("parameters:\n");
       printf("msq0 = %.6f     -> kappa0   = %.6f\n", data_in.msq0, data_in.kappa0);
       printf("msq1 = %.6f     -> kappa1   = %.6f\n", data_in.msq1, data_in.kappa1);
@@ -548,7 +560,7 @@ namespace cluster {
       data_in.smearing3FT = "yes";
       read_par_string(newfile, "smearing3FT", data_in.smearing3FT, false);
       data_in.compute_E = read_par_bool(newfile, "compute_E", false);
-      
+
       newfile.close();
 
       return data_in;
