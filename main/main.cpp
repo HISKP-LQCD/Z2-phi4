@@ -22,6 +22,9 @@
 #include "write_viewer.hpp"
 #include "measurements.hpp"
 #include "DFT.hpp"
+#include "git_version.h"
+
+
 
 //#include <highfive/H5File.hpp>
 
@@ -42,7 +45,7 @@ int main(int argc, char** argv) {
 #ifdef FFTW
     cout << "FFTW: ON " << endl;
 #endif
-    printf("git commit %s\n", GIT_COMMIT_HASH);
+    printf("git commit %s\n", kGitHash);
 
     printf("endianness=%d  (0 unknown , 1 little , 2 big)\n", endian);
     if (endian == UNKNOWN_ENDIAN) { printf("UNKNOWN_ENDIAN abort\n"); exit(0); }

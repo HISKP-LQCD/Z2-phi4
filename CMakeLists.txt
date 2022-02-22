@@ -61,18 +61,22 @@ add_subdirectory(include  include)
 
 ######################### git version ################
 ######################################################
-execute_process(
-    COMMAND git rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-# Get the latest commit hash
-execute_process(
-    COMMAND git rev-parse HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_COMMIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+include(cmake/CheckGit.cmake)
+CheckGitSetup()
+
+# execute_process(
+#     COMMAND git rev-parse --abbrev-ref HEAD
+#     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#     OUTPUT_VARIABLE GIT_BRANCH
+#     OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# # Get the latest commit hash
+# execute_process(
+#     COMMAND git rev-parse HEAD
+#     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#     OUTPUT_VARIABLE GIT_COMMIT_HASH
+#     OUTPUT_STRIP_TRAILING_WHITESPACE)
     
 ## this in not the end, you need to  target_compile_definitions for the executable to build
 ## see the macro add_target_with_lib  
@@ -92,13 +96,13 @@ macro(add_target_with_lib TARGETNAME)
   target_link_libraries(${TARGETNAME} PUBLIC write_viewer)
   target_link_libraries(${TARGETNAME} PUBLIC measurements)
   target_link_libraries(${TARGETNAME} PUBLIC DFT)
-
+  target_link_libraries(${TARGETNAME} PUBLIC git_version)
 #  target_link_libraries(${TARGETNAME} PUBLIC HighFive)
 #  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
 #  target_include_directories(${TARGETNAME} PUBLIC "${CMAKE_BINARY_DIR}/include")
     
-  target_compile_definitions(${TARGETNAME} PRIVATE
-    "-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
+  # target_compile_definitions(${TARGETNAME} PRIVATE
+  #   "-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
  
 endmacro()
 
