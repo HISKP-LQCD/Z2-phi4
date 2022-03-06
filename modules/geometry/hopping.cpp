@@ -97,6 +97,12 @@ void hopping(const int* L, Kokkos::View<size_t**>& hop, ViewLatt& sectors, Kokko
 
                     h_ipt(i, 0) = t; h_ipt(i, 1) = x; h_ipt(i, 2) = y; h_ipt(i, 3) = z;
                     int color = ((x % dx) + (y % dy) + (z % dz) + (t % dt)) % dtot;
+                    // special case for L = 7, 13, 19, 25, ...
+                    // in this case we color as r b g r b g b
+                    if ((L[0] - 1) % 6 == 0 && t == L[0] - 1) color = (color + 1) % dtot;
+                    if ((L[1] - 1) % 6 == 0 && x == L[1] - 1) color = (color + 1) % dtot;
+                    if ((L[2] - 1) % 6 == 0 && y == L[2] - 1) color = (color + 1) % dtot;
+                    if ((L[3] - 1) % 6 == 0 && z == L[3] - 1) color = (color + 1) % dtot;
                     // printf("  %ld = %ld  %ld  %ld  %ld   -> %d\n", i, x, y, z, t, color);
                     if (color == 0) {
                         h_rbg(0, sectors.size[0]) = i;
@@ -138,8 +144,8 @@ void hopping(const int* L, Kokkos::View<size_t**>& hop, ViewLatt& sectors, Kokko
                 size_t n = hop(x, d);
                 for (int j = 0; j < sectors.size[color]; j++) {
                     if (n == sectors.rbg(color, j)) {
-                        printf("x=%d  hopping=%ld is in the same colored sector\n", x, n);
-                        exit(1);
+                        printf("x=%d  hopping=%ld is in the same colored sector=%d\n", x, n, color);
+                        Kokkos::abort("check sectors");
                     }
                 }
             }
