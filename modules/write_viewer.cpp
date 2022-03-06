@@ -305,12 +305,12 @@ void write_single_conf_FT_complex(FILE* f_conf, int layout_value, cluster::IO_pa
         }
         // Deep copy device views to host views.
         //Kokkos::deep_copy( h_phi, w_phi );
-        fwrite(&w_phip(0, 0, 0), sizeof(double), 2 * V * Npfileds, f_conf);
+        fwrite(&w_phip(0, 0, 0), sizeof(double), 4 * V * Npfileds, f_conf);
 
 
     }
     else {
-        fwrite(&h_phip(0, 0, 0), sizeof(double), 2 * V * Npfileds, f_conf);
+        fwrite(&h_phip(0, 0, 0), sizeof(double), 4 * V * Npfileds, f_conf);
 
     }
 
@@ -350,7 +350,7 @@ void read_single_conf_FT_complex(FILE* f_conf, int layout_value, cluster::IO_par
     //manyphi::HostMirror h_phip("h_phip",Npfileds,2,V/2);
 
     if (layout_value == 0) {
-        i += fread(&h_phip(0, 0, 0), sizeof(double), 2 * V * Npfileds, f_conf);
+        i += fread(&h_phip(0, 0, 0), sizeof(double), 4 * V * Npfileds, f_conf);
 #ifdef TIMER
         double time1 = timer.seconds() - time;
         printf("time to read on Host %f\n", time1);
