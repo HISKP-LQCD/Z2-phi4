@@ -17,13 +17,13 @@ Rscript  diff_mesuraments.R   $file $ref
 
 bad=()
 ./main/main -i infile.in || bad+=( "running main" ) 
-check || bad+=( "main" ) 
+#check || bad+=( "main" ) 
 ./main/contraction -i infile.in || bad+=( "running contractions" ) 
-check || bad+=( "contraction" ) 
+#check || bad+=( "contraction" ) 
 ./main/contraction -i infile_conf.in || bad+=( "running contractions with infile_conf.in" ) 
-check || bad+=( "contraction conf" )  
+#check || bad+=( "contraction conf" )  
 ./main/contraction -i infile_confFT.in || bad+=( "running contractions with infile_confFT.in" )
-check || bad+=( "contraction confFT" ) 
+#check || bad+=( "contraction confFT" ) 
 
 if [[ -n "${bad-}" ]]; then
   echo -e "\n error in:\n"
