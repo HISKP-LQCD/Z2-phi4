@@ -59,7 +59,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
     const double delta = params.data.metropolis_delta;
     size_t nb_of_hits = params.data.metropolis_local_hits;
     const double g = params.data.g;
-
+    const bool split_g = params.data.split_g;
     // auto &phi=*field;
 
 #ifdef DEBUG
@@ -82,7 +82,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
     for (int color = 0; color < 3; color++) {
         // for(int x=0; x< V; x++) {
 #ifdef DEBUG
-        int acc_color=0; // this should not be necessary
+        int acc_color = 0; // this should not be necessary
         Kokkos::parallel_reduce("lattice metropolis loop", sectors.size[color], KOKKOS_LAMBDA(size_t xx, int& update) {
 #else
         Kokkos::parallel_for("lattice metropolis loop", sectors.size[color], KOKKOS_LAMBDA(size_t xx) {
@@ -129,7 +129,10 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
                 // S1= -2k Re{  phi1^dag(x) \sum_mu phi1(x+mu) }
                 // Sg=  g Re{ \phi1^dag  phi_0^3 }
                 double dS = (-2. * kappa[0] * exp(-I * phi(0, x)) * neighbourSum[0] * (exp(-I * d) - 1.)).real();
-                dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(I * 3 * d) - 1.)).real();
+                if (split_g)
+                    dS += (g * neighbourSum[0] * neighbourSum[0] * exp(I * (phi(0, x) - phi(1, x))) * (exp(I * d) - 1.)).real() / 64.;
+                else
+                    dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(I * 3 * d) - 1.)).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
@@ -141,7 +144,10 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
                 // second component
                 d = (rgen.drand() * 2. - 1.) * delta;
                 dS = (-2. * kappa[1] * exp(-I * phi(1, x)) * neighbourSum[1] * (exp(-I * d) - 1.)).real();
-                dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real();
+                if (split_g)
+                    dS += (g * neighbourSum[0] * neighbourSum[0] * exp(I * (phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real() / 64.;
+                else
+                    dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real();
 
                 //  accept reject step -------------------------------------
                 if (rgen.drand() < exp(-dS)) {
@@ -158,13 +164,13 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
             rand_pool.free_state(rgen);
 #ifdef DEBUG
         }, acc_color);
-        acc+=acc_color;    
+        acc += acc_color;
 #else
         }); // end parallel loop over lattice site of the same color
 #endif // if DEBUG compute acc
     } // end loop over sectors
 
-    return acc / ((double) 2. * nb_of_hits); // the 2 accounts for updating the component indiv.
+    return acc / ((double)2. * nb_of_hits); // the 2 accounts for updating the component indiv.
 }
 
 void modulo_2pi(Viewphi& phi, const int V) {

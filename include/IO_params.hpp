@@ -60,6 +60,7 @@ namespace cluster {
     std::string smearing3FT;
 
     bool compute_E;
+    bool split_g;
 
   };
   // -----------------------------------------------------------------------------
@@ -398,7 +399,7 @@ namespace cluster {
       if (match > 1) { printf("multiple line %s = \n", name.c_str()); exit(-10); }
       // std::cout << name << " = "<< s  << endl;
       //rewind
-      if (s == "yes" || s == "y" || s == "on" || s == "Yes" || s == "Y" || s == "On" || s == "YES" || s == "ON") {
+      if (s == "yes" || s == "y" || s == "on" || s == "Yes" || s == "Y" || s == "On" || s == "YES" || s == "ON" || s == "1" || s == "true") {
         r = true;
       }
 
@@ -473,7 +474,7 @@ namespace cluster {
         data_in.muC = 2. * data_in.lambdaC0;
 
       }
-      
+
       //fill formulation with null char    
       for (int i = data_in.formulation.size(); i < 99; i++)
         data_in.formulation = data_in.formulation + '\0';
@@ -486,10 +487,10 @@ namespace cluster {
       data_in.lambda0 = data_in.lambdaC0 * 4. * data_in.kappa0 * data_in.kappa0;
       data_in.lambda1 = data_in.lambdaC1 * 4. * data_in.kappa1 * data_in.kappa1;
       data_in.mu = data_in.muC * (4. * data_in.kappa0 * data_in.kappa1);
-      
-      if (strcmp(data_in.formulation.c_str() , "lattice")==0) {
+
+      if (strcmp(data_in.formulation.c_str(), "lattice") == 0) {
         printf("using lattice formulation gC=g\n");
-        data_in.g= data_in.gC;
+        data_in.g = data_in.gC;
       }
       else {
         printf("rescaling g=gC 4 sqrt(k0 k1^3)   ;  gC is the one in the input\n");
@@ -560,6 +561,8 @@ namespace cluster {
       data_in.smearing3FT = "yes";
       read_par_string(newfile, "smearing3FT", data_in.smearing3FT, false);
       data_in.compute_E = read_par_bool(newfile, "compute_E", false);
+
+      data_in.split_g = read_par_bool(newfile, "split_g", false);
 
       newfile.close();
 
