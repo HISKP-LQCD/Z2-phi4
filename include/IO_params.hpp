@@ -299,6 +299,9 @@ namespace cluster {
 
       if (match == 0) { printf("could not find line %s = \n", name.c_str()); exit(-10); }
       if (match > 1) { printf("multiple line %s = \n", name.c_str()); exit(-10); }
+      else{
+        std::cout << name << " = "<< p  << endl;
+      }
       // std::cout << name << " = "<< p  << endl;
 
       //rewind
@@ -328,6 +331,9 @@ namespace cluster {
 
       if (match == 0) { printf("could not find line %s = \n", name.c_str()); exit(-10); }
       if (match > 1) { printf("multiple line %s = \n", name.c_str()); exit(-10); }
+      else{
+        std::cout << name << " = "<< p  << endl;
+      }
       // std::cout << name << " = "<< p  << endl;
       //rewind
       newfile.clear();
@@ -360,7 +366,9 @@ namespace cluster {
           std::cout << "could not find param: " << name << "\n default falue: " << name << " = " << s << "" << endl;
       }
       if (match > 1) { printf("multiple line %s = \n", name.c_str()); exit(-10); }
-      // std::cout << name << " = "<< s  << endl;
+      else{
+        std::cout << name << " = "<< s  << endl;
+      }
       //rewind
       newfile.clear();
       newfile.seekg(0);
@@ -397,8 +405,10 @@ namespace cluster {
         return r;
       }
       if (match > 1) { printf("multiple line %s = \n", name.c_str()); exit(-10); }
-      // std::cout << name << " = "<< s  << endl;
-      //rewind
+      else{
+        std::cout << name << " = "<< s  << endl;
+      }     
+       //rewind
       if (s == "yes" || s == "y" || s == "on" || s == "Yes" || s == "Y" || s == "On" || s == "YES" || s == "ON" || s == "1" || s == "true") {
         r = true;
       }
