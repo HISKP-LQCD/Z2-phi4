@@ -26,7 +26,7 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[0]) * (V3);
     neighbourSum[0] = exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] = exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[3] = (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] = (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
 
     // direction z
     xp = (x % (V3)) / (V2);
@@ -34,7 +34,7 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[3]) * (V2);
     neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[3] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
 
     // direction 1
     xp = (x % (L[1]));
@@ -42,7 +42,7 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[1]);
     neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[3] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
 
     // direction 2
     xp = (x % (V2)) / L[1];
@@ -50,9 +50,9 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[2]) * L[1];
     neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[3] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
 
-    neighbourSum[3] /= 2.;
+    neighbourSum[2] /= 4.;
 }
 
 
@@ -137,7 +137,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
                 // Sg=  g Re{ \phi1^dag  phi_0^3 }
                 double dS = (-2. * kappa[0] * exp(-I * phi(0, x)) * neighbourSum[0] * (exp(-I * d) - 1.)).real();
                 if (split_g) {
-                    dS += (g * neighbourSum[3] * exp(I * (phi(0, x) - phi(1, x))) * (exp(I * d) - 1.)).real();
+                    dS += (g * neighbourSum[2] * exp(I * (phi(0, x) - phi(1, x))) * (exp(I * d) - 1.)).real();
                 }
                 else
                     dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(I * 3 * d) - 1.)).real();
@@ -153,7 +153,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
                 d = (rgen.drand() * 2. - 1.) * delta;
                 dS = (-2. * kappa[1] * exp(-I * phi(1, x)) * neighbourSum[1] * (exp(-I * d) - 1.)).real();
                 if (split_g)
-                    dS += (g * neighbourSum[3] * exp(I * (phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real();
+                    dS += (g * neighbourSum[2] * exp(I * (phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real();
                 else
                     dS += (g * exp(I * (3 * phi(0, x) - phi(1, x))) * (exp(-I * d) - 1.)).real();
 
