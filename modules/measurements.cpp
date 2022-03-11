@@ -78,14 +78,31 @@ void compute_energy(Viewphi phi, cluster::IO_params params, FILE* file) {
         }, E[comp]);
         E[comp] = E[comp] / ((double)params.data.V);
     }
-    
-    Kokkos::parallel_reduce("magnetization", V, KOKKOS_LAMBDA(const size_t x, double& inner) {
+
+    Kokkos::parallel_reduce("g_term", V, KOKKOS_LAMBDA(const size_t x, double& inner) {
         Kokkos::complex<double> I(0, 1);
         inner += (exp(-I * phi(1, x) + 3. * I * phi(0, x))).real();
     }, E[2]);
     E[2] = E[2] / ((double)params.data.V);
 
-    fprintf(file, "%.15g   %.15g  %.15g\n", E[0], E[1], E[2]);
+    Kokkos::complex<double>  phip[2] = { 0,0 };
+    for (int comp = 0; comp < 2; comp++) {
+        Kokkos::parallel_reduce("g_term", V, KOKKOS_LAMBDA(const size_t x, Kokkos::complex<double>&inner) {
+            Kokkos::complex<double> I(0, 1);
+            inner += exp(I * phi(comp, x));
+        }, phip[comp]);
+        phip[comp] = phip[comp] / ((double)params.data.V);
+    }
+    double chi20 = (phip[0] * phip[0]).real();
+    double chi21 = (phip[1] * phip[1]).real();
+    double chi40 = (phip[0] * phip[0] * conj(phip[0] * phip[0])).real();
+    double chi41 = (phip[1] * phip[1] * conj(phip[1] * phip[1])).real();
+    double chi42 = (phip[1] * phip[1] * conj(phip[0] * phip[0])).real();
+    double chi43 = (conj(phip[1]) * phip[1] * phip[0] * phip[0]).real();
+
+    fprintf(file, "%.15g   %.15g  %.15g  ", E[0], E[1], E[2]);
+    fprintf(file, "%.15g   %.15g  ", chi20, chi21);
+    fprintf(file, "%.15g   %.15g  %.15g  %.15g\n", chi40, chi41, chi42, chi43);
 
 }
 
