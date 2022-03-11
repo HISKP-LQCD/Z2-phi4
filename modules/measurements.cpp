@@ -87,14 +87,29 @@ void compute_energy(Viewphi phi, cluster::IO_params params, FILE* file) {
 
     Kokkos::complex<double>  phip[2] = { 0,0 };
     for (int comp = 0; comp < 2; comp++) {
-        Kokkos::parallel_reduce("g_term", V, KOKKOS_LAMBDA(const size_t x, Kokkos::complex<double>&inner) {
+        Kokkos::parallel_reduce("chi0", V, KOKKOS_LAMBDA(const size_t x, Kokkos::complex<double>&inner) {
             Kokkos::complex<double> I(0, 1);
             inner += exp(I * phi(comp, x));
         }, phip[comp]);
         phip[comp] = phip[comp] / ((double)params.data.V);
     }
-    double chi20 = (phip[0] * phip[0]).real();
-    double chi21 = (phip[1] * phip[1]).real();
+    double chi20 = (phip[0] * conj(phip[0])).real();
+    double chi21 = (phip[1] * conj(phip[1])).real();
+    Kokkos::complex<double>  phip1[2] = { 0,0 };
+    Kokkos::MDRangePolicy< Kokkos::Rank<4> > mdrange_policy({ 0,0,0,0 }, { L[1],L[2],L[3],L[0] });
+    for (int comp = 0; comp < 2; comp++) {
+        Kokkos::parallel_reduce("chip", mdrange_policy, KOKKOS_LAMBDA(const size_t x, const size_t y,
+            const size_t z, const size_t t, Kokkos::complex<double>&inner) {
+            Kokkos::complex<double> I(0, 1);
+            double px = twoPI * x / ((double)L[1]);
+            size_t ix = x + y * L[1] + z * L[1] * L[2] + t * L[1] * L[2] * L[3];
+            inner += exp(I * (px + phi(comp, ix)));
+        }, phip1[comp]);
+        phip1[comp] = phip1[comp] / ((double)params.data.V);
+    }
+    double chi20p1 = (phip1[0] * conj(phip1[0])).real();
+    double chi21p1 = (phip1[1] * conj(phip1[1])).real();
+
     double chi40 = (phip[0] * phip[0] * conj(phip[0] * phip[0])).real();
     double chi41 = (phip[1] * phip[1] * conj(phip[1] * phip[1])).real();
     double chi42 = (phip[1] * phip[1] * conj(phip[0] * phip[0])).real();
@@ -102,6 +117,7 @@ void compute_energy(Viewphi phi, cluster::IO_params params, FILE* file) {
 
     fprintf(file, "%.15g   %.15g  %.15g  ", E[0], E[1], E[2]);
     fprintf(file, "%.15g   %.15g  ", chi20, chi21);
+    fprintf(file, "%.15g   %.15g  ", chi20p1, chi21p1);
     fprintf(file, "%.15g   %.15g  %.15g  %.15g\n", chi40, chi41, chi42, chi43);
 
 }
