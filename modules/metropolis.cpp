@@ -26,7 +26,10 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[0]) * (V3);
     neighbourSum[0] = exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] = exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[2] = (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    // neighbourSum[2] = (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] = exp(i * (phi(0, xp) + phi(0, xp)))
+        - 2 * exp(i * (phi(0, xp) + phi(0, xm)))
+        + exp(i * (phi(0, xm) + phi(0, xm)));
 
     // direction z
     xp = (x % (V3)) / (V2);
@@ -34,7 +37,10 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[3]) * (V2);
     neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    // neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] += exp(i * (phi(0, xp) + phi(0, xp)))
+        - 2 * exp(i * (phi(0, xp) + phi(0, xm)))
+        + exp(i * (phi(0, xm) + phi(0, xm)));
 
     // direction 1
     xp = (x % (L[1]));
@@ -42,7 +48,10 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[1]);
     neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    // neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] += exp(i * (phi(0, xp) + phi(0, xp)))
+        - 2 * exp(i * (phi(0, xp) + phi(0, xm)))
+        + exp(i * (phi(0, xm) + phi(0, xm)));
 
     // direction 2
     xp = (x % (V2)) / L[1];
@@ -50,7 +59,10 @@ KOKKOS_INLINE_FUNCTION void compute_neibourgh_sum(Kokkos::complex<double> neighb
     xp = x + (-xp + (xp + 1) % L[2]) * L[1];
     neighbourSum[0] += exp(i * phi(0, xp)) + exp(i * phi(0, xm));
     neighbourSum[1] += exp(i * phi(1, xp)) + exp(i * phi(1, xm));
-    neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    // neighbourSum[2] += (exp(i * phi(0, xp)) - exp(i * phi(0, xm))) * (exp(i * phi(0, xp)) - exp(i * phi(0, xm)));
+    neighbourSum[2] += exp(i * (phi(0, xp) + phi(0, xp)))
+        - 2 * exp(i * (phi(0, xp) + phi(0, xm)))
+        + exp(i * (phi(0, xm) + phi(0, xm)));
 
     neighbourSum[2] /= 4.;
 }
