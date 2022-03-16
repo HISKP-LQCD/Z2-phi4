@@ -1126,6 +1126,15 @@ void  parallel_measurement_complex(manyphi mphip, manyphi::HostMirror h_mphip, c
             to_write(265, t) += (phip(0, t1) * phip(0, t1) * conj(A1_t[2])).real();// o20 A1 // two_to_two_o20A1
             to_write(266, t) += (phip(1, t1) * phip(1, t1) * conj(A1_t[2])).real();
 
+            // for complex field
+            Kokkos::complex<double> c00d1 = (phip(0, t1) * conj(phip(0, t1)) * phip(1, t1)); // phi0 phi0^+  phi1
+            Kokkos::complex<double> c00d1_t = (phip(0, tpt1) * conj(phip(0, tpt1)) * phip(1, tpt1));
+            to_write(267, t) += (c00d1 * conj(c00d1_t)).real();
+            to_write(268, t) += (phip(0, t1) * conj(c00d1_t)).real();   // this should be zero in the complex ising
+            to_write(269, t) += (phip(0, t1) * phip(0, t1) * phip(0, t1) * conj(c00d1_t)).real();
+            to_write(270, t) += (phip(0, t1) * phip(0, t1) * phip(0, t1) * conj(c00d1_t)).imag();  // compute imag just in case ... 
+            to_write(271, t) += (phip(1, t1) * conj(c00d1_t)).real();
+            to_write(272, t) += (phip(1, t1) * conj(c00d1_t)).imag();
 
         }// end loop t1
         for (int c = 0; c < Ncorr; c++)
