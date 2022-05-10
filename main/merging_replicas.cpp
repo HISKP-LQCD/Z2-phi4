@@ -346,13 +346,13 @@ void write_header_measuraments(FILE* f_conf, cluster::IO_params params) {
 
 
 template <typename T>
-void error_header(FILE* f_conf, T expected, const char* message) {
+void error_header(FILE* f_conf, T expected, const char* message, bool required=true) {
     T read;
     int i = fread(&read, sizeof(T), 1, f_conf);
     if (read != expected) {
         cout << "error:" << message << "   read=" << read << "  expected=" << expected << endl;
         //         printf("error: %s read=%d   expected %d \n",message,rconf,iconf);
-        exit(2);
+		if(required)      exit(2);
     }
 }
 void check_header(FILE* f_conf, cluster::IO_params& params) {
@@ -379,7 +379,7 @@ void check_header(FILE* f_conf, cluster::IO_params& params) {
 
     error_header(f_conf, params.data.metropolis_local_hits, "metropolis_local_hits");
     error_header(f_conf, params.data.metropolis_global_hits, "metropolis_global_hits");
-    error_header(f_conf, params.data.metropolis_delta, "metropolis_delta");
+    error_header(f_conf, params.data.metropolis_delta, "metropolis_delta", false);
     error_header(f_conf, params.data.cluster_hits, "cluster_hits");
     error_header(f_conf, params.data.cluster_min_size, "cluster_min_size");
     int tmp;
@@ -420,12 +420,12 @@ void check_header(FILE* f_conf, cluster::IO_params& params) {
 }
 
 template <typename T>
-void compare_2(T compare, T expected, const char* message) {
+void compare_2(T compare, T expected, const char* message, bool required=true) {
 
     if (compare != expected) {
         cout << "error:" << message << "   read=" << compare << "  expected=" << expected << endl;
         //         printf("error: %s read=%d   expected %d \n",message,rconf,iconf);
-        exit(2);
+		if(required)  exit(2);
     }
 }
 
@@ -450,7 +450,7 @@ void compare_headers(cluster::IO_params& params, cluster::IO_params& reference) 
 
     compare_2(params.data.metropolis_local_hits, reference.data.metropolis_local_hits, "metropolis_local_hits");
     compare_2(params.data.metropolis_global_hits, reference.data.metropolis_global_hits, "metropolis_global_hits");
-    compare_2(params.data.metropolis_delta, reference.data.metropolis_delta, "metropolis_delta");
+    compare_2(params.data.metropolis_delta, reference.data.metropolis_delta, "metropolis_delta", false);
     compare_2(params.data.cluster_hits, reference.data.cluster_hits, "cluster_hits");
     compare_2(params.data.cluster_min_size, reference.data.cluster_min_size, "cluster_min_size");
 
