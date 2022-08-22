@@ -166,8 +166,10 @@ void compute_FT_complex(manyphi& phip, int i, const Viewphi& phi, cluster::IO_pa
             }
 #endif
             double wr = sign * 6.28318530718 * (px * ix / (double(L1)) + py * iy / (double(L2)) + pz * iz / (double(L3)));
-            Kokkos::complex<double> ewr(0, 1);
-            ewr = exp( ewr * (-wr + pow_n * phi(comp, i0)));
+            // Kokkos::complex<double> ewr(0, 1);
+            // ewr = exp( ewr * (-wr + pow_n * phi(comp, i0)));
+            double theta=-wr + pow_n * phi(comp, i0);
+            Kokkos::complex<double> ewr( cos(theta), sin(theta));
             inner += ewr;
             }, phip(i, comp, xp));
 

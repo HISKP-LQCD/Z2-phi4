@@ -254,7 +254,8 @@ int main(int argc, char** argv) {
 #endif
             // cout << "Metropolis.acc=" << acc/V << endl ;
 
-             // Calculate time of Metropolis update
+            // Calculate time of Metropolis update
+            //  Kokkos::fence();
             time = timer1.seconds();
             time_update += time;
 
@@ -289,7 +290,7 @@ int main(int argc, char** argv) {
 #endif
                 if (params.data.checks == "yes")  Kokkos::deep_copy(h_mphip, mphip);
 
-                Kokkos::fence();   // ----------------------fence-------------------------------// 
+                // Kokkos::fence();   // ----------------------fence-------------------------------// 
                 time = timer_FT.seconds();
                 time_FT += time;
                 nFT++;
