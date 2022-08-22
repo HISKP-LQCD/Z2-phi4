@@ -20,3 +20,7 @@ test/Makefile
 test/do_cmake_qbig_kepler.sh
 test/CMakeCache.txt
 !.github/*
+workspace.code-workspace
+.vscode/configurationCache.log
+.vscode/dryrun.log
+.vscode/targets.log
