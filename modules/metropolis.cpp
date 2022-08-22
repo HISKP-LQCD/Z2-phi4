@@ -91,6 +91,7 @@ double metropolis_update(Viewphi& phi, cluster::IO_params params, RandPoolType& 
 
 #ifdef DEBUG
     static int init_hop = 0;
+    const size_t V = params.data.V;
     Kokkos::View<size_t**> hop;
     if (init_hop == 0) {
         ViewLatt eo_debug(V / 2);
