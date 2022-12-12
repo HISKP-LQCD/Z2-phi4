@@ -106,5 +106,5 @@ write (double) correlator 3  at time t
  - [x] Header to the confs
  - [x] Measurements
  - [ ] parallelization 
-   - [x] OMP : Kokkos 
+   - [x] Kokkos 
    - [ ] MPI 
