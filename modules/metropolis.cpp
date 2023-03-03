@@ -15,8 +15,8 @@ KOKKOS_INLINE_FUNCTION int ctolex(int x3, int x2, int x1, int x0, int L, int L2,
 
 template <class T>
 KOKKOS_INLINE_FUNCTION Kokkos::complex<T> polar1(const T& theta = T()) {
-    using Kokkos::Experimental::cos;
-    using Kokkos::Experimental::sin;
+    using Kokkos::cos;
+    using Kokkos::sin;
     return Kokkos::complex<T>(cos(theta), sin(theta));
 }
 

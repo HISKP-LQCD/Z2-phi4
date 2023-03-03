@@ -2,27 +2,23 @@
 
 rm -r CMakeFiles CMakeCache.txt
 
-#load modules
-module load Core/lmod/6.6
-module load Core/settarg/6.6
 
-#export CUDA_ROOT=/usr/local/cuda-9.2
-#alias nvcc='/opt/cuda-9.2/bin/nvcc'
+module purge
+
+module load foss/2021b
+module load CMake/3.21.1-GCCcore-11.2.0
+module load CUDA/11.5.0
+
 
 src_dir=${HOME}/Z2-phi4
-#CXXFLAGS="-Xcompiler -O3 -Xcompiler -mtune=power9 -Xcompiler -mcpu=power9 -Xcompiler -g -Xcompiler -mno-float128 " \
-CXXFLAGS="-Xcompiler -O3  -Xcompiler -g -Xcompiler -mno-avx2 " \
+CXXFLAGS="-mtune=sandybridge -march=sandybridge -g" \
   cmake \
+  -DCMAKE_CXX_STANDARD=17 \
   -DCMAKE_CXX_COMPILER=${src_dir}/external/kokkos/bin/nvcc_wrapper \
-  -DKokkos_ENABLE_OPENMP=ON\
+  -DCMAKE_BUILD_TYPE=RELEASE \
+  -DKokkos_ENABLE_COMPILER_WARNINGS=ON \
+  -DKokkos_ENABLE_OPENMP=OFF\
   -DKokkos_ENABLE_SERIAL=ON\
   -DKokkos_ENABLE_CUDA=ON \
-  -DKokkos_ARCH_KEPLER30=ON \
-  -DKokkos_ENABLE_CUDA_LAMBDA=ON \
-  -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON \
-  -DKokkos_CXX_STANDARD=14 \
+  -DKokkos_ARCH_KEPLER35=ON \
   ${src_dir}
-#  -DKokkos_ARCH_SKX=ON \
-#  -DKokkos_ARCH_VOLTA70=ON \
-#  -DKokkos_ARCH_POWER9=ON \
-#  -DCUDA_ROOT=/usr/local/cuda-9.2 \
